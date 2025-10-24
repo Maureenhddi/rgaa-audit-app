@@ -1,387 +1,925 @@
-# RGAA Audit - Application d'audit d'accessibilité automatisé
+# RGAA Audit App 🚀
 
-Application Symfony pour automatiser les audits d'accessibilité RGAA (Référentiel Général d'Amélioration de l'Accessibilité) avec Playwright, Pa11y et Google Gemini AI.
+> Application web d'audit d'accessibilité RGAA 4.1 automatisée avec analyse IA
 
-## 🚀 Fonctionnalités
+Application Symfony pour auditer l'accessibilité des sites web selon le référentiel RGAA (Référentiel Général d'Amélioration de l'Accessibilité), avec analyse automatique via Playwright, Axe-core, HTML_CodeSniffer et enrichissement intelligent via Google Gemini 2.5 Flash.
 
-### MVP (Minimum Viable Product)
-
-1. **Système d'authentification**
-   - Inscription / Connexion utilisateur
-   - Gestion de session sécurisée
-
-2. **Lancement d'audit automatique**
-   - Formulaire simple pour entrer l'URL
-   - Audit automatique avec Playwright + Pa11y
-   - Analyse contextuelle avec Gemini AI
-
-3. **Résultats détaillés**
-   - Affichage par criticité (Critique/Majeur/Mineur) avec accordions
-   - Pour chaque erreur :
-     - Description détaillée
-     - Impact sur les utilisateurs
-     - Recommandations de correction
-     - Exemple de code pour fixer
-     - Critères WCAG et RGAA concernés
-
-4. **Statistiques RGAA**
-   - 106 critères RGAA analysés
-   - Taux de conformité global
-   - Répartition : Conformes / Non conformes / Non applicables
-   - Graphiques de visualisation
-
-5. **Export PDF**
-   - Rapport détaillé complet
-   - Statistiques et recommandations
-   - Formatage professionnel
-
-6. **Historique et comparaison**
-   - Liste de tous les audits effectués
-   - Comparaison avant/après entre deux audits
-   - Dashboard avec évolution de la conformité dans le temps
-
-## 🛠 Stack technique
-
-- **Backend** : Symfony 6.4+ (PHP 8.1+)
-- **Base de données** : MySQL 8.0+ ou PostgreSQL 15+
-- **Audit Node.js** :
-  - Playwright (tests d'interactivité)
-  - Pa11y (analyse HTML/CSS)
-- **IA** : Google Gemini API
-- **Frontend** : Twig + Bootstrap 5 + Chart.js
-- **PDF** : Knp Snappy Bundle (wkhtmltopdf)
-
-## 📁 Structure du projet
-
-```
-rgaa-audit-app/
-├── audit-scripts/          # Scripts Node.js pour Playwright et Pa11y
-│   ├── package.json
-│   ├── playwright-audit.js
-│   ├── pa11y-audit.js
-│   └── README.md
-├── config/                 # Configuration Symfony
-│   ├── packages/
-│   ├── routes.yaml
-│   └── services.yaml
-├── migrations/             # Migrations de base de données
-├── public/                 # Point d'entrée web
-│   └── index.php
-├── src/
-│   ├── Controller/         # Contrôleurs
-│   │   ├── AuditController.php
-│   │   ├── DashboardController.php
-│   │   ├── ExportController.php
-│   │   └── SecurityController.php
-│   ├── Entity/             # Entités Doctrine
-│   │   ├── Audit.php
-│   │   ├── AuditResult.php
-│   │   └── User.php
-│   ├── Form/               # Formulaires
-│   │   └── RegistrationFormType.php
-│   ├── Repository/         # Repositories
-│   │   ├── AuditRepository.php
-│   │   ├── AuditResultRepository.php
-│   │   └── UserRepository.php
-│   ├── Security/           # Voters et sécurité
-│   │   └── AuditVoter.php
-│   ├── Service/            # Services métier
-│   │   ├── AuditService.php
-│   │   ├── GeminiService.php
-│   │   ├── Pa11yService.php
-│   │   ├── PdfExportService.php
-│   │   └── PlaywrightService.php
-│   └── Kernel.php
-├── templates/              # Templates Twig
-│   ├── audit/
-│   ├── dashboard/
-│   ├── security/
-│   └── base.html.twig
-├── .env                    # Variables d'environnement (template)
-├── .env.local.example      # Exemple de configuration locale
-├── composer.json           # Dépendances PHP
-└── README.md
-```
-
-## 🐳 Installation avec Docker (Recommandé)
-
-### Prérequis
-
-- [Docker](https://docs.docker.com/get-docker/) 20.10+
-- [Docker Compose](https://docs.docker.com/compose/install/) 2.0+
-- 4 GB de RAM minimum
-
-### Installation rapide
-
-```bash
-# 1. Copier la configuration
-cp .env.docker .env.docker.local
-
-# 2. Éditer .env.docker.local et configurer :
-#    - GEMINI_API_KEY (obligatoire)
-#    - Mots de passe MySQL
-#    - APP_SECRET
-
-# 3. Démarrer l'application
-make start
-# ou
-docker compose build && docker compose up -d
-
-# 4. Accéder à l'application
-# http://localhost:8080
-```
-
-**Commandes utiles avec Docker :**
-
-```bash
-make help              # Voir toutes les commandes disponibles
-make up                # Démarrer les services
-make down              # Arrêter les services
-make logs              # Voir les logs
-make shell             # Accéder au conteneur PHP
-make db-migrate        # Exécuter les migrations
-```
-
-📖 **Guide complet Docker** : Voir [DOCKER.md](DOCKER.md)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=flat&logo=php)](https://www.php.net/)
+[![Symfony](https://img.shields.io/badge/Symfony-6.4-000000?style=flat&logo=symfony)](https://symfony.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat&logo=node.js)](https://nodejs.org/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker)](https://www.docker.com/)
 
 ---
 
-## 🔧 Installation manuelle (sans Docker)
+## 📋 Table des matières
 
-### Prérequis
+- [Fonctionnalités](#-fonctionnalités)
+- [Stack technique](#-stack-technique)
+- [Prérequis](#-prérequis)
+- [Installation rapide](#-installation-rapide-docker)
+- [Configuration](#-configuration)
+- [Utilisation](#-utilisation)
+- [Architecture](#-architecture)
+- [Processus d'audit](#-processus-daudit)
+- [Documentation](#-documentation)
+- [Contribution](#-contribution)
+- [Licence](#-licence)
 
-- PHP 8.1 ou supérieur
-- Composer
+---
+
+## ✨ Fonctionnalités
+
+### 🔍 Audit automatique multi-sources
+- **Playwright** : Tests d'interactivité, navigation au clavier, gestion du focus
+- **Axe-core** : Analyse complète WCAG 2.1 AA/AAA
+- **HTML_CodeSniffer** : Vérification HTML/CSS et standards RGAA
+
+### 🤖 Analyse IA avec Google Gemini 2.5 Flash
+- Enrichissement contextuel des résultats
+- Recommandations personnalisées de correction
+- Exemples de code pour résoudre les problèmes
+- Évaluation de l'impact utilisateur
+- Mapping automatique WCAG → RGAA
+
+### 📊 Grille RGAA complète
+- **106 critères RGAA 4.1** organisés en 13 thématiques
+- Statut pour chaque critère : Conforme / Non-conforme / Non applicable
+- Taux de conformité global en pourcentage
+- Visualisation par thème avec icônes et couleurs
+
+### ✅ Vérifications manuelles
+- Interface de checklist pour les critères non automatisables
+- Sauvegarde automatique des vérifications
+- Intégration dans le calcul du taux de conformité
+- Suivi de progression
+
+### 📈 Résultats détaillés
+- Organisation par criticité : **Critique** 🔴 / **Majeur** 🟠 / **Mineur** 🟡
+- Affichage par thème RGAA avec design moderne
+- Interface à onglets (Vue d'ensemble / Grille RGAA / Détail des problèmes)
+- Mode sombre pour le confort visuel
+
+### 📄 Export PDF professionnel
+- Rapport complet avec graphiques
+- Statistiques détaillées
+- Toutes les recommandations et exemples de code
+- Formatage print-ready
+
+### 📊 Historique et comparaison
+- Liste de tous les audits effectués
+- Comparaison avant/après entre deux audits
+- Dashboard avec évolution de la conformité
+- Statistiques par période
+
+### 🔐 Sécurité et multi-utilisateurs
+- Système d'authentification sécurisé
+- Isolation des audits par utilisateur
+- Voter pattern pour contrôle d'accès
+- Hashage bcrypt des mots de passe
+
+---
+
+## 🛠 Stack technique
+
+### Backend
+- **PHP 8.2+** avec orienté objet moderne
+- **Symfony 6.4** (MVC, Doctrine ORM, Twig, Security)
+- **MySQL 8.0** pour le stockage des données
+- **Doctrine Migrations** pour la gestion du schéma
+
+### Frontend
+- **Twig** templating engine
+- **Bootstrap 5** pour le design responsive
+- **Chart.js** pour les graphiques
+- **JavaScript vanilla** pour l'interactivité
+- **Mode sombre** avec persistance localStorage
+
+### Audit automatique
+- **Node.js 18+** pour les scripts d'audit
+- **Playwright** (tests navigateur automatisés)
+- **Axe-core** (moteur d'accessibilité Deque)
+- **HTML_CodeSniffer** (validation WCAG/RGAA)
+
+### Intelligence Artificielle
+- **Google Gemini 2.5 Flash** (via API REST)
+- Analyse contextuelle des erreurs
+- Génération de recommandations
+- Mapping WCAG/RGAA automatique
+
+### Export & reporting
+- **KnpSnappyBundle** (génération PDF)
+- **wkhtmltopdf** (rendu HTML→PDF)
+
+### DevOps
+- **Docker & Docker Compose** pour environnement isolé
+- **Nginx** serveur web
+- **PHP-FPM** pour performance
+- **Git** pour versionnement
+
+---
+
+## 📦 Prérequis
+
+### Avec Docker (recommandé)
+- [Docker](https://docs.docker.com/get-docker/) 20.10+
+- [Docker Compose](https://docs.docker.com/compose/install/) 2.0+
+- 4 GB RAM minimum
+- 10 GB d'espace disque
+
+### Sans Docker
+- PHP 8.2+ avec extensions : `pdo_mysql`, `intl`, `mbstring`, `xml`, `curl`
+- Composer 2.0+
 - Node.js 18+ et npm
-- MySQL 8.0+ ou PostgreSQL 15+
-- wkhtmltopdf (pour l'export PDF)
+- MySQL 8.0+ ou MariaDB 10.6+
+- wkhtmltopdf (pour export PDF)
 
-### 1. Cloner et configurer le projet
+### Configuration requise
+- **Clé API Google Gemini** (gratuite) : [Obtenir une clé](https://makersuite.google.com/app/apikey)
+
+---
+
+## 🚀 Installation rapide (Docker)
+
+> **Recommandation :** Docker simplifie considérablement l'installation en isolant toutes les dépendances dans des conteneurs. C'est la méthode recommandée pour démarrer rapidement.
+
+### Prérequis Docker
+
+Avant de commencer, assurez-vous d'avoir :
+- **Docker Desktop** installé et démarré ([Télécharger](https://www.docker.com/products/docker-desktop))
+- **Git** pour cloner le projet
+- **Une clé API Google Gemini** ([Obtenir gratuitement](https://makersuite.google.com/app/apikey))
+
+### Étape 1 : Cloner le projet
 
 ```bash
+# Cloner depuis GitHub
+git clone git@github.com:Maureenhddi/rgaa-audit-app.git
+
+# Se déplacer dans le répertoire
 cd rgaa-audit-app
+```
 
-# Copier le fichier d'environnement
+### Étape 2 : Configuration de l'environnement
+
+```bash
+# Copier le fichier d'exemple
 cp .env.local.example .env.local
-
-# Éditer .env.local et configurer :
-# - DATABASE_URL
-# - APP_SECRET
-# - GEMINI_API_KEY
 ```
 
-### 2. Installer les dépendances PHP
+**Éditer le fichier `.env.local` :**
 
 ```bash
-composer install
-```
-
-### 3. Installer les dépendances Node.js
-
-```bash
-cd audit-scripts
-npm install
-npm run install-browsers  # Installer Chromium pour Playwright
-cd ..
-```
-
-### 4. Créer la base de données
-
-```bash
-php bin/console doctrine:database:create
-php bin/console doctrine:migrations:migrate
-```
-
-### 5. Lancer le serveur de développement
-
-```bash
-symfony server:start
+# Ouvrir avec votre éditeur préféré
+nano .env.local
 # ou
-php -S localhost:8000 -t public/
+code .env.local
 ```
 
-L'application sera accessible sur `http://localhost:8000`
-
-## 🔑 Configuration
-
-### Variables d'environnement (.env.local)
+**Configurer les variables suivantes :**
 
 ```env
-# Base de données
-DATABASE_URL="mysql://user:password@127.0.0.1:3306/rgaa_audit"
+###> Symfony Framework ###
+APP_ENV=dev
+APP_SECRET=changez_ce_secret_32_caracteres_minimum_ici_par_une_chaine_aleatoire
+###< Symfony Framework ###
 
-# Secret Symfony
-APP_SECRET=votre_secret_de_32_caracteres_minimum
+###> Base de données (pas besoin de changer avec Docker) ###
+DATABASE_URL="mysql://root:root@db:3306/rgaa_audit?serverVersion=8.0&charset=utf8mb4"
+###< Base de données ###
+
+###> Google Gemini API (OBLIGATOIRE) ###
+GEMINI_API_KEY=VOTRE_CLE_API_GEMINI_ICI
+GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent
+###< Google Gemini API ###
+
+###> Scripts Node.js (chemins Docker - ne pas modifier) ###
+NODE_SCRIPTS_PATH=/var/www/html/audit-scripts
+NODE_EXECUTABLE=node
+###< Scripts Node.js ###
+```
+
+**⚠️ Important :**
+- Remplacez `VOTRE_CLE_API_GEMINI_ICI` par votre vraie clé API
+- Générez un `APP_SECRET` aléatoire (32+ caractères)
+
+### Étape 3 : Construire et démarrer les conteneurs Docker
+
+```bash
+# Construire les images et démarrer tous les services
+docker compose up -d --build
+```
+
+**Ce que fait cette commande :**
+- 📦 Télécharge les images Docker (Nginx, PHP 8.2, MySQL 8.0)
+- 🔨 Construit l'image PHP avec toutes les extensions
+- 🚀 Démarre 3 conteneurs : `web` (Nginx), `php`, `db` (MySQL)
+- 🔗 Configure le réseau entre les conteneurs
+
+**Temps d'installation :** 5-10 minutes (première fois uniquement)
+
+### Étape 4 : Installer les dépendances PHP
+
+```bash
+# Entrer dans le conteneur PHP
+docker compose exec php bash
+
+# Installer les dépendances Composer
+composer install --no-interaction --optimize-autoloader
+
+# Sortir du conteneur
+exit
+```
+
+### Étape 5 : Installer les dépendances Node.js
+
+```bash
+# Installer npm packages dans le conteneur
+docker compose exec php bash -c "cd /var/www/html/audit-scripts && npm install"
+
+# Installer les navigateurs Playwright (Chromium)
+docker compose exec php bash -c "cd /var/www/html/audit-scripts && npx playwright install chromium --with-deps"
+```
+
+**Ce que fait cette commande :**
+- Installe Playwright et toutes ses dépendances
+- Télécharge Chromium headless (~200 MB)
+- Configure l'environnement pour les tests d'accessibilité
+
+### Étape 6 : Initialiser la base de données
+
+```bash
+# Créer la base de données si elle n'existe pas
+docker compose exec php php bin/console doctrine:database:create --if-not-exists
+
+# Exécuter les migrations pour créer les tables
+docker compose exec php php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+**Tables créées :**
+- `user` - Utilisateurs de l'application
+- `audit` - Audits d'accessibilité
+- `audit_result` - Résultats détaillés des audits
+- `manual_check` - Vérifications manuelles RGAA
+
+### Étape 7 : Vérifier que tout fonctionne
+
+```bash
+# Voir les logs en temps réel
+docker compose logs -f
+
+# Vérifier que les 3 conteneurs tournent
+docker compose ps
+```
+
+**Sortie attendue :**
+```
+NAME                COMMAND                  SERVICE   STATUS
+rgaa-audit-app-db   "docker-entrypoint.s…"   db        Up
+rgaa-audit-app-php  "docker-php-entrypoi…"   php       Up
+rgaa-audit-app-web  "/docker-entrypoint.…"   web       Up
+```
+
+### Étape 8 : Accéder à l'application
+
+Ouvrez votre navigateur et accédez à :
+
+```
+http://localhost:8080
+```
+
+🎉 **L'application est prête !**
+
+### Premiers pas
+
+1. **Créer un compte :**
+   - Cliquez sur "S'inscrire"
+   - Remplissez le formulaire (nom, email, mot de passe)
+   - Connectez-vous
+
+2. **Lancer votre premier audit :**
+   - Cliquez sur "Nouvel audit"
+   - Entrez une URL (ex: `https://www.example.com`)
+   - Cliquez sur "Lancer l'audit"
+   - Patientez 2-5 minutes
+
+3. **Consulter les résultats :**
+   - Vue d'ensemble avec statistiques
+   - Grille RGAA complète (106 critères)
+   - Détails des problèmes détectés
+
+---
+
+### Commandes Docker utiles
+
+```bash
+# Démarrer les conteneurs
+docker compose up -d
+
+# Arrêter les conteneurs
+docker compose down
+
+# Voir les logs en temps réel
+docker compose logs -f
+
+# Voir les logs d'un service spécifique
+docker compose logs -f php
+
+# Redémarrer un service
+docker compose restart php
+
+# Accéder au conteneur PHP (bash)
+docker compose exec php bash
+
+# Accéder à MySQL
+docker compose exec db mysql -uroot -proot rgaa_audit
+
+# Vider le cache Symfony
+docker compose exec php php bin/console cache:clear
+
+# Voir les routes disponibles
+docker compose exec php php bin/console debug:router
+
+# Reconstruire les conteneurs (après modification Dockerfile)
+docker compose up -d --build --force-recreate
+```
+
+---
+
+### Dépannage
+
+**Problème : Port 8080 déjà utilisé**
+```bash
+# Modifier le port dans docker-compose.yml
+ports:
+  - "8081:80"  # Utiliser 8081 au lieu de 8080
+```
+
+**Problème : Erreur de connexion base de données**
+```bash
+# Vérifier que le conteneur MySQL est démarré
+docker compose ps
+
+# Vérifier les logs MySQL
+docker compose logs db
+
+# Recréer la base de données
+docker compose exec php php bin/console doctrine:database:drop --force --if-exists
+docker compose exec php php bin/console doctrine:database:create
+docker compose exec php php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+**Problème : Playwright ne fonctionne pas**
+```bash
+# Réinstaller Playwright avec dépendances système
+docker compose exec php bash -c "cd /var/www/html/audit-scripts && npx playwright install chromium --with-deps"
+```
+
+**Problème : Cache Symfony corrompu**
+```bash
+# Vider complètement le cache
+docker compose exec php rm -rf var/cache/*
+docker compose exec php php bin/console cache:clear
+```
+
+---
+
+### Architecture Docker
+
+Le projet utilise 3 conteneurs :
+
+```
+┌─────────────────────────────────────┐
+│   Navigateur → http://localhost:8080│
+└──────────────┬──────────────────────┘
+               │
+         ┌─────▼─────┐
+         │   Nginx   │  Port 8080 → 80
+         │   (web)   │  Serveur web
+         └─────┬─────┘
+               │
+         ┌─────▼─────┐
+         │  PHP-FPM  │  PHP 8.2 + Extensions
+         │   (php)   │  Symfony + Composer
+         │           │  Node.js + Playwright
+         └─────┬─────┘
+               │
+         ┌─────▼─────┐
+         │   MySQL   │  Port 3306
+         │    (db)   │  Base de données
+         └───────────┘
+```
+
+**Volumes Docker :**
+- `./` → `/var/www/html` (code source synchronisé)
+- `db_data` → Données MySQL persistantes
+
+**Réseau Docker :**
+- Tous les conteneurs communiquent via le réseau `rgaa_network`
+
+---
+
+## ⚙️ Configuration
+
+### Variables d'environnement
+
+Fichier `.env.local` :
+
+```env
+# Environnement
+APP_ENV=dev
+APP_SECRET=votre_secret_32_caracteres_minimum
+
+# Base de données
+DATABASE_URL="mysql://user:password@db:3306/rgaa_audit?serverVersion=8.0&charset=utf8mb4"
 
 # Google Gemini API
 GEMINI_API_KEY=votre_cle_api_gemini
-GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent
+GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent
 
-# Scripts Node.js
-NODE_SCRIPTS_PATH=/chemin/absolu/vers/rgaa-audit-app/audit-scripts
+# Node.js (chemin dans le conteneur Docker)
+NODE_SCRIPTS_PATH=/var/www/html/audit-scripts
 NODE_EXECUTABLE=node
 ```
 
-### Obtenir une clé API Gemini
+### Obtenir une clé API Google Gemini
 
-1. Allez sur [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Créez une nouvelle clé API
-3. Copiez la clé dans votre `.env.local`
+1. Visitez [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Connectez-vous avec votre compte Google
+3. Cliquez sur "Create API Key"
+4. Copiez la clé et collez-la dans `.env.local`
 
-## 📊 Structure de la base de données
+**Note :** L'API Gemini est gratuite avec limites raisonnables (60 requêtes/minute).
 
-### Table `user`
-- `id` : Identifiant unique
-- `email` : Email de connexion (unique)
-- `password` : Mot de passe hashé
-- `name` : Nom complet
-- `roles` : Rôles de l'utilisateur
-- `created_at` : Date de création
-
-### Table `audit`
-- `id` : Identifiant unique
-- `user_id` : Référence à l'utilisateur
-- `url` : URL auditée
-- `status` : pending|running|completed|failed
-- `conformity_rate` : Taux de conformité (%)
-- `summary` : Résumé de l'audit
-- `critical_count` : Nombre de problèmes critiques
-- `major_count` : Nombre de problèmes majeurs
-- `minor_count` : Nombre de problèmes mineurs
-- `total_issues` : Total des problèmes
-- `conform_criteria` : Critères conformes
-- `non_conform_criteria` : Critères non conformes
-- `not_applicable_criteria` : Critères non applicables
-- `error_message` : Message d'erreur (si échec)
-- `created_at` : Date de création
-- `updated_at` : Date de mise à jour
-
-### Table `audit_result`
-- `id` : Identifiant unique
-- `audit_id` : Référence à l'audit
-- `error_type` : Type d'erreur
-- `severity` : critical|major|minor
-- `description` : Description du problème
-- `recommendation` : Recommandation de correction
-- `code_fix` : Exemple de code corrigé
-- `selector` : Sélecteur CSS de l'élément
-- `context` : Contexte de l'erreur
-- `wcag_criteria` : Critères WCAG (ex: 1.1.1)
-- `rgaa_criteria` : Critères RGAA (ex: 1.1)
-- `impact_user` : Impact sur l'utilisateur
-- `source` : playwright|pa11y|gemini
-- `created_at` : Date de création
+---
 
 ## 🎯 Utilisation
 
 ### 1. Créer un compte
 
-- Accédez à `/register`
-- Remplissez le formulaire d'inscription
+- Accédez à http://localhost:8080/register
+- Remplissez le formulaire (nom, email, mot de passe)
 - Connectez-vous avec vos identifiants
 
 ### 2. Lancer un audit
 
-- Cliquez sur "Nouvel audit"
-- Entrez l'URL du site à auditer (ex: https://www.example.com)
-- Cliquez sur "Lancer l'audit"
-- L'audit s'exécute automatiquement (peut prendre 2-5 minutes)
+1. Cliquez sur **"Nouvel audit"** dans la navigation
+2. Entrez l'URL du site à auditer (ex: `https://www.example.com`)
+3. Cliquez sur **"Lancer l'audit"**
+4. Patientez 2-5 minutes (l'audit s'exécute automatiquement)
 
 ### 3. Consulter les résultats
 
-Les résultats sont organisés par criticité :
+Les résultats sont organisés en **3 onglets** :
 
-- **🔴 Critiques** : Bloquent l'accès au contenu
-- **🟠 Majeurs** : Impact significatif sur l'expérience
-- **🟡 Mineurs** : Améliorations recommandées
+#### 📊 Vue d'ensemble
+- Taux de conformité global
+- Statistiques par criticité (Critique/Majeur/Mineur)
+- Répartition RGAA (Conforme/Non-conforme/Non applicable)
+- Résumé généré par IA
 
-Chaque problème contient :
-- Description détaillée
-- Impact sur les utilisateurs
-- Recommandations de correction
-- Exemple de code pour fixer
-- Critères WCAG et RGAA concernés
+#### ✅ Grille RGAA (106 critères)
+- Accordéons par thématique (Images, Couleurs, Navigation, etc.)
+- Statut pour chaque critère avec radio buttons
+- Description de chaque critère
+- Sauvegarde automatique
 
-### 4. Exporter en PDF
+#### 🔍 Détail des problèmes
+- Groupement par thème RGAA
+- Badges de source (Playwright / Axe-core / HTML_CodeSniffer)
+- Pour chaque erreur :
+  - Description du problème
+  - Impact sur les utilisateurs
+  - Recommandation de correction
+  - Exemple de code fix
+  - Critères WCAG et RGAA concernés
 
-- Cliquez sur "Exporter PDF" depuis la page de résultats
-- Un rapport complet est généré avec toutes les informations
+### 4. Vérifications manuelles
 
-### 5. Comparer des audits
+Certains critères ne peuvent pas être vérifiés automatiquement. Pour ces critères :
 
-- Accédez à l'historique
-- Sélectionnez deux audits à comparer
-- Visualisez l'évolution entre les deux audits
+1. Allez dans l'onglet **"Grille RGAA"**
+2. Vérifiez manuellement chaque critère
+3. Sélectionnez : **Conforme** / **Non-conforme** / **Non applicable**
+4. Les changements sont sauvegardés automatiquement
+5. Le taux de conformité est recalculé en temps réel
 
-## 🏗 Architecture modulaire
+### 5. Exporter en PDF
 
-### Services
+- Cliquez sur **"Exporter en PDF"** depuis la page de résultats
+- Un rapport professionnel est généré avec :
+  - Page de garde
+  - Statistiques et graphiques
+  - Liste complète des problèmes
+  - Recommandations et exemples de code
 
-Les services sont découplés et réutilisables :
+### 6. Comparer des audits
 
-- **`AuditService`** : Orchestre l'audit complet
-- **`PlaywrightService`** : Exécute les tests d'interactivité
-- **`Pa11yService`** : Analyse HTML/CSS
-- **`GeminiService`** : Génère les analyses contextuelles
-- **`PdfExportService`** : Exporte les rapports en PDF
+1. Accédez à **"Mes audits"**
+2. Sélectionnez deux audits (même URL, dates différentes)
+3. Cliquez sur **"Comparer"**
+4. Visualisez l'évolution :
+   - Différence de conformité
+   - Évolution par criticité
+   - Problèmes résolus vs nouveaux
 
-### Extensibilité
+---
 
-Pour ajouter de nouveaux outils d'audit :
+## 🏗 Architecture
 
-1. Créer un nouveau service dans `src/Service/`
-2. Implémenter la méthode `runAudit(string $url): array`
-3. Intégrer dans `AuditService::runCompleteAudit()`
+### Structure du projet
 
-## 🧪 Scripts Node.js
+```
+rgaa-audit-app/
+├── audit-scripts/              # Scripts Node.js pour audit
+│   ├── playwright-audit.js     # Tests Playwright + Axe + HTML_CodeSniffer
+│   ├── package.json
+│   └── README.md
+├── config/
+│   ├── packages/               # Configuration Symfony
+│   ├── routes.yaml             # Routes de l'application
+│   ├── services.yaml           # Services et DI
+│   └── rgaa_criteria.json      # 106 critères RGAA (source unique)
+├── migrations/                 # Migrations Doctrine
+├── public/
+│   ├── images/                 # Assets images
+│   └── index.php               # Point d'entrée
+├── src/
+│   ├── Controller/             # Contrôleurs MVC
+│   │   ├── AuditController.php
+│   │   ├── DashboardController.php
+│   │   ├── ExportController.php
+│   │   ├── ManualCheckController.php
+│   │   └── SecurityController.php
+│   ├── Entity/                 # Entités Doctrine
+│   │   ├── Audit.php
+│   │   ├── AuditResult.php
+│   │   ├── ManualCheck.php
+│   │   └── User.php
+│   ├── Enum/                   # Constantes type-safe
+│   │   ├── AuditStatus.php     # PENDING, RUNNING, COMPLETED, FAILED
+│   │   ├── IssueSeverity.php   # CRITICAL, MAJOR, MINOR
+│   │   └── IssueSource.php     # PLAYWRIGHT, AXE_CORE, HTML_CODESNIFFER
+│   ├── Form/
+│   │   └── RegistrationFormType.php
+│   ├── Repository/
+│   │   ├── AuditRepository.php
+│   │   ├── AuditResultRepository.php
+│   │   ├── ManualCheckRepository.php
+│   │   └── UserRepository.php
+│   ├── Security/
+│   │   └── AuditVoter.php      # Contrôle d'accès aux audits
+│   ├── Service/                # Logique métier
+│   │   ├── AuditService.php          # Orchestration audit complet
+│   │   ├── PlaywrightService.php     # Exécution Playwright
+│   │   ├── GeminiService.php         # Analyse IA
+│   │   ├── RgaaThemeService.php      # Gestion thèmes RGAA (JSON-based)
+│   │   ├── RgaaReferenceService.php  # Référence des critères
+│   │   └── PdfExportService.php      # Export PDF
+│   └── Kernel.php
+├── templates/                  # Templates Twig
+│   ├── audit/
+│   │   ├── show.html.twig      # Page de résultats (tabs)
+│   │   ├── list.html.twig
+│   │   ├── new.html.twig
+│   │   ├── compare.html.twig
+│   │   └── pdf_report.html.twig
+│   ├── dashboard/
+│   ├── security/
+│   └── base.html.twig          # Layout de base (CSS, navbar, footer)
+├── var/                        # Cache, logs (non versionné)
+├── vendor/                     # Dépendances Composer (non versionné)
+├── .env.local.example          # Template configuration
+├── .gitignore
+├── composer.json
+├── docker-compose.yml
+└── README.md
+```
 
-### playwright-audit.js
+### Pattern architectural
 
-Tests d'interactivité et de navigation :
-- Navigation au clavier
-- Gestion du focus
-- Éléments interactifs
-- Contenu dynamique
-- Accessibilité des formulaires
-- Liens d'évitement
+**MVC avec Services découplés :**
 
-### pa11y-audit.js
+```
+User Request
+     ↓
+Controller (AuditController)
+     ↓
+Service Layer (AuditService → PlaywrightService → GeminiService)
+     ↓
+Repository (AuditRepository)
+     ↓
+Entity (Audit, AuditResult)
+     ↓
+Database (MySQL)
+     ↓
+View (Twig templates)
+     ↓
+User Response
+```
 
-Analyse HTML/CSS :
-- Conformité WCAG 2.1 AA
-- Structure sémantique
-- Attributs ARIA
-- Contraste des couleurs
-- Alternatives textuelles
+### Services clés
 
-## 📝 TODO / Améliorations futures
+#### `AuditService`
+Orchestre le processus complet d'audit :
+- Lance Playwright + Axe + HTML_CodeSniffer
+- Stocke les résultats bruts
+- Envoie à Gemini pour enrichissement
+- Met à jour avec recommandations IA
+- Calcule les statistiques
 
-- [ ] Audit de plusieurs pages en parallèle
-- [ ] Tests automatiques récurrents (cron)
-- [ ] Notifications par email
-- [ ] API REST pour intégration CI/CD
-- [ ] Support multi-langue
-- [ ] Tests unitaires et fonctionnels
-- [ ] Interface d'administration
-- [ ] Gestion d'équipes et de projets
-- [ ] Rapports personnalisables
-- [ ] Intégration Slack/Discord
+#### `PlaywrightService`
+Exécute le script Node.js Playwright :
+- Lance navigateur Chromium headless
+- Exécute Axe-core sur la page
+- Exécute HTML_CodeSniffer
+- Retourne résultats JSON unifiés
 
-## 📄 Licence
+#### `GeminiService`
+Communique avec Google Gemini API :
+- Envoie résultats bruts + contexte RGAA
+- Reçoit recommandations enrichies
+- Parse et structure les données
+- Mappe WCAG → RGAA
 
-Propriétaire - Tous droits réservés
+#### `RgaaThemeService`
+Gestion des thèmes et critères RGAA :
+- Charge dynamiquement depuis `rgaa_criteria.json`
+- 13 thèmes avec métadonnées (icône, couleur)
+- Mapping critère → thème
+- Descriptions des 106 critères
 
-## 🤝 Support
+#### `PdfExportService`
+Génération de rapports PDF :
+- Rendu Twig → HTML
+- Conversion HTML → PDF via wkhtmltopdf
+- Graphiques Chart.js inclus
+- Mise en page professionnelle
 
-Pour toute question ou problème :
-- Créer une issue sur le dépôt Git
-- Contacter l'équipe de développement
+---
+
+## 🔄 Processus d'audit
+
+### Étapes automatiques
+
+```
+1. Utilisateur soumet URL
+         ↓
+2. AuditService crée entité Audit (status: RUNNING)
+         ↓
+3. PlaywrightService lance script Node.js
+         ↓
+4. Playwright ouvre URL dans Chromium headless
+         ↓
+5. Exécution Axe-core → Détecte violations WCAG
+         ↓
+6. Exécution HTML_CodeSniffer → Détecte problèmes HTML/CSS
+         ↓
+7. Retour JSON avec tous les résultats
+         ↓
+8. AuditService stocke résultats bruts (AuditResult entities)
+         ↓
+9. GeminiService analyse les résultats
+         ↓
+10. Gemini 2.5 Flash génère :
+    - Recommandations personnalisées
+    - Exemples de code
+    - Impact utilisateur
+    - Mapping WCAG → RGAA
+    - Résumé général
+         ↓
+11. AuditService enrichit les résultats stockés
+         ↓
+12. Calcul statistiques (conformité, critères, criticité)
+         ↓
+13. Audit status → COMPLETED
+         ↓
+14. Redirection vers page de résultats
+```
+
+**Durée totale :** 2-5 minutes selon taille du site
+
+---
+
+## 📚 Documentation
+
+- **[INSTALLATION.md](INSTALLATION.md)** - Guide d'installation détaillé
+- **[DOCKER.md](DOCKER.md)** - Configuration Docker complète
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Architecture technique approfondie
+- **[CHANGELOG.md](CHANGELOG.md)** - Historique des versions
+
+---
+
+## 🗄️ Base de données
+
+### Schéma principal
+
+**Table `user`**
+```sql
+id INT PRIMARY KEY
+email VARCHAR(180) UNIQUE
+password VARCHAR(255)
+name VARCHAR(255)
+roles JSON
+created_at DATETIME
+```
+
+**Table `audit`**
+```sql
+id INT PRIMARY KEY
+user_id INT FOREIGN KEY
+url VARCHAR(500)
+status VARCHAR(50)  -- pending|running|completed|failed
+conformity_rate DECIMAL(5,2)
+summary TEXT
+critical_count INT
+major_count INT
+minor_count INT
+total_issues INT
+conform_criteria INT
+non_conform_criteria INT
+not_applicable_criteria INT
+non_conform_details JSON
+error_message TEXT
+created_at DATETIME
+updated_at DATETIME
+```
+
+**Table `audit_result`**
+```sql
+id INT PRIMARY KEY
+audit_id INT FOREIGN KEY
+error_type VARCHAR(255)
+severity VARCHAR(50)  -- critical|major|minor
+description TEXT
+recommendation TEXT
+code_fix TEXT
+selector VARCHAR(500)
+context TEXT
+wcag_criteria VARCHAR(100)
+rgaa_criteria VARCHAR(100)
+impact_user TEXT
+source VARCHAR(50)  -- playwright|axe-core|html_codesniffer
+created_at DATETIME
+```
+
+**Table `manual_check`**
+```sql
+id INT PRIMARY KEY
+audit_id INT FOREIGN KEY
+criterion_number VARCHAR(10)
+status VARCHAR(50)  -- conform|non_conform|not_applicable
+created_at DATETIME
+updated_at DATETIME
+```
+
+---
+
+## 🧪 Développement
+
+### Commandes utiles
+
+```bash
+# Démarrer les conteneurs
+docker compose up -d
+
+# Voir les logs
+docker compose logs -f php
+
+# Accéder au conteneur PHP
+docker compose exec php bash
+
+# Exécuter migrations
+docker compose exec php php bin/console doctrine:migrations:migrate
+
+# Vider le cache Symfony
+docker compose exec php php bin/console cache:clear
+
+# Lister les routes
+docker compose exec php php bin/console debug:router
+
+# Arrêter les conteneurs
+docker compose down
+```
+
+### Structure des Enums
+
+**Nouvelles constantes type-safe (PHP 8.1+) :**
+
+```php
+// src/Enum/AuditStatus.php
+AuditStatus::PENDING
+AuditStatus::RUNNING
+AuditStatus::COMPLETED
+AuditStatus::FAILED
+
+// src/Enum/IssueSeverity.php
+IssueSeverity::CRITICAL
+IssueSeverity::MAJOR
+IssueSeverity::MINOR
+
+// src/Enum/IssueSource.php
+IssueSource::PLAYWRIGHT
+IssueSource::AXE_CORE
+IssueSource::HTML_CODESNIFFER
+IssueSource::UNKNOWN
+```
+
+---
+
+## 🎨 Personnalisation
+
+### Couleurs du thème
+
+Fichier `templates/base.html.twig` :
+
+```css
+:root {
+    --primary-color: #f59c16;      /* Orange - boutons principaux */
+    --primary-dark: #d98913;
+    --info-color: #016dae;         /* Bleu - liens */
+    --info-dark: #014d7a;
+    --secondary-color: #5a6268;    /* Gris moderne */
+    --text-medium: #4c4c4c;        /* Texte principal */
+}
+```
+
+### Thèmes RGAA
+
+Fichier `config/rgaa_criteria.json` :
+- Source unique pour les 106 critères
+- Modifiable sans toucher au code PHP
+- Structure JSON claire
+
+```json
+{
+  "criteria": [
+    {
+      "number": "1.1",
+      "topic": "Images",
+      "title": "Chaque image porteuse d'information a-t-elle une alternative textuelle ?"
+    },
+    ...
+  ]
+}
+```
+
+---
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues !
+
+### Process de contribution
+
+1. Forkez le projet
+2. Créez une branche feature (`git checkout -b feature/AmazingFeature`)
+3. Committez vos changements (`git commit -m 'Add some AmazingFeature'`)
+4. Pushez vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrez une Pull Request
+
+### Coding standards
+
+- Suivre **PSR-12** pour PHP
+- Suivre **Symfony Best Practices**
+- Documenter les fonctions publiques
+- Tests unitaires pour nouvelle logique métier
+
+---
 
 ## 🙏 Crédits
 
-- [Symfony](https://symfony.com/)
-- [Playwright](https://playwright.dev/)
-- [Pa11y](https://pa11y.org/)
-- [Google Gemini](https://ai.google.dev/)
-- [Bootstrap](https://getbootstrap.com/)
-- [Chart.js](https://www.chartjs.org/)
+### Technologies
+
+- [Symfony](https://symfony.com/) - Framework PHP
+- [Playwright](https://playwright.dev/) - Automation browser testing
+- [Axe-core](https://github.com/dequelabs/axe-core) - Accessibility testing engine
+- [HTML_CodeSniffer](https://squizlabs.github.io/HTML_CodeSniffer/) - WCAG validator
+- [Google Gemini](https://ai.google.dev/) - Intelligence artificielle
+- [Bootstrap](https://getbootstrap.com/) - Framework CSS
+- [Chart.js](https://www.chartjs.org/) - Graphiques JavaScript
+- [Docker](https://www.docker.com/) - Containerization
+
+### Référentiels
+
+- [RGAA 4.1](https://accessibilite.numérique.gouv.fr/) - Référentiel français
+- [WCAG 2.1](https://www.w3.org/WAI/WCAG21/quickref/) - Standards W3C
+
+---
+
+## 📄 Licence
+
+MIT License - © 2024-2025 IT Room
+
+---
+
+## 📞 Support
+
+Pour toute question ou problème :
+
+- 📧 Email : mhaddadi@itroom.fr
+- 🐛 Issues : [GitHub Issues](https://github.com/Maureenhddi/rgaa-audit-app/issues)
+- 📖 Documentation : Voir fichiers `*.md` du projet
+
+---
+
+**Développé avec ❤️ pour rendre le web plus accessible à tous**
