@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Symfony
+/var/
+/vendor/
+.env.local
+.env.local.php
+.env.*.local
+
+# Node
+audit-scripts/node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+/phpunit.xml
+.phpunit.result.cache
+
+# Documentation (gardée dans l'image)
+# README.md
+# INSTALLATION.md

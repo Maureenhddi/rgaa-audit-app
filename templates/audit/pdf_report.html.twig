@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport d'audit RGAA - {{ audit.url }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 { color: #0d6efd; font-size: 24pt; margin-bottom: 10px; }
+        h2 { color: #0d6efd; font-size: 18pt; margin-top: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; }
+        h3 { color: #333; font-size: 14pt; margin-top: 15px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .info-box { background: #f8f9fa; padding: 15px; margin: 20px 0; border-left: 4px solid #0d6efd; }
+        .stat-row { display: flex; justify-content: space-around; margin: 20px 0; }
+        .stat { text-align: center; padding: 10px; }
+        .stat-value { font-size: 24pt; font-weight: bold; }
+        .badge { padding: 5px 10px; border-radius: 3px; color: white; font-weight: bold; }
+        .critical { background: #dc3545; }
+        .major { background: #fd7e14; }
+        .minor { background: #ffc107; color: #000; }
+        .issue { margin: 15px 0; padding: 15px; border: 1px solid #ddd; page-break-inside: avoid; }
+        .issue-header { font-weight: bold; margin-bottom: 10px; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f8f9fa; font-weight: bold; }
+        .footer { margin-top: 30px; text-align: center; font-size: 9pt; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Rapport d'audit d'accessibilité RGAA</h1>
+        <p>{{ audit.url }}</p>
+        <p>Date : {{ audit.createdAt|date('d/m/Y à H:i') }}</p>
+        <p>Généré le : {{ generated_at|date('d/m/Y à H:i') }}</p>
+    </div>
+
+    <div class="info-box">
+        <h2>Résumé exécutif</h2>
+        <div class="stat-row">
+            <div class="stat">
+                <div class="stat-value" style="color: {% if audit.conformityRate >= 75 %}#198754{% elseif audit.conformityRate >= 50 %}#ffc107{% else %}#dc3545{% endif %}">
+                    {{ audit.conformityRate }}%
+                </div>
+                <div>Conformité</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">{{ audit.totalIssues }}</div>
+                <div>Total problèmes</div>
+            </div>
+        </div>
+
+        <table>
+            <tr>
+                <th>Problèmes critiques</th>
+                <td>{{ audit.criticalCount }}</td>
+            </tr>
+            <tr>
+                <th>Problèmes majeurs</th>
+                <td>{{ audit.majorCount }}</td>
+            </tr>
+            <tr>
+                <th>Problèmes mineurs</th>
+                <td>{{ audit.minorCount }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {% if audit.summary %}
+    <div>
+        <h2>Analyse générale</h2>
+        <p>{{ audit.summary|nl2br }}</p>
+    </div>
+    {% endif %}
+
+    <div>
+        <h2>Statistiques RGAA (106 critères)</h2>
+        <table>
+            <tr>
+                <th>Critères conformes</th>
+                <td>{{ audit.conformCriteria }}</td>
+            </tr>
+            <tr>
+                <th>Critères non conformes</th>
+                <td>{{ audit.nonConformCriteria }}</td>
+            </tr>
+            <tr>
+                <th>Critères non applicables</th>
+                <td>{{ audit.notApplicableCriteria }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {% if grouped_results.critical|length > 0 %}
+    <div style="page-break-before: always;">
+        <h2><span class="badge critical">Problèmes critiques ({{ grouped_results.critical|length }})</span></h2>
+        {% for result in grouped_results.critical %}
+        <div class="issue">
+            <div class="issue-header">
+                {{ result.errorType }}
+                {% if result.wcagCriteria %} - WCAG {{ result.wcagCriteria }}{% endif %}
+                {% if result.rgaaCriteria %} - RGAA {{ result.rgaaCriteria }}{% endif %}
+            </div>
+            <p><strong>Description :</strong> {{ result.description }}</p>
+            {% if result.impactUser %}
+            <p><strong>Impact utilisateur :</strong> {{ result.impactUser }}</p>
+            {% endif %}
+            {% if result.recommendation %}
+            <p><strong>Recommandation :</strong> {{ result.recommendation }}</p>
+            {% endif %}
+            {% if result.codeFix %}
+            <p><strong>Exemple de correction :</strong></p>
+            <pre>{{ result.codeFix }}</pre>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if grouped_results.major|length > 0 %}
+    <div style="page-break-before: always;">
+        <h2><span class="badge major">Problèmes majeurs ({{ grouped_results.major|length }})</span></h2>
+        {% for result in grouped_results.major %}
+        <div class="issue">
+            <div class="issue-header">
+                {{ result.errorType }}
+                {% if result.wcagCriteria %} - WCAG {{ result.wcagCriteria }}{% endif %}
+                {% if result.rgaaCriteria %} - RGAA {{ result.rgaaCriteria }}{% endif %}
+            </div>
+            <p><strong>Description :</strong> {{ result.description }}</p>
+            {% if result.impactUser %}
+            <p><strong>Impact utilisateur :</strong> {{ result.impactUser }}</p>
+            {% endif %}
+            {% if result.recommendation %}
+            <p><strong>Recommandation :</strong> {{ result.recommendation }}</p>
+            {% endif %}
+            {% if result.codeFix %}
+            <p><strong>Exemple de correction :</strong></p>
+            <pre>{{ result.codeFix }}</pre>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if grouped_results.minor|length > 0 %}
+    <div style="page-break-before: always;">
+        <h2><span class="badge minor">Problèmes mineurs ({{ grouped_results.minor|length }})</span></h2>
+        {% for result in grouped_results.minor %}
+        <div class="issue">
+            <div class="issue-header">
+                {{ result.errorType }}
+                {% if result.wcagCriteria %} - WCAG {{ result.wcagCriteria }}{% endif %}
+                {% if result.rgaaCriteria %} - RGAA {{ result.rgaaCriteria }}{% endif %}
+            </div>
+            <p><strong>Description :</strong> {{ result.description }}</p>
+            {% if result.recommendation %}
+            <p><strong>Recommandation :</strong> {{ result.recommendation }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>Rapport généré avec RGAA Audit - {{ generated_at|date('d/m/Y à H:i') }}</p>
+        <p>Ce rapport a été généré automatiquement avec Playwright (Axe-core + HTML_CodeSniffer) et Gemini AI</p>
+    </div>
+</body>
+</html>

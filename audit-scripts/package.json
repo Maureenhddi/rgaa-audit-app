@@ -1,0 +1,26 @@
+{
+  "name": "rgaa-audit-scripts",
+  "version": "1.0.0",
+  "description": "Node.js scripts for RGAA accessibility audits using Playwright, Axe-core and HTML_CodeSniffer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install-browsers": "playwright install chromium"
+  },
+  "keywords": [
+    "accessibility",
+    "rgaa",
+    "audit",
+    "playwright",
+    "axe-core",
+    "html_codesniffer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@playwright/test": "^1.40.0",
+    "axe-core": "^4.11.0",
+    "html_codesniffer": "^2.5.1",
+    "playwright": "^1.40.0"
+  }
+}

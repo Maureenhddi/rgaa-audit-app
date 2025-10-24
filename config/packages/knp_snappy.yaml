@@ -1,0 +1,9 @@
+knp_snappy:
+    pdf:
+        enabled: true
+        binary: /usr/local/bin/wkhtmltopdf
+        options:
+            encoding: 'UTF-8'
+            enable-local-file-access: true
+            no-outline: true
+            print-media-type: true

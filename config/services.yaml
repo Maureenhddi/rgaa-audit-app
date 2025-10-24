@@ -1,0 +1,27 @@
+parameters:
+    gemini_api_key: '%env(GEMINI_API_KEY)%'
+    gemini_api_url: '%env(GEMINI_API_URL)%'
+    node_scripts_path: '%env(NODE_SCRIPTS_PATH)%'
+    node_executable: '%env(NODE_EXECUTABLE)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            $geminiApiKey: '%gemini_api_key%'
+            $geminiApiUrl: '%gemini_api_url%'
+            $nodeScriptsPath: '%node_scripts_path%'
+            $nodeExecutable: '%node_executable%'
+            $projectDir: '%kernel.project_dir%'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']

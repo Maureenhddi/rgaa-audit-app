@@ -1,0 +1,925 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Audit {{ audit.url }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .accordion-body {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-file-earmark-text"></i> Résultats de l'audit</h1>
+    <div>
+        <a href="{{ path('app_export_audit_pdf', {id: audit.id}) }}" class="btn btn-success">
+            <i class="bi bi-file-pdf"></i> Exporter PDF
+        </a>
+        <a href="{{ path('app_audit_list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h5>URL auditée</h5>
+                <p class="mb-2"><a href="{{ audit.url }}" target="_blank">{{ audit.url }}</a></p>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar"></i> {{ audit.createdAt|date('d/m/Y à H:i') }}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="conformity-rate {% if audit.conformityRate >= 75 %}text-success{% elseif audit.conformityRate >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                    {% if audit.conformityRate %}
+                        {{ audit.conformityRate }}%
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+                <p class="text-muted">Taux de conformité RGAA</p>
+                <small class="text-muted d-block text-info-small">
+                    <i class="bi bi-info-circle"></i>
+                    Critères conformes / critères applicables
+                    <br>
+                    ({{ audit.conformCriteria }} conformes sur {{ audit.conformCriteria + audit.nonConformCriteria }} applicables)
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if audit.status == 'running' %}
+    <div class="alert alert-info">
+        <i class="bi bi-hourglass-split"></i> L'audit est en cours d'exécution...
+        <div class="progress mt-2">
+            <div class="progress-bar progress-bar-striped progress-bar-animated progress-bar-full" role="progressbar"></div>
+        </div>
+    </div>
+{% elseif audit.status == 'failed' %}
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle"></i> L'audit a échoué : {{ audit.errorMessage }}
+    </div>
+{% else %}
+
+{# Navigation par onglets #}
+<ul class="nav nav-tabs mb-4" id="auditTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+            <i class="bi bi-bar-chart-fill"></i> Vue d'ensemble
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="grid-tab" data-bs-toggle="tab" data-bs-target="#grid" type="button" role="tab" aria-controls="grid" aria-selected="false">
+            <i class="bi bi-clipboard-check"></i> Grille RGAA (106 critères)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="false">
+            <i class="bi bi-list-check"></i> Détail des problèmes
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="auditTabsContent">
+    {# Tab 1 : Vue d'ensemble #}
+    <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="text-danger">{{ audit.criticalCount }}</h2>
+                <span class="badge severity-critical">Critiques</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="text-warning">{{ audit.majorCount }}</h2>
+                <span class="badge severity-major">Majeurs</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="text-info">{{ audit.minorCount }}</h2>
+                <span class="badge severity-minor">Mineurs</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2>{{ audit.totalIssues }}</h2>
+                <span class="text-muted">Total</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-tools"></i> Sources des erreurs détectées</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <h3 class="text-primary">{{ source_count.playwright }}</h3>
+                    <span class="badge bg-primary"><i class="bi bi-play-circle"></i> PLAYWRIGHT</span>
+                    <p class="text-muted small mt-2">Tests interactifs (clavier, focus, formulaires)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <h3 class="text-info">{{ source_count.axe_core }}</h3>
+                    <span class="badge badge-axe-core text-white"><i class="bi bi-shield-check"></i> AXE-CORE</span>
+                    <p class="text-muted small mt-2">Analyse WCAG 2.1 AA (HTML/CSS/ARIA)</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <h3 class="text-success">{{ source_count.html_codesniffer }}</h3>
+                    <span class="badge bg-success"><i class="bi bi-code-square"></i> HTML_CODESNIFFER</span>
+                    <p class="text-muted small mt-2">Validation HTML et WCAG supplémentaire</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Analyse RGAA</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <h3 class="text-info">{{ total_themes }}</h3>
+                    <span class="badge bg-info"><i class="bi bi-folder"></i> THÈMES CONCERNÉS</span>
+                    <p class="text-muted small mt-2">Sur 13 thématiques RGAA</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <h3 class="text-warning">{{ total_criteria }}</h3>
+                    <span class="badge bg-warning"><i class="bi bi-bookmark-check"></i> CRITÈRES AUDITÉS</span>
+                    <p class="text-muted small mt-2">Critères avec problèmes détectés</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 border rounded">
+                    <h3 class="text-danger">{{ audit.nonConformCriteria }}</h3>
+                    <span class="badge bg-danger"><i class="bi bi-x-circle"></i> NON CONFORMES</span>
+                    <p class="text-muted small mt-2">Critères RGAA non respectés</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if audit.summary %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-card-text"></i> Résumé</h5>
+    </div>
+    <div class="card-body">
+        {{ audit.summary|nl2br }}
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Statistiques RGAA (106 critères)</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <h3 class="text-success">{{ audit.conformCriteria }}</h3>
+                <p class="text-muted">Conformes</p>
+            </div>
+            <div class="col-md-4">
+                <h3 class="text-danger">{{ audit.nonConformCriteria }}</h3>
+                <p class="text-muted">Non conformes</p>
+            </div>
+            <div class="col-md-4">
+                <h3 class="text-secondary">{{ audit.notApplicableCriteria }}</h3>
+                <p class="text-muted">Non applicables</p>
+            </div>
+        </div>
+        <div class="chart-container mt-4">
+            <canvas id="criteriaChart"></canvas>
+        </div>
+    </div>
+</div>
+
+    </div>
+    {# End Tab 1: Vue d'ensemble #}
+
+    {# Tab 2: Grille RGAA complète #}
+    <div class="tab-pane fade" id="grid" role="tabpanel" aria-labelledby="grid-tab">
+
+{# Vue complète des 106 critères RGAA #}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Grille complète RGAA 4.1 (106 critères)</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">
+            <i class="bi bi-info-circle"></i>
+            Cette grille affiche tous les critères RGAA et leur statut de vérification :
+        </p>
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <span class="badge bg-success me-1">✓</span> <small>Testé automatiquement + conforme</small>
+            </div>
+            <div class="col-md-3">
+                <span class="badge bg-danger me-1">✗</span> <small>Testé automatiquement + non conforme</small>
+            </div>
+            <div class="col-md-3">
+                <span class="badge bg-warning me-1">⚠</span> <small>Non testé - vérification manuelle requise</small>
+            </div>
+            <div class="col-md-3">
+                <span class="badge bg-secondary me-1">➖</span> <small>Non applicable</small>
+            </div>
+        </div>
+
+        <div class="accordion" id="rgaaFullGridAccordion">
+            {% for topic, criteria_list in criteria_by_topic %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTopic{{ loop.index }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTopic{{ loop.index }}" aria-expanded="false" aria-controls="collapseTopic{{ loop.index }}">
+                        <strong>{{ topic }}</strong>
+                        <span class="ms-2 text-muted">({{ criteria_list|length }} critères)</span>
+                    </button>
+                </h2>
+                <div id="collapseTopic{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="headingTopic{{ loop.index }}" data-bs-parent="#rgaaFullGridAccordion">
+                    <div class="accordion-body accordion-body-scroll">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="col-criteria-number">Critère</th>
+                                    <th class="col-criteria-level">Niveau</th>
+                                    <th class="col-criteria-description">Description</th>
+                                    <th class="col-criteria-status">Statut / Vérification</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for criteria in criteria_list %}
+                                <tr class="{% if not criteria.autoTestable %}manual-check-row{% endif %}" data-criteria="{{ criteria.number }}">
+                                    <td><strong>{{ criteria.number }}</strong></td>
+                                    <td><span class="badge bg-info">{{ criteria.level }}</span></td>
+                                    <td>
+                                        {{ criteria.description }}
+                                        {% if not criteria.autoTestable %}
+                                            <div class="mt-2">
+                                                <textarea class="form-control form-control-sm manual-check-notes" placeholder="💡 Notes de vérification (optionnel)" rows="2" data-criteria="{{ criteria.number }}"></textarea>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if criteria.autoTestable %}
+                                            {# Critères testés automatiquement - affichage en lecture seule #}
+                                            {% if criteria.number in criteria_status.conform %}
+                                                <span class="badge bg-success" title="Testé automatiquement et conforme">✓ Conforme (auto)</span>
+                                            {% elseif criteria.number in criteria_status.nonConform %}
+                                                <span class="badge bg-danger" title="Testé automatiquement et non conforme">✗ Non conforme (auto)</span>
+                                            {% else %}
+                                                <span class="badge bg-success" title="Testé automatiquement et conforme">✓ Conforme (auto)</span>
+                                            {% endif %}
+                                        {% else %}
+                                            {# Critères manuels - boutons radio interactifs #}
+                                            <div class="btn-group-vertical w-100" role="group">
+                                                <input type="radio" class="btn-check" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="conform_{{ criteria.number|replace({'.': '_'}) }}" value="conform" autocomplete="off">
+                                                <label class="btn btn-sm btn-outline-success" for="conform_{{ criteria.number|replace({'.': '_'}) }}">
+                                                    <i class="bi bi-check-circle"></i> Conforme
+                                                </label>
+
+                                                <input type="radio" class="btn-check" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="nonconform_{{ criteria.number|replace({'.': '_'}) }}" value="non_conform" autocomplete="off">
+                                                <label class="btn btn-sm btn-outline-danger" for="nonconform_{{ criteria.number|replace({'.': '_'}) }}">
+                                                    <i class="bi bi-x-circle"></i> Non conforme
+                                                </label>
+
+                                                <input type="radio" class="btn-check" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="notchecked_{{ criteria.number|replace({'.': '_'}) }}" value="not_checked" autocomplete="off" checked>
+                                                <label class="btn btn-sm btn-outline-secondary" for="notchecked_{{ criteria.number|replace({'.': '_'}) }}">
+                                                    <i class="bi bi-circle"></i> Non vérifié
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-3 alert alert-info">
+            <h6><i class="bi bi-lightbulb"></i> Comment utiliser cette grille :</h6>
+            <ul class="mb-0">
+                <li><strong>Critères avec badge vert/rouge "auto"</strong> : Testés automatiquement par les outils. Aucune action requise.</li>
+                <li><strong>Critères avec boutons radio</strong> : Nécessitent une vérification manuelle. Sélectionnez "Conforme" ou "Non conforme" après avoir vérifié le site.</li>
+                <li><strong>Notes</strong> : Vous pouvez ajouter des observations pour chaque critère manuel. Elles sont sauvegardées automatiquement.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+    </div>
+    {# End Tab 2: Grille RGAA #}
+
+    {# Tab 3: Détail des problèmes #}
+    <div class="tab-pane fade" id="details" role="tabpanel" aria-labelledby="details-tab">
+
+{% if audit.nonConformDetails and audit.nonConformDetails|length > 0 %}
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Critères RGAA non conformes ({{ audit.nonConformDetails|length }})</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">
+            Voici la liste des critères RGAA qui ne sont pas respectés sur cette page, avec l'explication des problèmes détectés :
+        </p>
+        <div class="accordion" id="nonConformCriteriaAccordion">
+            {% for criteria in audit.nonConformDetails %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                    <button class="accordion-button {% if loop.index > 1 %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="{% if loop.index == 1 %}true{% else %}false{% endif %}" aria-controls="collapse{{ loop.index }}">
+                        <span class="badge bg-danger me-2">{{ criteria.criteriaNumber }}</span>
+                        <strong>{{ criteria.criteriaTitle }}</strong>
+                        <span class="badge bg-secondary ms-2">{{ criteria.errorCount }} erreur(s)</span>
+                    </button>
+                </h2>
+                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.index == 1 %}show{% endif %}" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#nonConformCriteriaAccordion">
+                    <div class="accordion-body">
+                        <p><strong>Raison de non-conformité :</strong></p>
+                        <p>{{ criteria.reason }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-list-check"></i> Détail des problèmes détectés</h5>
+    </div>
+    <div class="card-body">
+        {% if grouped_by_theme|length > 0 %}
+        {% for key, theme in grouped_by_theme %}
+        <div class="card mb-3 border-0 shadow-sm">
+            <div class="card-header theme-card-header" style="background-color: {{ theme.theme_color }}15; border-left-color: {{ theme.theme_color }};">
+                <h4 class="mb-0">
+                    <i class="{{ theme.theme_icon }}" style="color: {{ theme.theme_color }};"></i>
+                    <strong>Thème {{ theme.theme_number }}</strong> : {{ theme.theme_name }}
+                    <span class="badge bg-secondary ms-2">{{ theme.total_count }} problème(s)</span>
+                </h4>
+            </div>
+            <div class="card-body">
+                {% for criterion_key, criterion_data in theme.criteria %}
+                {% set safe_criterion_key = criterion_key|replace({'.': '_', ',': '_', ' ': '_', ':': '_'}) %}
+                <div class="mb-4">
+                    <h5 class="border-bottom pb-2 mb-3">
+                        <i class="bi bi-bookmark-check" style="color: {{ theme.theme_color }};"></i>
+                        Critère <strong>{{ criterion_data.criterion }}</strong>{% if criterion_data.criterion_description and criterion_data.criterion_description != '' %} - {{ criterion_data.criterion_description }}{% endif %}
+                        <span class="badge bg-secondary ms-2">{{ criterion_data.total_count }}</span>
+                    </h5>
+
+                {% if criterion_data.results.critical|length > 0 %}
+                <h6 class="mt-2"><span class="badge severity-critical">Problèmes critiques ({{ criterion_data.results.critical|length }} types)</span></h6>
+                <div class="accordion mb-3" id="accordion_{{ theme.theme_number }}_{{ safe_criterion_key }}_critical">
+                    {% for group in criterion_data.results.critical %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#theme{{ theme.theme_number }}_crit{{ safe_criterion_key }}_critical{{ loop.index }}">
+                                <strong>{{ group.errorType }}</strong>
+                                <span class="badge bg-dark ms-2">{{ group.occurrences|length }} occurrence(s)</span>
+                                <span class="badge {% if group.source == 'playwright' %}bg-primary{% elseif group.source == 'axe-core' %}badge-axe-core text-white{% elseif group.source == 'html_codesniffer' %}bg-success{% else %}bg-secondary{% endif %} ms-2">
+                                    <i class="bi bi-{% if group.source == 'playwright' %}play-circle{% elseif group.source == 'axe-core' %}shield-check{% elseif group.source == 'html_codesniffer' %}code-square{% else %}tool{% endif %}"></i> {{ group.source|upper|replace({'_': '-'}) }}
+                                </span>
+                                {% if group.wcagCriteria %}
+                                    <span class="badge bg-secondary ms-2">WCAG {{ group.wcagCriteria }}</span>
+                                {% endif %}
+                                {% if group.rgaaCriteria %}
+                                    <span class="badge bg-info ms-2">RGAA {{ group.rgaaCriteria }}</span>
+                                {% endif %}
+                            </button>
+                        </h2>
+                        <div id="theme{{ theme.theme_number }}_crit{{ safe_criterion_key }}_critical{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordion_{{ theme.theme_number }}_{{ safe_criterion_key }}_critical">
+                            <div class="accordion-body">
+                                <h6><i class="bi bi-exclamation-circle"></i> Description</h6>
+                                <p>{{ group.description }}</p>
+
+                                {% if group.impactUser %}
+                                <h6><i class="bi bi-person-x"></i> Impact utilisateur</h6>
+                                <p>{{ group.impactUser }}</p>
+                                {% endif %}
+
+                                {% if group.recommendation %}
+                                <h6><i class="bi bi-lightbulb"></i> Recommandation</h6>
+                                <p>{{ group.recommendation }}</p>
+                                {% endif %}
+
+                                {% if group.codeFix %}
+                                <h6><i class="bi bi-code-square"></i> Exemple de correction</h6>
+                                <pre><code>{{ group.codeFix }}</code></pre>
+                                {% endif %}
+
+                                <h6 class="mt-3"><i class="bi bi-list-ul"></i> Occurrences ({{ group.occurrences|length }})</h6>
+                                <div class="list-group">
+                                    {% for occurrence in group.occurrences %}
+                                    <div class="list-group-item">
+                                        {% if occurrence.selector %}
+                                        <div><strong>Sélecteur :</strong> <code>{{ occurrence.selector }}</code></div>
+                                        {% endif %}
+                                        {% if occurrence.context %}
+                                        <div class="text-muted small mt-1"><strong>Contexte :</strong> {{ occurrence.context|slice(0, 150) }}{% if occurrence.context|length > 150 %}...{% endif %}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if criterion_data.results.major|length > 0 %}
+                <h6 class="mt-3"><span class="badge severity-major">Problèmes majeurs ({{ criterion_data.results.major|length }} types)</span></h6>
+                <div class="accordion mb-3" id="accordion_{{ theme.theme_number }}_{{ safe_criterion_key }}_major">
+                    {% for group in criterion_data.results.major %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#theme{{ theme.theme_number }}_crit{{ safe_criterion_key }}_major{{ loop.index }}">
+                                <strong>{{ group.errorType }}</strong>
+                                <span class="badge bg-dark ms-2">{{ group.occurrences|length }} occurrence(s)</span>
+                                <span class="badge {% if group.source == 'playwright' %}bg-primary{% elseif group.source == 'axe-core' %}badge-axe-core text-white{% elseif group.source == 'html_codesniffer' %}bg-success{% else %}bg-secondary{% endif %} ms-2">
+                                    <i class="bi bi-{% if group.source == 'playwright' %}play-circle{% elseif group.source == 'axe-core' %}shield-check{% elseif group.source == 'html_codesniffer' %}code-square{% else %}tool{% endif %}"></i> {{ group.source|upper|replace({'_': '-'}) }}
+                                </span>
+                                {% if group.wcagCriteria %}
+                                    <span class="badge bg-secondary ms-2">WCAG {{ group.wcagCriteria }}</span>
+                                {% endif %}
+                                {% if group.rgaaCriteria %}
+                                    <span class="badge bg-info ms-2">RGAA {{ group.rgaaCriteria }}</span>
+                                {% endif %}
+                            </button>
+                        </h2>
+                        <div id="theme{{ theme.theme_number }}_crit{{ safe_criterion_key }}_major{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordion_{{ theme.theme_number }}_{{ safe_criterion_key }}_major">
+                            <div class="accordion-body">
+                                <h6><i class="bi bi-exclamation-circle"></i> Description</h6>
+                                <p>{{ group.description }}</p>
+
+                                {% if group.impactUser %}
+                                <h6><i class="bi bi-person-x"></i> Impact utilisateur</h6>
+                                <p>{{ group.impactUser }}</p>
+                                {% endif %}
+
+                                {% if group.recommendation %}
+                                <h6><i class="bi bi-lightbulb"></i> Recommandation</h6>
+                                <p>{{ group.recommendation }}</p>
+                                {% endif %}
+
+                                {% if group.codeFix %}
+                                <h6><i class="bi bi-code-square"></i> Exemple de correction</h6>
+                                <pre><code>{{ group.codeFix }}</code></pre>
+                                {% endif %}
+
+                                <h6 class="mt-3"><i class="bi bi-list-ul"></i> Occurrences ({{ group.occurrences|length }})</h6>
+                                <div class="list-group">
+                                    {% for occurrence in group.occurrences %}
+                                    <div class="list-group-item">
+                                        {% if occurrence.selector %}
+                                        <div><strong>Sélecteur :</strong> <code>{{ occurrence.selector }}</code></div>
+                                        {% endif %}
+                                        {% if occurrence.context %}
+                                        <div class="text-muted small mt-1"><strong>Contexte :</strong> {{ occurrence.context|slice(0, 150) }}{% if occurrence.context|length > 150 %}...{% endif %}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if criterion_data.results.minor|length > 0 %}
+                <h6 class="mt-3"><span class="badge severity-minor">Problèmes mineurs ({{ criterion_data.results.minor|length }} types)</span></h6>
+                <div class="accordion" id="accordion_{{ theme.theme_number }}_{{ safe_criterion_key }}_minor">
+                    {% for group in criterion_data.results.minor %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#theme{{ theme.theme_number }}_crit{{ safe_criterion_key }}_minor{{ loop.index }}">
+                                <strong>{{ group.errorType }}</strong>
+                                <span class="badge bg-dark ms-2">{{ group.occurrences|length }} occurrence(s)</span>
+                                <span class="badge {% if group.source == 'playwright' %}bg-primary{% elseif group.source == 'axe-core' %}badge-axe-core text-white{% elseif group.source == 'html_codesniffer' %}bg-success{% else %}bg-secondary{% endif %} ms-2">
+                                    <i class="bi bi-{% if group.source == 'playwright' %}play-circle{% elseif group.source == 'axe-core' %}shield-check{% elseif group.source == 'html_codesniffer' %}code-square{% else %}tool{% endif %}"></i> {{ group.source|upper|replace({'_': '-'}) }}
+                                </span>
+                                {% if group.wcagCriteria %}
+                                    <span class="badge bg-secondary ms-2">WCAG {{ group.wcagCriteria }}</span>
+                                {% endif %}
+                                {% if group.rgaaCriteria %}
+                                    <span class="badge bg-info ms-2">RGAA {{ group.rgaaCriteria }}</span>
+                                {% endif %}
+                            </button>
+                        </h2>
+                        <div id="theme{{ theme.theme_number }}_crit{{ safe_criterion_key }}_minor{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordion_{{ theme.theme_number }}_{{ safe_criterion_key }}_minor">
+                            <div class="accordion-body">
+                                <h6><i class="bi bi-exclamation-circle"></i> Description</h6>
+                                <p>{{ group.description }}</p>
+
+                                {% if group.impactUser %}
+                                <h6><i class="bi bi-person-x"></i> Impact utilisateur</h6>
+                                <p>{{ group.impactUser }}</p>
+                                {% endif %}
+
+                                {% if group.recommendation %}
+                                <h6><i class="bi bi-lightbulb"></i> Recommandation</h6>
+                                <p>{{ group.recommendation }}</p>
+                                {% endif %}
+
+                                {% if group.codeFix %}
+                                <h6><i class="bi bi-code-square"></i> Exemple de correction</h6>
+                                <pre><code>{{ group.codeFix }}</code></pre>
+                                {% endif %}
+
+                                <h6 class="mt-3"><i class="bi bi-list-ul"></i> Occurrences ({{ group.occurrences|length }})</h6>
+                                <div class="list-group">
+                                    {% for occurrence in group.occurrences %}
+                                    <div class="list-group-item">
+                                        {% if occurrence.selector %}
+                                        <div><strong>Sélecteur :</strong> <code>{{ occurrence.selector }}</code></div>
+                                        {% endif %}
+                                        {% if occurrence.context %}
+                                        <div class="text-muted small mt-1"><strong>Contexte :</strong> {{ occurrence.context|slice(0, 150) }}{% if occurrence.context|length > 150 %}...{% endif %}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i> Aucun problème détecté !
+        </div>
+        {% endif %}
+
+        {% if false %} {# OLD CODE - KEEP FOR REFERENCE #}
+        {% if grouped_results.critical|length > 0 %}
+        <h4 class="mt-3"><span class="badge severity-critical">Problèmes critiques ({{ grouped_results.critical|length }} types)</span></h4>
+        <div class="accordion mb-3" id="accordionCritical">
+            {% for group in grouped_results.critical %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#critical{{ loop.index }}">
+                        <strong>{{ group.errorType }}</strong>
+                        <span class="badge bg-dark ms-2">{{ group.occurrences|length }} occurrence(s)</span>
+                        <span class="badge {% if group.source == 'playwright' %}bg-primary{% elseif group.source == 'axe-core' %}badge-axe-core text-white{% elseif group.source == 'html_codesniffer' %}bg-success{% else %}bg-secondary{% endif %} ms-2">
+                            <i class="bi bi-{% if group.source == 'playwright' %}play-circle{% elseif group.source == 'axe-core' %}shield-check{% elseif group.source == 'html_codesniffer' %}code-square{% else %}tool{% endif %}"></i> {{ group.source|upper|replace({'_': '-'}) }}
+                        </span>
+                        {% if group.wcagCriteria %}
+                            <span class="badge bg-secondary ms-2">WCAG {{ group.wcagCriteria }}</span>
+                        {% endif %}
+                        {% if group.rgaaCriteria %}
+                            <span class="badge bg-info ms-2">RGAA {{ group.rgaaCriteria }}</span>
+                        {% endif %}
+                    </button>
+                </h2>
+                <div id="critical{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordionCritical">
+                    <div class="accordion-body">
+                        <h6><i class="bi bi-exclamation-circle"></i> Description</h6>
+                        <p>{{ group.description }}</p>
+
+                        {% if group.impactUser %}
+                        <h6><i class="bi bi-person-x"></i> Impact utilisateur</h6>
+                        <p>{{ group.impactUser }}</p>
+                        {% endif %}
+
+                        {% if group.recommendation %}
+                        <h6><i class="bi bi-lightbulb"></i> Recommandation</h6>
+                        <p>{{ group.recommendation }}</p>
+                        {% endif %}
+
+                        {% if group.codeFix %}
+                        <h6><i class="bi bi-code-square"></i> Exemple de correction</h6>
+                        <pre><code>{{ group.codeFix }}</code></pre>
+                        {% endif %}
+
+                        <h6 class="mt-3"><i class="bi bi-list-ul"></i> Occurrences ({{ group.occurrences|length }})</h6>
+                        <div class="list-group">
+                            {% for occurrence in group.occurrences %}
+                            <div class="list-group-item">
+                                {% if occurrence.selector %}
+                                <div><strong>Sélecteur :</strong> <code>{{ occurrence.selector }}</code></div>
+                                {% endif %}
+                                {% if occurrence.context %}
+                                <div class="text-muted small mt-1"><strong>Contexte :</strong> {{ occurrence.context|slice(0, 150) }}{% if occurrence.context|length > 150 %}...{% endif %}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <p class="text-muted mb-0 mt-2"><small><i class="bi bi-tools"></i> Source : {{ group.source }}</small></p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if grouped_results.major|length > 0 %}
+        <h4 class="mt-4"><span class="badge severity-major">Problèmes majeurs ({{ grouped_results.major|length }} types)</span></h4>
+        <div class="accordion mb-3" id="accordionMajor">
+            {% for group in grouped_results.major %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#major{{ loop.index }}">
+                        <strong>{{ group.errorType }}</strong>
+                        <span class="badge bg-dark ms-2">{{ group.occurrences|length }} occurrence(s)</span>
+                        <span class="badge {% if group.source == 'playwright' %}bg-primary{% elseif group.source == 'axe-core' %}badge-axe-core text-white{% elseif group.source == 'html_codesniffer' %}bg-success{% else %}bg-secondary{% endif %} ms-2">
+                            <i class="bi bi-{% if group.source == 'playwright' %}play-circle{% elseif group.source == 'axe-core' %}shield-check{% elseif group.source == 'html_codesniffer' %}code-square{% else %}tool{% endif %}"></i> {{ group.source|upper|replace({'_': '-'}) }}
+                        </span>
+                        {% if group.wcagCriteria %}
+                            <span class="badge bg-secondary ms-2">WCAG {{ group.wcagCriteria }}</span>
+                        {% endif %}
+                        {% if group.rgaaCriteria %}
+                            <span class="badge bg-info ms-2">RGAA {{ group.rgaaCriteria }}</span>
+                        {% endif %}
+                    </button>
+                </h2>
+                <div id="major{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordionMajor">
+                    <div class="accordion-body">
+                        <h6><i class="bi bi-exclamation-circle"></i> Description</h6>
+                        <p>{{ group.description }}</p>
+
+                        {% if group.impactUser %}
+                        <h6><i class="bi bi-person-x"></i> Impact utilisateur</h6>
+                        <p>{{ group.impactUser }}</p>
+                        {% endif %}
+
+                        {% if group.recommendation %}
+                        <h6><i class="bi bi-lightbulb"></i> Recommandation</h6>
+                        <p>{{ group.recommendation }}</p>
+                        {% endif %}
+
+                        {% if group.codeFix %}
+                        <h6><i class="bi bi-code-square"></i> Exemple de correction</h6>
+                        <pre><code>{{ group.codeFix }}</code></pre>
+                        {% endif %}
+
+                        <h6 class="mt-3"><i class="bi bi-list-ul"></i> Occurrences ({{ group.occurrences|length }})</h6>
+                        <div class="list-group">
+                            {% for occurrence in group.occurrences %}
+                            <div class="list-group-item">
+                                {% if occurrence.selector %}
+                                <div><strong>Sélecteur :</strong> <code>{{ occurrence.selector }}</code></div>
+                                {% endif %}
+                                {% if occurrence.context %}
+                                <div class="text-muted small mt-1"><strong>Contexte :</strong> {{ occurrence.context|slice(0, 150) }}{% if occurrence.context|length > 150 %}...{% endif %}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <p class="text-muted mb-0 mt-2"><small><i class="bi bi-tools"></i> Source : {{ group.source }}</small></p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if grouped_results.minor|length > 0 %}
+        <h4 class="mt-4"><span class="badge severity-minor">Problèmes mineurs ({{ grouped_results.minor|length }} types)</span></h4>
+        <div class="accordion" id="accordionMinor">
+            {% for group in grouped_results.minor %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#minor{{ loop.index }}">
+                        <strong>{{ group.errorType }}</strong>
+                        <span class="badge bg-dark ms-2">{{ group.occurrences|length }} occurrence(s)</span>
+                        <span class="badge {% if group.source == 'playwright' %}bg-primary{% elseif group.source == 'axe-core' %}badge-axe-core text-white{% elseif group.source == 'html_codesniffer' %}bg-success{% else %}bg-secondary{% endif %} ms-2">
+                            <i class="bi bi-{% if group.source == 'playwright' %}play-circle{% elseif group.source == 'axe-core' %}shield-check{% elseif group.source == 'html_codesniffer' %}code-square{% else %}tool{% endif %}"></i> {{ group.source|upper|replace({'_': '-'}) }}
+                        </span>
+                        {% if group.wcagCriteria %}
+                            <span class="badge bg-secondary ms-2">WCAG {{ group.wcagCriteria }}</span>
+                        {% endif %}
+                        {% if group.rgaaCriteria %}
+                            <span class="badge bg-info ms-2">RGAA {{ group.rgaaCriteria }}</span>
+                        {% endif %}
+                    </button>
+                </h2>
+                <div id="minor{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#accordionMinor">
+                    <div class="accordion-body">
+                        <h6><i class="bi bi-exclamation-circle"></i> Description</h6>
+                        <p>{{ group.description }}</p>
+
+                        {% if group.impactUser %}
+                        <h6><i class="bi bi-person-x"></i> Impact utilisateur</h6>
+                        <p>{{ group.impactUser }}</p>
+                        {% endif %}
+
+                        {% if group.recommendation %}
+                        <h6><i class="bi bi-lightbulb"></i> Recommandation</h6>
+                        <p>{{ group.recommendation }}</p>
+                        {% endif %}
+
+                        {% if group.codeFix %}
+                        <h6><i class="bi bi-code-square"></i> Exemple de correction</h6>
+                        <pre><code>{{ group.codeFix }}</code></pre>
+                        {% endif %}
+
+                        <h6 class="mt-3"><i class="bi bi-list-ul"></i> Occurrences ({{ group.occurrences|length }})</h6>
+                        <div class="list-group">
+                            {% for occurrence in group.occurrences %}
+                            <div class="list-group-item">
+                                {% if occurrence.selector %}
+                                <div><strong>Sélecteur :</strong> <code>{{ occurrence.selector }}</code></div>
+                                {% endif %}
+                                {% if occurrence.context %}
+                                <div class="text-muted small mt-1"><strong>Contexte :</strong> {{ occurrence.context|slice(0, 150) }}{% if occurrence.context|length > 150 %}...{% endif %}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <p class="text-muted mb-0 mt-2"><small><i class="bi bi-tools"></i> Source : {{ group.source }}</small></p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if grouped_results.critical|length == 0 and grouped_results.major|length == 0 and grouped_results.minor|length == 0 %}
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i> Aucun problème détecté ! Le site semble conforme.
+        </div>
+        {% endif %}
+        {% endif %} {# END OLD CODE #}
+    </div>
+</div>
+
+    </div>
+    {# End Tab 3: Détail des problèmes #}
+
+</div>
+{# End tab-content #}
+
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+{% if audit.status == 'completed' %}
+<script>
+    const ctx = document.getElementById('criteriaChart');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Conformes', 'Non conformes', 'Non applicables'],
+            datasets: [{
+                data: [{{ audit.conformCriteria }}, {{ audit.nonConformCriteria }}, {{ audit.notApplicableCriteria }}],
+                backgroundColor: ['#198754', '#dc3545', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+// Manual checks JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const auditId = {{ audit.id }};
+    const manualChecks = {{ manual_checks|json_encode|raw }};
+
+    // Load existing checks
+    Object.keys(manualChecks).forEach(criteriaNumber => {
+        const check = manualChecks[criteriaNumber];
+        const safeNumber = criteriaNumber.replace(/\./g, '_');
+
+        // Set radio button
+        const radioButton = document.querySelector(`input[name="check_${safeNumber}"][value="${check.status}"]`);
+        if (radioButton) {
+            radioButton.checked = true;
+        }
+
+        // Set notes
+        const notesTextarea = document.querySelector(`.manual-check-notes[data-criteria="${criteriaNumber}"]`);
+        if (notesTextarea && check.notes) {
+            notesTextarea.value = check.notes;
+        }
+    });
+
+    // Save function
+    function saveManualCheck(criteriaNumber, status, notes) {
+        fetch(`/manual-check/save/${auditId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                criteriaNumber: criteriaNumber,
+                status: status,
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Saved:', criteriaNumber, status);
+                showToast('✓ Vérification sauvegardée', 'success');
+            } else {
+                showToast('✗ Erreur de sauvegarde', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('✗ Erreur de sauvegarde', 'danger');
+        });
+    }
+
+    // Toast notification
+    function showToast(message, type) {
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        const toastElement = document.createElement('div');
+        toastElement.innerHTML = toastHtml;
+        document.body.appendChild(toastElement);
+        const toast = new bootstrap.Toast(toastElement.querySelector('.toast'));
+        toast.show();
+        setTimeout(() => toastElement.remove(), 4000);
+    }
+
+    // Listen to radio buttons
+    document.querySelectorAll('input[type="radio"][name^="check_"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const row = this.closest('tr.manual-check-row');
+            const criteriaNumber = row.dataset.criteria;
+            const status = this.value;
+            const notesElement = document.querySelector(`.manual-check-notes[data-criteria="${criteriaNumber}"]`);
+            const notes = notesElement ? notesElement.value : '';
+
+            saveManualCheck(criteriaNumber, status, notes);
+        });
+    });
+
+    // Listen to notes textarea (debounced)
+    let noteTimeout;
+    document.querySelectorAll('.manual-check-notes').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            clearTimeout(noteTimeout);
+            noteTimeout = setTimeout(() => {
+                const criteriaNumber = this.dataset.criteria;
+                const safeNumber = criteriaNumber.replace(/\./g, '_');
+                const radioButton = document.querySelector(`input[name="check_${safeNumber}"]:checked`);
+                const status = radioButton ? radioButton.value : 'not_checked';
+                const notes = this.value;
+
+                saveManualCheck(criteriaNumber, status, notes);
+            }, 1000); // Wait 1s after user stops typing
+        });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Comparaison d'audits - {{ parent() }}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="bi bi-arrow-left-right"></i> Comparaison d'audits</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Audit 1 - {{ comparison.audit1.createdAt|date('d/m/Y') }}</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>URL :</strong> {{ comparison.audit1.url }}</p>
+                <p><strong>Conformité :</strong> {{ comparison.audit1.conformityRate }}%</p>
+                <p><strong>Critiques :</strong> {{ comparison.audit1.criticalCount }}</p>
+                <p><strong>Majeurs :</strong> {{ comparison.audit1.majorCount }}</p>
+                <p><strong>Mineurs :</strong> {{ comparison.audit1.minorCount }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Audit 2 - {{ comparison.audit2.createdAt|date('d/m/Y') }}</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>URL :</strong> {{ comparison.audit2.url }}</p>
+                <p><strong>Conformité :</strong> {{ comparison.audit2.conformityRate }}%</p>
+                <p><strong>Critiques :</strong> {{ comparison.audit2.criticalCount }}</p>
+                <p><strong>Majeurs :</strong> {{ comparison.audit2.majorCount }}</p>
+                <p><strong>Mineurs :</strong> {{ comparison.audit2.minorCount }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Évolution</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <h3 class="{% if comparison.conformity_difference > 0 %}text-success{% elseif comparison.conformity_difference < 0 %}text-danger{% else %}text-secondary{% endif %}">
+                    {% if comparison.conformity_difference > 0 %}+{% endif %}{{ comparison.conformity_difference|number_format(2) }}%
+                </h3>
+                <p class="text-muted">Conformité</p>
+            </div>
+            <div class="col-md-3">
+                <h3 class="{% if comparison.critical_difference < 0 %}text-success{% elseif comparison.critical_difference > 0 %}text-danger{% else %}text-secondary{% endif %}">
+                    {% if comparison.critical_difference > 0 %}+{% endif %}{{ comparison.critical_difference }}
+                </h3>
+                <p class="text-muted">Critiques</p>
+            </div>
+            <div class="col-md-3">
+                <h3 class="{% if comparison.major_difference < 0 %}text-success{% elseif comparison.major_difference > 0 %}text-danger{% else %}text-secondary{% endif %}">
+                    {% if comparison.major_difference > 0 %}+{% endif %}{{ comparison.major_difference }}
+                </h3>
+                <p class="text-muted">Majeurs</p>
+            </div>
+            <div class="col-md-3">
+                <h3 class="{% if comparison.minor_difference < 0 %}text-success{% elseif comparison.minor_difference > 0 %}text-danger{% else %}text-secondary{% endif %}">
+                    {% if comparison.minor_difference > 0 %}+{% endif %}{{ comparison.minor_difference }}
+                </h3>
+                <p class="text-muted">Mineurs</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ path('app_audit_list') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour à l'historique
+    </a>
+</div>
+{% endblock %}

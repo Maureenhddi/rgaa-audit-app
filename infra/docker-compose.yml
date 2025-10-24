@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # Base de données MySQL
+  db:
+    image: mysql:8.0
+    container_name: rgaa_audit_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-rgaa_audit}
+      MYSQL_USER: ${MYSQL_USER:-rgaa_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-rgaa_password}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    networks:
+      - rgaa_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PHP-FPM avec Symfony
+  php:
+    build:
+      context: ..
+      dockerfile: infra/docker/php/Dockerfile
+      args:
+        - PHP_VERSION=${PHP_VERSION:-8.2}
+    container_name: rgaa_audit_php
+    restart: unless-stopped
+    network_mode: host
+    working_dir: /var/www/html
+    volumes:
+      - ..:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    environment:
+      # DATABASE_URL sera lu depuis .env - utilise MySQL local via network host
+      APP_ENV: ${APP_ENV:-dev}
+      APP_SECRET: ${APP_SECRET:-changeme_32_characters_minimum}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-your_gemini_api_key}
+      GEMINI_API_URL: ${GEMINI_API_URL:-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent}
+      NODE_SCRIPTS_PATH: /var/www/html/audit-scripts
+      NODE_EXECUTABLE: node
+      PLAYWRIGHT_BROWSERS_PATH: /var/www/.cache/ms-playwright
+    # Dépendance db désactivée car utilisation de MySQL local
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+
+  # Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: rgaa_audit_nginx
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ..:/var/www/html
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+
+  # Node.js pour les scripts d'audit (optionnel, si besoin d'un service dédié)
+  # Actuellement, Node.js est installé dans le container PHP
+
+###> doctrine/doctrine-bundle ###
+  database:
+    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      # You should definitely change the password in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./docker/db/data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
+
+volumes:
+  db_data:
+
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
+    driver: local
+
+networks:
+  rgaa_network:
+    driver: bridge

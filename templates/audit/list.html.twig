@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historique des audits - {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-clock-history"></i> Historique des audits</h1>
+    <a href="{{ path('app_audit_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nouvel audit
+    </a>
+</div>
+
+{% if audits|length > 0 %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>URL</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Conformité</th>
+                        <th>Problèmes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for audit in audits %}
+                    <tr>
+                        <td>
+                            <a href="{{ path('app_audit_show', {id: audit.id}) }}">
+                                {{ audit.url|length > 50 ? audit.url|slice(0, 50) ~ '...' : audit.url }}
+                            </a>
+                        </td>
+                        <td>{{ audit.createdAt|date('d/m/Y H:i') }}</td>
+                        <td>
+                            {% if audit.status == 'completed' %}
+                                <span class="badge bg-success">Terminé</span>
+                            {% elseif audit.status == 'running' %}
+                                <span class="badge bg-primary">En cours</span>
+                            {% elseif audit.status == 'failed' %}
+                                <span class="badge bg-danger">Échoué</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ audit.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if audit.conformityRate %}
+                                <strong class="{% if audit.conformityRate >= 75 %}text-success{% elseif audit.conformityRate >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ audit.conformityRate }}%
+                                </strong>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge severity-critical">{{ audit.criticalCount }}</span>
+                            <span class="badge severity-major">{{ audit.majorCount }}</span>
+                            <span class="badge severity-minor">{{ audit.minorCount }}</span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('app_export_audit_pdf', {id: audit.id}) }}" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-file-pdf"></i>
+                                </a>
+                                <form method="post" action="{{ path('app_audit_delete', {id: audit.id}) }}" style="display: inline;"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet audit ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ audit.id) }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Aucun audit pour le moment.
+    <a href="{{ path('app_audit_new') }}" class="alert-link">Créez votre premier audit</a>
+</div>
+{% endif %}
+{% endblock %}
