@@ -261,25 +261,7 @@ docker compose exec php php bin/console doctrine:migrations:migrate --no-interac
 - `audit_result` - Résultats détaillés des audits
 - `manual_check` - Vérifications manuelles RGAA
 
-### Étape 7 : Vérifier que tout fonctionne
-
-```bash
-# Voir les logs en temps réel
-docker compose logs -f
-
-# Vérifier que les 3 conteneurs tournent
-docker compose ps
-```
-
-**Sortie attendue :**
-```
-NAME                COMMAND                  SERVICE   STATUS
-rgaa-audit-app-db   "docker-entrypoint.s…"   db        Up
-rgaa-audit-app-php  "docker-php-entrypoi…"   php       Up
-rgaa-audit-app-web  "/docker-entrypoint.…"   web       Up
-```
-
-### Étape 8 : Accéder à l'application
+### Étape 7 : Accéder à l'application
 
 Ouvrez votre navigateur et accédez à :
 
@@ -288,6 +270,18 @@ http://localhost:8080
 ```
 
 🎉 **L'application est prête !**
+
+<details>
+<summary>💡 Vérifier que tout fonctionne (optionnel)</summary>
+
+```bash
+# Vérifier que les 3 conteneurs tournent
+docker compose ps
+
+# Voir les logs si besoin
+docker compose logs -f
+```
+</details>
 
 ### Premiers pas
 
