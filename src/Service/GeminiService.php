@@ -2,92 +2,209 @@
 
 namespace App\Service;
 
+use App\Entity\VisualErrorCriteria;
+use App\Enum\IssueSource;
+use App\Repository\VisualErrorCriteriaRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Psr\Log\LoggerInterface;
 
 class GeminiService
 {
+    private ?array $criteriaCache = null;
+
     public function __construct(
         private HttpClientInterface $httpClient,
         private string $geminiApiKey,
         private string $geminiApiUrl,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private VisualErrorCriteriaRepository $visualErrorCriteriaRepository,
+        private EntityManagerInterface $entityManager,
+        private AiAnalysisCacheService $aiCache
     ) {
     }
 
     /**
-     * Analyze audit results with Gemini AI
+     * Analyze audit results with Gemini AI for enrichment
+     * (recommendations, impact user, code fixes, etc.)
+     *
+     * @param array $playwrightResults Playwright test results
+     * @param array $pa11yResults Pa11y test results
+     * @param string $url URL being audited
      */
     public function analyzeResults(array $playwrightResults, array $pa11yResults, string $url): array
     {
         $prompt = $this->buildAnalysisPrompt($playwrightResults, $pa11yResults, $url);
 
+        // Log detailed request info BEFORE making the call
+        $promptKB = round(strlen($prompt) / 1024, 2);
+
+        $this->logger->info("📦 GEMINI PAYLOAD: URL={$url}, Prompt={$promptKB}KB");
+
         try {
             // Add API key to URL
             $urlWithKey = $this->geminiApiUrl . '?key=' . $this->geminiApiKey;
 
-            $response = $this->httpClient->request('POST', $urlWithKey, [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                ],
-                'timeout' => 120, // 2 minutes timeout
-                'json' => [
-                    'contents' => [
-                        [
-                            'parts' => [
-                                ['text' => $prompt]
+            // Build parts array for the request
+            $parts = [['text' => $prompt]];
+
+            $this->logger->info('Sending request to Gemini API...');
+
+            $startTime = microtime(true);
+
+            // Retry logic for 503/429 errors (quota/overload)
+            $maxRetries = 5; // Increased from 3 to 5 retries
+            $attempt = 0;
+            $data = null;
+            $lastException = null;
+
+            while ($attempt < $maxRetries) {
+                try {
+                    if ($attempt > 0) {
+                        $waitSeconds = min(pow(2, $attempt), 30); // Exponential backoff: 2s, 4s, 8s, 16s, 30s (max 30s)
+                        $this->logger->warning("⏳ Gemini API retry attempt {$attempt}/{$maxRetries} after {$waitSeconds}s wait");
+                        sleep($waitSeconds);
+                    }
+
+                    $this->logger->info("📤 Sending Gemini API request (attempt " . ($attempt + 1) . "/{$maxRetries})...");
+
+                    $response = $this->httpClient->request('POST', $urlWithKey, [
+                        'headers' => [
+                            'Content-Type' => 'application/json',
+                        ],
+                        'timeout' => 300, // 5 minutes timeout (Gemini peut être très lent avec vision)
+                        'json' => [
+                            'contents' => [
+                                [
+                                    'parts' => $parts
+                                ]
+                            ],
+                            'generationConfig' => [
+                                'temperature' => 0.1, // Réduit pour plus de cohérence entre audits
+                                'topK' => 40,
+                                'topP' => 0.95,
+                                'maxOutputTokens' => 65536, // Augmenté pour Gemini 2.5 (thoughts + output)
+                                'responseMimeType' => 'application/json',
                             ]
-                        ]
-                    ],
-                    'generationConfig' => [
-                        'temperature' => 0.3,
-                        'topK' => 40,
-                        'topP' => 0.95,
-                        'maxOutputTokens' => 65536, // Augmenté pour Gemini 2.5 (thoughts + output)
-                        'responseMimeType' => 'application/json',
-                    ]
-                ],
+                        ],
+                    ]);
+
+                    $this->logger->info('Gemini API request sent, waiting for response...');
+
+                    $data = $response->toArray();
+                    $this->logger->info("✅ Gemini API responded successfully on attempt " . ($attempt + 1));
+                    break; // Success - exit retry loop
+
+                } catch (\Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface $e) {
+                    $lastException = $e;
+                    $statusCode = $e->getResponse()->getStatusCode();
+
+                    // Retry on 503 (Service Unavailable) or 429 (Too Many Requests)
+                    if (in_array($statusCode, [503, 429])) {
+                        $attempt++;
+                        $this->logger->warning("⚠️ GEMINI ERROR {$statusCode}: Attempt {$attempt}/{$maxRetries} - " . $e->getMessage());
+
+                        if ($attempt >= $maxRetries) {
+                            $this->logger->error("❌ GEMINI FAILED PERMANENTLY after {$maxRetries} retries - HTTP {$statusCode}");
+                            throw $e; // Give up
+                        }
+                        // Continue to next retry iteration
+                    } else {
+                        // Other errors - don't retry
+                        $this->logger->error("❌ GEMINI ERROR {$statusCode} (not retryable) - " . $e->getMessage());
+                        throw $e;
+                    }
+                } catch (\Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface $e) {
+                    // Server errors (5xx) - retry with backoff
+                    $lastException = $e;
+                    $statusCode = $e->getResponse()->getStatusCode();
+                    $attempt++;
+                    $this->logger->warning("⚠️ GEMINI SERVER ERROR {$statusCode}: Attempt {$attempt}/{$maxRetries} - " . $e->getMessage());
+
+                    if ($attempt >= $maxRetries) {
+                        $this->logger->error("❌ GEMINI FAILED PERMANENTLY after {$maxRetries} retries - HTTP {$statusCode}");
+                        throw $e; // Give up
+                    }
+                    // Continue to next retry iteration
+                } catch (\Exception $e) {
+                    $this->logger->error("❌ GEMINI UNEXPECTED ERROR: " . get_class($e) . " - " . $e->getMessage());
+                    throw $e; // Other exceptions - don't retry
+                }
+            }
+
+            if ($data === null && $lastException !== null) {
+                throw $lastException;
+            }
+
+            $duration = round(microtime(true) - $startTime, 2);
+
+            $this->logger->info('Gemini API response received', [
+                'duration_seconds' => $duration,
+                'response_size_bytes' => strlen(json_encode($data)),
+                'response_size_kb' => round(strlen(json_encode($data)) / 1024, 2)
             ]);
 
-            $data = $response->toArray();
-
-            // Log complete response for debugging
-            $responseDebugFile = '/tmp/gemini_full_response_' . time() . '.json';
-            file_put_contents($responseDebugFile, json_encode($data, JSON_PRETTY_PRINT));
-
-            $this->logger->debug('Gemini API response structure', [
+            $this->logger->info('Gemini analysis response', [
                 'has_candidates' => isset($data['candidates']),
                 'candidates_count' => isset($data['candidates']) ? count($data['candidates']) : 0,
-                'response_keys' => array_keys($data),
-                'debug_file' => $responseDebugFile
+                'response_keys' => array_keys($data)
+            ]);
+
+            // Log full response in debug mode only
+            $this->logger->debug('Gemini full response', [
+                'response' => $data
             ]);
 
             if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
                 $this->logger->error('Invalid Gemini response format', [
-                    'response' => json_encode($data),
-                    'debug_file' => $responseDebugFile
+                    'response' => json_encode($data)
                 ]);
-                throw new \RuntimeException('Invalid response format from Gemini API. Voir: ' . $responseDebugFile);
+                throw new \RuntimeException('Invalid response format from Gemini API');
             }
 
             $analysisText = $data['candidates'][0]['content']['parts'][0]['text'];
 
-            // Save raw response for debugging
-            $debugFile = '/tmp/gemini_response_' . time() . '.txt';
-            file_put_contents($debugFile, $analysisText);
-
-            $this->logger->info('Gemini analysis completed', [
-                'url' => $url,
-                'response_length' => strlen($analysisText),
-                'debug_file' => $debugFile
+            // Log raw response in debug mode
+            $this->logger->debug('Gemini raw analysis text', [
+                'text' => $analysisText
             ]);
 
-            return $this->parseGeminiResponse($analysisText);
+            $parsed = $this->parseGeminiResponse($analysisText);
+
+            // Log parsed response in debug mode
+            $this->logger->debug('Gemini parsed response', [
+                'parsed' => $parsed
+            ]);
+
+            $totalResults = isset($parsed['results']) ? count($parsed['results']) : 0;
+            $this->logger->info("✅ GEMINI SUCCESS: {$totalResults} enriched results, response={$duration}s, URL={$url}");
+
+            // Store enriched results in cache for future audits
+            if (isset($parsed['results']) && is_array($parsed['results'])) {
+                foreach ($parsed['results'] as $result) {
+                    $fingerprint = $this->aiCache->generateFingerprint(
+                        $result['errorType'] ?? 'unknown',
+                        $result
+                    );
+                    $this->aiCache->set($fingerprint, $result);
+                }
+            }
+
+            // Log cache statistics
+            $this->aiCache->logStats();
+
+            return $parsed;
 
         } catch (\Exception $e) {
+            $duration = isset($startTime) ? round(microtime(true) - $startTime, 2) : 0;
+
             $this->logger->error('Gemini analysis failed', [
                 'url' => $url,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e),
+                'duration_before_failure' => $duration,
+                'prompt_length_kb' => round(strlen($prompt) / 1024, 2),
+                'timeout_setting' => 300
             ]);
 
             throw new \RuntimeException('Gemini analysis failed: ' . $e->getMessage());
@@ -95,22 +212,49 @@ class GeminiService
     }
 
     /**
-     * Build analysis prompt for Gemini
+     * Build analysis prompt for Gemini (technical errors enrichment only)
+     *
+     * @param array $playwrightResults Playwright test results
+     * @param array $pa11yResults Pa11y test results
+     * @param string $url URL being audited
      */
     private function buildAnalysisPrompt(array $playwrightResults, array $pa11yResults, string $url): string
     {
         // Extraire toutes les erreurs uniques par type
         $issuesByType = [];
+        $cachedIssues = []; // Track issues found in cache
 
         // Extraire Playwright issues groupées par type
         if (isset($playwrightResults['tests']) && is_array($playwrightResults['tests'])) {
             foreach ($playwrightResults['tests'] as $test) {
                 if (isset($test['issues']) && is_array($test['issues'])) {
                     $testName = $test['name'] ?? 'Unknown';
+
+                    // Detect actual source from test name (playwright, axe-core, or a11ylint)
+                    $source = IssueSource::detectFromTestName($testName);
+
+                    $issueData = [
+                        'errorType' => $testName,
+                        'source' => $source,
+                        'severity' => $test['issues'][0]['severity'] ?? 'minor',
+                        'selector' => $test['issues'][0]['selector'] ?? '',
+                        'message' => $test['issues'][0]['message'] ?? '',
+                    ];
+
+                    // Check cache first
+                    $fingerprint = $this->aiCache->generateFingerprint($testName, $issueData);
+
+                    if ($this->aiCache->has($fingerprint)) {
+                        // Found in cache! No need to ask Gemini
+                        $cachedIssues[$testName] = $this->aiCache->get($fingerprint);
+                        continue; // Skip adding to prompt
+                    }
+
+                    // Not in cache, add to prompt for Gemini analysis
                     if (!isset($issuesByType[$testName])) {
                         $issuesByType[$testName] = [
                             'errorType' => $testName,
-                            'source' => 'playwright',
+                            'source' => $source,
                             'severity' => $test['issues'][0]['severity'] ?? 'minor',
                             'count' => 0,
                             'examples' => []
@@ -150,33 +294,46 @@ class GeminiService
             }
         }
 
-        $prompt = "Expert RGAA: analyse ces {$url} erreurs d'accessibilité.\n\n";
-        $prompt .= "Erreurs groupées par type:\n";
-        $prompt .= json_encode(array_values($issuesByType), JSON_PRETTY_PRINT) . "\n\n";
+        // Technical errors enrichment only (no vision analysis)
+        $prompt = "Expert RGAA analyse {$url}\n\n";
+        $prompt .= "Erreurs:\n" . json_encode(array_values($issuesByType)) . "\n\n";
+        $prompt .= "Génère: errorType, source, severity, description, impactUser, recommendation, codeFix, wcagCriteria, rgaaCriteria\n\n";
 
-        $prompt .= "Pour CHAQUE type d'erreur, génère:\n";
-        $prompt .= "- errorType: nom du type\n";
-        $prompt .= "- severity: critique/majeur/mineur\n";
-        $prompt .= "- description: explication concise (max 80 mots)\n";
-        $prompt .= "- impactUser: impact utilisateurs (max 60 mots)\n";
-        $prompt .= "- recommendation: comment corriger (max 80 mots)\n";
-        $prompt .= "- codeFix: exemple de code corrigé\n";
-        $prompt .= "- wcagCriteria: critères WCAG (ex: \"2.4.7\")\n";
-        $prompt .= "- rgaaCriteria: critères RGAA (ex: \"7.3\")\n";
-        $prompt .= "- source: playwright ou pa11y\n\n";
+        // CRITICAL: Recommendations quality guidelines
+        $prompt .= "RÈGLES IMPÉRATIVES pour 'recommendation':\n";
+        $prompt .= "1. JAMAIS de recommandations génériques comme:\n";
+        $prompt .= "   ❌ 'Vérifier le code HTML/CSS/JS'\n";
+        $prompt .= "   ❌ 'Appliquer les corrections RGAA/WCAG'\n";
+        $prompt .= "   ❌ 'Corriger l'accessibilité'\n";
+        $prompt .= "   ❌ 'Mettre à jour le code'\n\n";
+        $prompt .= "2. TOUJOURS donner des recommandations CONCRÈTES et ACTIONNABLES:\n";
+        $prompt .= "   ✅ Inclure le sélecteur CSS ou l'élément HTML exact à modifier\n";
+        $prompt .= "   ✅ Donner l'action précise à effectuer\n";
+        $prompt .= "   ✅ Mentionner les attributs ARIA spécifiques si nécessaire\n\n";
+        $prompt .= "Exemples de BONNES recommandations:\n";
+        $prompt .= "- 'Ajouter un attribut alt=\"Description de l'image\" sur chaque balise <img>'\n";
+        $prompt .= "- 'Remplacer <div class=\"button\"> par <button type=\"button\">'\n";
+        $prompt .= "- 'Augmenter le contraste de #999 vers #555 pour atteindre un ratio de 4.5:1'\n";
+        $prompt .= "- 'Ajouter aria-label=\"Menu principal\" sur la balise <nav>'\n";
+        $prompt .= "- 'Remplacer le texte du lien \"Cliquez ici\" par \"Télécharger le rapport PDF\"'\n\n";
 
-        $prompt .= "IMPORTANT: Pour les statistiques RGAA, base-toi UNIQUEMENT sur les erreurs fournies.\n";
-        $prompt .= "- Si AUCUNE erreur n'est fournie, retourne: conformCriteria=106, nonConformCriteria=0, nonConformDetails=[]\n";
-        $prompt .= "- Si des erreurs existent, identifie les critères RGAA concernés\n\n";
+        // CRITICAL: Summary format guidelines
+        $prompt .= "RÈGLES IMPÉRATIVES pour 'summary':\n";
+        $prompt .= "Le summary doit être un texte NARRATIF et LISIBLE (pas du JSON!), structuré ainsi:\n\n";
+        $prompt .= "🔍 Résumé de l'audit\n\n";
+        $prompt .= "**Problèmes critiques détectés:**\n";
+        $prompt .= "• [Description courte du problème 1] (X occurrences)\n";
+        $prompt .= "• [Description courte du problème 2] (X occurrences)\n\n";
+        $prompt .= "**Problèmes majeurs:**\n";
+        $prompt .= "• [Description courte] (X occurrences)\n\n";
+        $prompt .= "**Problèmes mineurs:**\n";
+        $prompt .= "• [Description courte] (X occurrences)\n\n";
+        $prompt .= "**Priorités d'action:**\n";
+        $prompt .= "1. Corriger en premier: [problème le plus critique]\n";
+        $prompt .= "2. Ensuite: [deuxième priorité]\n";
+        $prompt .= "3. Amélioration: [troisième priorité]\n\n";
 
-        $prompt .= "Pour chaque critère RGAA NON CONFORME, fournis dans nonConformDetails:\n";
-        $prompt .= "- criteriaNumber: numéro du critère (ex: \"1.1\", \"3.2\")\n";
-        $prompt .= "- criteriaTitle: titre court du critère (ex: \"Images avec alternative textuelle\")\n";
-        $prompt .= "- reason: raison de non-conformité basée sur les erreurs détectées (max 100 mots)\n";
-        $prompt .= "- errorCount: nombre d'erreurs liées à ce critère\n\n";
-
-        $prompt .= "Format JSON attendu:\n";
-        $prompt .= '{"results":[{...}],"summary":"résumé 2-3 phrases","conformityRate":85.5,"statistics":{"conformCriteria":90,"nonConformCriteria":12,"notApplicableCriteria":4,"nonConformDetails":[{"criteriaNumber":"1.1","criteriaTitle":"Images","reason":"15 images sans alternative","errorCount":15}]}}';
+        $prompt .= "JSON: {results,summary}";
 
         return $prompt;
     }
@@ -232,17 +389,13 @@ class GeminiService
         $data = json_decode($response, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            // Save failed response for debugging
-            $errorFile = '/tmp/gemini_error_' . time() . '.txt';
-            file_put_contents($errorFile, "=== CLEANED RESPONSE ===\n" . $response . "\n\n=== JSON ERROR ===\n" . json_last_error_msg());
-
             $this->logger->error('JSON parsing failed', [
                 'error' => json_last_error_msg(),
-                'error_file' => $errorFile,
                 'response_length' => strlen($response),
-                'response_preview' => substr($response, 0, 200)
+                'response_preview' => substr($response, 0, 200),
+                'full_response' => $response
             ]);
-            throw new \RuntimeException('Failed to parse Gemini response as JSON: ' . json_last_error_msg() . ' (voir ' . $errorFile . ')');
+            throw new \RuntimeException('Failed to parse Gemini response as JSON: ' . json_last_error_msg());
         }
 
         // Validate response structure
@@ -298,5 +451,90 @@ class GeminiService
 
             return "Impossible de générer une recommandation pour le moment.";
         }
+    }
+
+    /**
+     * Add WCAG/RGAA criteria mapping to Gemini Vision results
+     *
+     * Auto-learning system:
+     * 1. Check database for existing mapping
+     * 2. If not found, use Gemini's suggestion and save it
+     * 3. Increment detection count for statistics
+     */
+    private function addCriteriaMapping(array $result): array
+    {
+        // Load all mappings once per request (cache)
+        if ($this->criteriaCache === null) {
+            $this->criteriaCache = $this->visualErrorCriteriaRepository->getAllMappingsAsArray();
+        }
+
+        $errorType = $result['errorType'] ?? 'unknown';
+
+        // Check if we have a mapping in database
+        if (isset($this->criteriaCache[$errorType])) {
+            // Use database mapping
+            $result['wcagCriteria'] = $this->criteriaCache[$errorType]['wcag'];
+            $result['rgaaCriteria'] = $this->criteriaCache[$errorType]['rgaa'];
+
+            // Increment detection count
+            $criteria = $this->visualErrorCriteriaRepository->findByErrorType($errorType);
+            if ($criteria) {
+                $criteria->incrementDetectionCount();
+                $this->entityManager->persist($criteria);
+                // Flush will be done by AuditService at the end
+            }
+
+            $this->logger->info('Applied database criteria mapping', [
+                'errorType' => $errorType,
+                'wcag' => $result['wcagCriteria'],
+                'rgaa' => $result['rgaaCriteria'],
+                'detection_count' => $criteria?->getDetectionCount() ?? 0
+            ]);
+        } else {
+            // Unknown error type - check if Gemini provided criteria
+            $geminiWcag = $result['wcagCriteria'] ?? null;
+            $geminiRgaa = $result['rgaaCriteria'] ?? null;
+
+            if ($geminiWcag && $geminiRgaa) {
+                // Convert arrays to strings if needed
+                $wcagString = is_array($geminiWcag) ? implode(', ', $geminiWcag) : $geminiWcag;
+                $rgaaString = is_array($geminiRgaa) ? implode(', ', $geminiRgaa) : $geminiRgaa;
+
+                // Gemini provided criteria - AUTO-LEARN IT!
+                $criteria = new VisualErrorCriteria();
+                $criteria->setErrorType($errorType);
+                $criteria->setWcagCriteria($wcagString);
+                $criteria->setRgaaCriteria($rgaaString);
+                $criteria->setDescription($result['description'] ?? null);
+                $criteria->setDetectionCount(1);
+                $criteria->setAutoLearned(true);
+
+                $this->entityManager->persist($criteria);
+                // Flush will be done by AuditService at the end
+
+                // Update cache
+                $this->criteriaCache[$errorType] = [
+                    'wcag' => $wcagString,
+                    'rgaa' => $rgaaString
+                ];
+
+                $this->logger->info('✨ AUTO-LEARNED new error type from Gemini suggestion', [
+                    'errorType' => $errorType,
+                    'wcag' => $wcagString,
+                    'rgaa' => $rgaaString,
+                    'description' => $result['description'] ?? 'N/A',
+                    'message' => 'This mapping will be used for all future occurrences'
+                ]);
+            } else {
+                // Gemini didn't provide criteria
+                $this->logger->error('New error type without criteria - cannot auto-learn', [
+                    'errorType' => $errorType,
+                    'description' => $result['description'] ?? 'N/A',
+                    'message' => 'Gemini should provide wcagCriteria and rgaaCriteria for all errors'
+                ]);
+            }
+        }
+
+        return $result;
     }
 }

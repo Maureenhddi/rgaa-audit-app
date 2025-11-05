@@ -1,7 +1,7 @@
 {
   "name": "rgaa-audit-scripts",
   "version": "1.0.0",
-  "description": "Node.js scripts for RGAA accessibility audits using Playwright, Axe-core and HTML_CodeSniffer",
+  "description": "Node.js scripts for RGAA accessibility audits using Playwright, Axe-core and A11yLint",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -13,14 +13,15 @@
     "audit",
     "playwright",
     "axe-core",
-    "html_codesniffer"
+    "a11ylint"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@playwright/test": "^1.40.0",
+    "@a11ylint/core": "^1.0.0-alpha.1",
+    "@a11ylint/playwright": "^1.0.0-alpha.1",
     "axe-core": "^4.11.0",
-    "html_codesniffer": "^2.5.1",
     "playwright": "^1.40.0"
   }
 }

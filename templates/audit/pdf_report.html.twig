@@ -4,171 +4,559 @@
     <meta charset="UTF-8">
     <title>Rapport d'audit RGAA - {{ audit.url }}</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            font-size: 11pt;
-            line-height: 1.6;
-            color: #333;
+            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            font-size: 9pt;
+            line-height: 1.4;
+            color: #4c4c4c;
+            background: #ffffff;
         }
-        h1 { color: #0d6efd; font-size: 24pt; margin-bottom: 10px; }
-        h2 { color: #0d6efd; font-size: 18pt; margin-top: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; }
-        h3 { color: #333; font-size: 14pt; margin-top: 15px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .info-box { background: #f8f9fa; padding: 15px; margin: 20px 0; border-left: 4px solid #0d6efd; }
-        .stat-row { display: flex; justify-content: space-around; margin: 20px 0; }
-        .stat { text-align: center; padding: 10px; }
-        .stat-value { font-size: 24pt; font-weight: bold; }
-        .badge { padding: 5px 10px; border-radius: 3px; color: white; font-weight: bold; }
-        .critical { background: #dc3545; }
-        .major { background: #fd7e14; }
-        .minor { background: #ffc107; color: #000; }
-        .issue { margin: 15px 0; padding: 15px; border: 1px solid #ddd; page-break-inside: avoid; }
-        .issue-header { font-weight: bold; margin-bottom: 10px; }
-        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f8f9fa; font-weight: bold; }
-        .footer { margin-top: 30px; text-align: center; font-size: 9pt; color: #666; }
+
+        /* Header - Compact */
+        .header {
+            background: #016dae;
+            padding: 15px 20px;
+            text-align: center;
+            margin-bottom: 15px;
+            border: 2px solid #f59c16;
+        }
+        .header-logo {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .header-logo img {
+            max-width: 120px;
+            height: auto;
+        }
+        .header h1 {
+            font-size: 18pt;
+            margin-bottom: 8px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .header p {
+            font-size: 9pt;
+            color: #ffffff;
+            margin: 3px 0;
+        }
+        .header p strong {
+            color: #ffffff;
+            font-size: 10pt;
+        }
+
+        /* Typography - Compact */
+        h2 {
+            color: #016dae;
+            font-size: 14pt;
+            margin: 15px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #f59c16;
+            font-weight: 700;
+        }
+        h3 {
+            color: #016dae;
+            font-size: 13pt;
+            margin: 12px 0 8px 0;
+            font-weight: 700;
+        }
+        h4 {
+            color: #5a6268;
+            font-size: 10pt;
+            margin: 10px 0 5px 0;
+            font-weight: 600;
+        }
+
+        /* Boxes - Compact */
+        .info-box {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-left: 3px solid #016dae;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .alert-info {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-left: 3px solid #f59c16;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        /* Stats Grid - Compact */
+        .stats-grid {
+            display: table;
+            width: 100%;
+            margin: 12px 0;
+            border-collapse: separate;
+            border-spacing: 5px;
+        }
+        .stat-card {
+            display: table-cell;
+            width: 25%;
+            text-align: center;
+            padding: 10px;
+            vertical-align: middle;
+        }
+        .stat-card.danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #c82333;
+        }
+        .stat-card.warning {
+            background: #fd7e14;
+            color: white;
+            border: 2px solid #e8590c;
+        }
+        .stat-card.info {
+            background: #016dae;
+            color: white;
+            border: 2px solid #014d7a;
+        }
+        .stat-card.secondary {
+            background: #6c757d;
+            color: white;
+            border: 2px solid #5a6268;
+        }
+        .stat-value {
+            font-size: 24pt;
+            font-weight: 700;
+            margin: 5px 0;
+            color: #ffffff;
+        }
+        .stat-label {
+            font-size: 9pt;
+            margin: 3px 0;
+            font-weight: 600;
+            color: #ffffff;
+        }
+        .stat-sublabel {
+            font-size: 7pt;
+            margin: 2px 0;
+            color: #ffffff;
+        }
+
+        /* Priority badges - Compact */
+        .priority-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 2px;
+            color: white;
+            font-weight: 600;
+            font-size: 7pt;
+        }
+        .priority-1 { background: #dc3545; }
+        .priority-2 { background: #fd7e14; }
+        .priority-3 { background: #016dae; }
+        .priority-4 { background: #6c757d; }
+
+        /* Severity badges - Compact */
+        .severity-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 2px;
+            color: white;
+            font-weight: 600;
+            font-size: 7pt;
+        }
+        .severity-critical { background: #dc3545; }
+        .severity-major { background: #fd7e14; }
+        .severity-minor { background: #ffc107; color: #000; }
+
+        /* Source badges - Compact */
+        .source-badge {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 2px;
+            font-size: 7pt;
+            font-weight: 600;
+            color: white;
+        }
+        .source-playwright { background: #016dae; }
+        .source-axe { background: #5e2750; }
+        .source-html { background: #198754; }
+        .source-gemini { background: #f59c16; }
+
+        /* Issue cards - Compact */
+        .issue-card {
+            margin: 8px 0;
+            padding: 8px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-left: 3px solid #ccc;
+            page-break-inside: avoid;
+        }
+        .issue-card.priority-1 {
+            border-left-color: #dc3545;
+            border-left-width: 4px;
+        }
+        .issue-card.priority-2 {
+            border-left-color: #fd7e14;
+            border-left-width: 4px;
+        }
+        .issue-card.priority-3 {
+            border-left-color: #016dae;
+            border-left-width: 3px;
+        }
+        .issue-card.priority-4 {
+            border-left-color: #6c757d;
+            border-left-width: 3px;
+        }
+
+        .issue-header {
+            font-weight: 700;
+            font-size: 10pt;
+            margin-bottom: 5px;
+            color: #016dae;
+        }
+        .issue-meta {
+            font-size: 8pt;
+            color: #5a6268;
+            margin-bottom: 5px;
+        }
+        .issue-content {
+            font-size: 9pt;
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+        .issue-content strong {
+            color: #016dae;
+            font-weight: 600;
+        }
+
+        /* Tables - Compact */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 6px;
+            text-align: left;
+            font-size: 8pt;
+        }
+        th {
+            background: #016dae;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        /* Code - Compact */
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #404040;
+            padding: 6px;
+            font-size: 7pt;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Footer - Compact */
+        .footer {
+            margin-top: 20px;
+            padding: 12px;
+            border-top: 2px solid #f59c16;
+            text-align: center;
+            font-size: 7pt;
+            color: #4c4c4c;
+            background: #f8f9fa;
+        }
+        .footer strong {
+            color: #016dae;
+        }
+        .footer-logo {
+            margin-top: 8px;
+        }
+        .footer-logo img {
+            max-width: 80px;
+            height: auto;
+        }
+
+        /* Page breaks */
+        .page-break { page-break-before: always; }
+        .no-break { page-break-inside: avoid; }
+
+        /* Text colors - Palette du site */
+        .text-danger { color: #dc3545; }
+        .text-warning { color: #fd7e14; }
+        .text-info { color: #016dae; }
+        .text-success { color: #198754; }
+        .text-muted { color: #6c757d; }
+        .text-primary { color: #f59c16; }
+
+        /* Icon emojis - Compact */
+        .emoji-icon {
+            margin-right: 5px;
+            font-size: 10pt;
+        }
     </style>
 </head>
 <body>
+    {# ============= HEADER ============= #}
     <div class="header">
-        <h1>Rapport d'audit d'accessibilité RGAA</h1>
-        <p>{{ audit.url }}</p>
-        <p>Date : {{ audit.createdAt|date('d/m/Y à H:i') }}</p>
-        <p>Généré le : {{ generated_at|date('d/m/Y à H:i') }}</p>
+        <div class="header-logo">
+            <img src="{{ absolute_url('/images/logo-itroom.png') }}" alt="IT Room Logo">
+        </div>
+        <h1><span class="emoji-icon">📋</span>Rapport d'Audit d'Accessibilité RGAA</h1>
+        <p style="font-size: 13pt; margin: 15px 0;"><strong>{{ audit.url }}</strong></p>
+        <p>Audit réalisé le : {{ audit.createdAt|date('d/m/Y à H:i') }}</p>
+        <p>Rapport généré le : {{ generated_at|date('d/m/Y à H:i') }}</p>
     </div>
+
+    {# ============= CONFORMITY RATE ============= #}
+    <h2><span class="emoji-icon">📊</span>Taux de Conformité RGAA</h2>
+
+    <div style="text-align: center; padding: 20px; background: {% if audit.conformityRate >= 90 %}#d4edda{% elseif audit.conformityRate >= 70 %}#fff3cd{% else %}#f8d7da{% endif %}; border: 2px solid {% if audit.conformityRate >= 90 %}#28a745{% elseif audit.conformityRate >= 70 %}#ffc107{% else %}#dc3545{% endif %}; margin: 15px 0;">
+        <div style="font-size: 48pt; font-weight: 700; color: {% if audit.conformityRate >= 90 %}#28a745{% elseif audit.conformityRate >= 70 %}#ffc107{% else %}#dc3545{% endif %}; margin-bottom: 10px;">
+            {{ audit.conformityRate|number_format(1) }}%
+        </div>
+        <div style="font-size: 11pt; color: #4c4c4c;">
+            <strong>Taux de conformité estimé</strong>
+        </div>
+        <div style="font-size: 8pt; color: #6c757d; margin-top: 5px;">
+            Basé sur {{ audit.nonConformCriteria }} critères non conformes sur 106 critères RGAA
+        </div>
+    </div>
+
+    {# ============= ANALYSIS RGAA ============= #}
+    <h2><span class="emoji-icon">📊</span>Analyse RGAA</h2>
+
+    <table>
+        <tr>
+            <th style="width: 33.33%; text-align: center;">Thèmes concernés</th>
+            <th style="width: 33.33%; text-align: center;">Critères avec erreurs</th>
+            <th style="width: 33.33%; text-align: center;">Non conformes</th>
+        </tr>
+        <tr>
+            <td style="text-align: center; padding: 15px;">
+                <div style="font-size: 28pt; font-weight: 700; color: #016dae; margin-bottom: 5px;">{{ total_themes }}</div>
+                <div style="font-size: 8pt; color: #6c757d;">Sur 13 thématiques RGAA</div>
+            </td>
+            <td style="text-align: center; padding: 15px;">
+                <div style="font-size: 28pt; font-weight: 700; color: #fd7e14; margin-bottom: 5px;">{{ total_criteria }}</div>
+                <div style="font-size: 8pt; color: #6c757d;">Sur 106 critères RGAA</div>
+                <div style="font-size: 7pt; color: #6c757d; margin-top: 3px;">Critères avec problèmes détectés</div>
+            </td>
+            <td style="text-align: center; padding: 15px;">
+                <div style="font-size: 28pt; font-weight: 700; color: #dc3545; margin-bottom: 5px;">{{ audit.nonConformCriteria }}</div>
+                <div style="font-size: 8pt; color: #6c757d;">Critères RGAA non respectés</div>
+            </td>
+        </tr>
+    </table>
+
+    {# ============= CRITERIA STATUS BY TOPIC ============= #}
+    <h2><span class="emoji-icon">📋</span>Détail des critères par thématique</h2>
+
+    <table>
+        <tr>
+            <th style="width: 40%;">Thématique RGAA</th>
+            <th style="width: 15%; text-align: center;">Conformes</th>
+            <th style="width: 15%; text-align: center;">Non conformes</th>
+            <th style="width: 15%; text-align: center;">Non testés</th>
+            <th style="width: 15%; text-align: center;">Non applicables</th>
+        </tr>
+        {% for topicName, stats in criteria_status_by_topic %}
+        <tr>
+            <td><strong>{{ topicName }}</strong></td>
+            <td style="text-align: center;">
+                <span style="background: #198754; color: white; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-size: 8pt;">{{ stats.conform }}</span>
+            </td>
+            <td style="text-align: center;">
+                <span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-size: 8pt;">{{ stats.nonConform }}</span>
+            </td>
+            <td style="text-align: center;">
+                <span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-size: 8pt;">{{ stats.notTested }}</span>
+            </td>
+            <td style="text-align: center;">
+                <span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-size: 8pt;">{{ stats.notApplicable }}</span>
+            </td>
+        </tr>
+        {% endfor %}
+        <tr style="background: #f8f9fa; font-weight: 700;">
+            <td><strong>TOTAL (106 critères)</strong></td>
+            <td style="text-align: center;">
+                <span style="background: #198754; color: white; padding: 2px 6px; border-radius: 3px; font-weight: 700; font-size: 8pt;">{{ audit.conformCriteria }}</span>
+            </td>
+            <td style="text-align: center;">
+                <span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; font-weight: 700; font-size: 8pt;">{{ audit.nonConformCriteria }}</span>
+            </td>
+            <td style="text-align: center;">
+                <span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 3px; font-weight: 700; font-size: 8pt;">{{ audit.notTestedCriteria }}</span>
+            </td>
+            <td style="text-align: center;">
+                <span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-weight: 700; font-size: 8pt;">{{ audit.notApplicableCriteria }}</span>
+            </td>
+        </tr>
+    </table>
+
+    {# ============= NON-CONFORM CRITERIA DETAILS ============= #}
+    <h2><span class="emoji-icon">❌</span>Critères RGAA Non Conformes ({{ audit.nonConformCriteria }})</h2>
 
     <div class="info-box">
-        <h2>Résumé exécutif</h2>
-        <div class="stat-row">
-            <div class="stat">
-                <div class="stat-value" style="color: {% if audit.conformityRate >= 75 %}#198754{% elseif audit.conformityRate >= 50 %}#ffc107{% else %}#dc3545{% endif %}">
-                    {{ audit.conformityRate }}%
+        <p style="font-size: 9pt;">
+            Cette section détaille les {{ audit.nonConformCriteria }} critères RGAA non respectés.
+            Chaque critère non-conforme peut générer plusieurs erreurs individuelles.
+            Les erreurs sont classées par sévérité : <span class="severity-badge severity-critical">CRITIQUE</span>,
+            <span class="severity-badge severity-major">MAJEUR</span>, <span class="severity-badge severity-minor">MINEUR</span>.
+        </p>
+    </div>
+
+    {% for detail in non_conform_details %}
+    <div class="no-break" style="margin: 15px 0; padding: 10px; border: 1px solid #dee2e6; border-left: 4px solid #dc3545; background: #fff;">
+        <h4 style="margin: 0 0 8px 0; color: #2c3e50;">
+            <span class="severity-badge severity-critical">RGAA {{ detail.criteriaNumber }}</span>
+            {{ detail.criteriaTitle }}
+            <span style="float: right; font-size: 9pt; color: #6c757d;">({{ detail.errorCount }} erreur{% if detail.errorCount > 1 %}s{% endif %})</span>
+        </h4>
+
+        <div style="font-size: 9pt; margin: 8px 0; line-height: 1.4; white-space: pre-line;">{{ detail.reason }}</div>
+
+        {# Display errors grouped by severity #}
+        {% if detail.errorsBySeverity.critical|length > 0 %}
+        <div style="margin-top: 10px;">
+            <strong style="color: #dc3545; font-size: 9pt;">🔴 Critiques ({{ detail.errorsBySeverity.critical|length }})</strong>
+            <ul style="margin: 5px 0 0 20px; font-size: 8pt;">
+            {% for error in detail.errorsBySeverity.critical %}
+                <li>{{ error.errorType }} - {{ error.count }} occurrence{% if error.count > 1 %}s{% endif %}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if detail.errorsBySeverity.major|length > 0 %}
+        <div style="margin-top: 8px;">
+            <strong style="color: #fd7e14; font-size: 9pt;">🟠 Majeurs ({{ detail.errorsBySeverity.major|length }})</strong>
+            <ul style="margin: 5px 0 0 20px; font-size: 8pt;">
+            {% for error in detail.errorsBySeverity.major %}
+                <li>{{ error.errorType }} - {{ error.count }} occurrence{% if error.count > 1 %}s{% endif %}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if detail.errorsBySeverity.minor|length > 0 %}
+        <div style="margin-top: 8px;">
+            <strong style="color: #ffc107; font-size: 9pt;">🟡 Mineurs ({{ detail.errorsBySeverity.minor|length }})</strong>
+            <ul style="margin: 5px 0 0 20px; font-size: 8pt;">
+            {% for error in detail.errorsBySeverity.minor %}
+                <li>{{ error.errorType }} - {{ error.count }} occurrence{% if error.count > 1 %}s{% endif %}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    {# ============= STATISTICS ============= #}
+    <h2><span class="emoji-icon">📈</span>Statistiques détaillées</h2>
+
+    <table>
+        <tr>
+            <th style="width: 50%;">Métrique</th>
+            <th style="width: 50%; text-align: center;">Valeur</th>
+        </tr>
+        <tr>
+            <td><strong>Total des problèmes détectés</strong></td>
+            <td style="text-align: center; font-size: 16pt;"><strong>{{ audit.totalIssues }}</strong></td>
+        </tr>
+        <tr>
+            <td>Problèmes critiques</td>
+            <td style="text-align: center;"><span class="text-danger"><strong>{{ audit.criticalCount }}</strong></span></td>
+        </tr>
+        <tr>
+            <td>Problèmes majeurs</td>
+            <td style="text-align: center;"><span class="text-warning"><strong>{{ audit.majorCount }}</strong></span></td>
+        </tr>
+        <tr>
+            <td>Problèmes mineurs</td>
+            <td style="text-align: center;"><span style="color: #ffc107;"><strong>{{ audit.minorCount }}</strong></span></td>
+        </tr>
+    </table>
+
+    {# ============= DETAILED ISSUES BY THEME ============= #}
+    <div class="page-break"></div>
+    <h2><span class="emoji-icon">🔍</span>Détail des problèmes par thème RGAA</h2>
+
+    {% for key, theme in grouped_by_theme %}
+    <h3 style="color: {{ theme.theme_color }};">
+        Thème {{ theme.theme_number }}: {{ theme.theme_name }} ({{ theme.total_count }} problème{% if theme.total_count > 1 %}s{% endif %})
+    </h3>
+
+    {% for criterion_key, criterion_data in theme.criteria %}
+        <h4>Critère {{ criterion_data.criterion }}{% if criterion_data.criterion_description %} - {{ criterion_data.criterion_description }}{% endif %}</h4>
+
+        {% for severity in ['critical', 'major', 'minor'] %}
+            {% if criterion_data.results[severity]|length > 0 %}
+                {% for group in criterion_data.results[severity] %}
+                <div class="issue-card priority-{% if group.priorityScore >= 80 %}1{% elseif group.priorityScore >= 60 %}2{% elseif group.priorityScore >= 40 %}3{% else %}4{% endif %} no-break">
+                    <div class="issue-header">{{ group.errorType }}</div>
+                    <div class="issue-meta">
+                        <span class="severity-badge severity-{{ severity }}">{{ severity|upper }}</span>
+
+                        {% if group.source == 'playwright' %}
+                            <span class="source-badge source-playwright">PLAYWRIGHT</span>
+                        {% elseif group.source == 'axe-core' %}
+                            <span class="source-badge source-axe">AXE-CORE</span>
+                        {% elseif group.source == 'html_codesniffer' %}
+                            <span class="source-badge source-html">HTML_CS</span>
+                        {% elseif group.source == 'gemini-vision' or group.source == 'gemini-image-analysis' %}
+                            <span class="source-badge source-gemini">GEMINI</span>
+                        {% endif %}
+
+                        | {{ group.occurrences|length }} occurrence{% if group.occurrences|length > 1 %}s{% endif %}
+                    </div>
+
+                    <div class="issue-content">
+                        <strong>Description :</strong> {{ group.description }}
+                    </div>
+
+                    {% if group.impactUser %}
+                    <div class="issue-content">
+                        <strong>Impact utilisateur :</strong> {{ group.impactUser }}
+                    </div>
+                    {% endif %}
+
+                    {% if group.recommendation %}
+                    <div class="issue-content">
+                        <strong>💡 Recommandation :</strong> {{ group.recommendation }}
+                    </div>
+                    {% endif %}
+
+                    {% if group.codeFix %}
+                    <div class="issue-content">
+                        <strong>Exemple de correction :</strong>
+                        <pre>{{ group.codeFix }}</pre>
+                    </div>
+                    {% endif %}
                 </div>
-                <div>Conformité</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">{{ audit.totalIssues }}</div>
-                <div>Total problèmes</div>
-            </div>
-        </div>
-
-        <table>
-            <tr>
-                <th>Problèmes critiques</th>
-                <td>{{ audit.criticalCount }}</td>
-            </tr>
-            <tr>
-                <th>Problèmes majeurs</th>
-                <td>{{ audit.majorCount }}</td>
-            </tr>
-            <tr>
-                <th>Problèmes mineurs</th>
-                <td>{{ audit.minorCount }}</td>
-            </tr>
-        </table>
-    </div>
-
-    {% if audit.summary %}
-    <div>
-        <h2>Analyse générale</h2>
-        <p>{{ audit.summary|nl2br }}</p>
-    </div>
-    {% endif %}
-
-    <div>
-        <h2>Statistiques RGAA (106 critères)</h2>
-        <table>
-            <tr>
-                <th>Critères conformes</th>
-                <td>{{ audit.conformCriteria }}</td>
-            </tr>
-            <tr>
-                <th>Critères non conformes</th>
-                <td>{{ audit.nonConformCriteria }}</td>
-            </tr>
-            <tr>
-                <th>Critères non applicables</th>
-                <td>{{ audit.notApplicableCriteria }}</td>
-            </tr>
-        </table>
-    </div>
-
-    {% if grouped_results.critical|length > 0 %}
-    <div style="page-break-before: always;">
-        <h2><span class="badge critical">Problèmes critiques ({{ grouped_results.critical|length }})</span></h2>
-        {% for result in grouped_results.critical %}
-        <div class="issue">
-            <div class="issue-header">
-                {{ result.errorType }}
-                {% if result.wcagCriteria %} - WCAG {{ result.wcagCriteria }}{% endif %}
-                {% if result.rgaaCriteria %} - RGAA {{ result.rgaaCriteria }}{% endif %}
-            </div>
-            <p><strong>Description :</strong> {{ result.description }}</p>
-            {% if result.impactUser %}
-            <p><strong>Impact utilisateur :</strong> {{ result.impactUser }}</p>
+                {% endfor %}
             {% endif %}
-            {% if result.recommendation %}
-            <p><strong>Recommandation :</strong> {{ result.recommendation }}</p>
-            {% endif %}
-            {% if result.codeFix %}
-            <p><strong>Exemple de correction :</strong></p>
-            <pre>{{ result.codeFix }}</pre>
-            {% endif %}
-        </div>
         {% endfor %}
-    </div>
-    {% endif %}
+    {% endfor %}
+    {% endfor %}
 
-    {% if grouped_results.major|length > 0 %}
-    <div style="page-break-before: always;">
-        <h2><span class="badge major">Problèmes majeurs ({{ grouped_results.major|length }})</span></h2>
-        {% for result in grouped_results.major %}
-        <div class="issue">
-            <div class="issue-header">
-                {{ result.errorType }}
-                {% if result.wcagCriteria %} - WCAG {{ result.wcagCriteria }}{% endif %}
-                {% if result.rgaaCriteria %} - RGAA {{ result.rgaaCriteria }}{% endif %}
-            </div>
-            <p><strong>Description :</strong> {{ result.description }}</p>
-            {% if result.impactUser %}
-            <p><strong>Impact utilisateur :</strong> {{ result.impactUser }}</p>
-            {% endif %}
-            {% if result.recommendation %}
-            <p><strong>Recommandation :</strong> {{ result.recommendation }}</p>
-            {% endif %}
-            {% if result.codeFix %}
-            <p><strong>Exemple de correction :</strong></p>
-            <pre>{{ result.codeFix }}</pre>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    {% if grouped_results.minor|length > 0 %}
-    <div style="page-break-before: always;">
-        <h2><span class="badge minor">Problèmes mineurs ({{ grouped_results.minor|length }})</span></h2>
-        {% for result in grouped_results.minor %}
-        <div class="issue">
-            <div class="issue-header">
-                {{ result.errorType }}
-                {% if result.wcagCriteria %} - WCAG {{ result.wcagCriteria }}{% endif %}
-                {% if result.rgaaCriteria %} - RGAA {{ result.rgaaCriteria }}{% endif %}
-            </div>
-            <p><strong>Description :</strong> {{ result.description }}</p>
-            {% if result.recommendation %}
-            <p><strong>Recommandation :</strong> {{ result.recommendation }}</p>
-            {% endif %}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
+    {# ============= FOOTER ============= #}
     <div class="footer">
-        <p>Rapport généré avec RGAA Audit - {{ generated_at|date('d/m/Y à H:i') }}</p>
-        <p>Ce rapport a été généré automatiquement avec Playwright (Axe-core + HTML_CodeSniffer) et Gemini AI</p>
+        <div class="footer-logo">
+            <img src="{{ absolute_url('/images/logo-itroom.png') }}" alt="IT Room Logo">
+        </div>
+        <p style="margin-top: 15px;"><strong>Rapport généré avec RGAA Audit App by IT Room</strong></p>
+        <p style="margin: 8px 0;">{{ generated_at|date('d/m/Y à H:i') }}</p>
+        <p style="margin-top: 12px;">
+            <span class="emoji-icon">🤖</span>Audit automatisé avec Playwright, Axe-core, A11yLint (RGAA 4.1) et Gemini AI
+        </p>
+        <p style="margin-top: 12px; font-size: 8pt; color: #6c757d;">
+            Note : Ce rapport automatisé doit être complété par des tests manuels pour une conformité RGAA complète (106 critères).
+        </p>
     </div>
 </body>
 </html>

@@ -78,4 +78,86 @@ class AuditRepository extends ServiceEntityRepository
             'totalMinor' => (int) $result['totalMinor'],
         ];
     }
+
+    /**
+     * Get most audited URLs for a user
+     */
+    public function getMostAuditedUrls(User $user, int $limit = 5): array
+    {
+        return $this->createQueryBuilder('a')
+            ->select('a.url, COUNT(a.id) as auditCount')
+            ->andWhere('a.user = :user')
+            ->andWhere('a.status = :status')
+            ->setParameter('user', $user)
+            ->setParameter('status', 'completed')
+            ->groupBy('a.url')
+            ->orderBy('auditCount', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find audits with filters
+     */
+    public function findByUserWithFilters(User $user, ?string $search = null, ?string $status = null, ?int $projectId = null, int $page = 1, int $limit = 10): array
+    {
+        $qb = $this->createQueryBuilder('a')
+            ->andWhere('a.user = :user')
+            ->setParameter('user', $user);
+
+        if ($search) {
+            $qb->andWhere('a.url LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($status && $status !== 'all') {
+            $qb->andWhere('a.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($projectId) {
+            $qb->andWhere('a.project = :project')
+               ->setParameter('project', $projectId);
+        } elseif ($projectId === 0) {
+            // Filter for audits without a project
+            $qb->andWhere('a.project IS NULL');
+        }
+
+        $qb->orderBy('a.createdAt', 'DESC')
+           ->setFirstResult(($page - 1) * $limit)
+           ->setMaxResults($limit);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Count audits with filters
+     */
+    public function countByUserWithFilters(User $user, ?string $search = null, ?string $status = null, ?int $projectId = null): int
+    {
+        $qb = $this->createQueryBuilder('a')
+            ->select('COUNT(a.id)')
+            ->andWhere('a.user = :user')
+            ->setParameter('user', $user);
+
+        if ($search) {
+            $qb->andWhere('a.url LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($status && $status !== 'all') {
+            $qb->andWhere('a.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($projectId) {
+            $qb->andWhere('a.project = :project')
+               ->setParameter('project', $projectId);
+        } elseif ($projectId === 0) {
+            $qb->andWhere('a.project IS NULL');
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
 }

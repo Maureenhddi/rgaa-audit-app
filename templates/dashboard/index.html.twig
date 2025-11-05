@@ -2,59 +2,171 @@
 
 {% block title %}Dashboard - {{ parent() }}{% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .stat-card {
+        border-left: 4px solid var(--primary-color);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 20px var(--shadow-color);
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    .stat-icon {
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-top: 1rem;
+    }
+    .chart-container-small {
+        position: relative;
+        height: 250px;
+    }
+    .progress-ring {
+        width: 120px;
+        height: 120px;
+    }
+    .card-header {
+        background-color: transparent;
+        border-bottom: 2px solid var(--border-color);
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
-    <a href="{{ path('app_audit_new') }}" class="btn btn-primary">
+    <div>
+        <h1><i class="bi bi-speedometer2"></i> Tableau de bord</h1>
+        <p class="text-muted mb-0">Vue d'ensemble de vos audits d'accessibilité</p>
+    </div>
+    <a href="{{ path('app_audit_new') }}" class="btn btn-primary btn-lg">
         <i class="bi bi-plus-circle"></i> Nouvel audit
     </a>
 </div>
 
-<div class="row">
-    <div class="col-md-3">
-        <div class="card stat-card">
+{# Statistics Cards #}
+<div class="row g-4 mb-4">
+    <div class="col-lg-4 col-md-6">
+        <div class="card stat-card h-100">
             <div class="card-body">
-                <h6 class="text-muted">Total audits</h6>
-                <h2 class="mb-0">{{ statistics.totalAudits }}</h2>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Total des audits</div>
+                        <div class="stat-number text-primary">{{ statistics.totalAudits }}</div>
+                        <small class="text-muted">Audits réalisés</small>
+                    </div>
+                    <i class="bi bi-clipboard-check stat-icon text-primary"></i>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card" style="border-left-color: var(--success-color)">
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card stat-card h-100" style="border-left-color: var(--critical-color)">
             <div class="card-body">
-                <h6 class="text-muted">Conformité moyenne</h6>
-                <h2 class="mb-0">{{ statistics.avgConformity }}%</h2>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Critiques</div>
+                        <div class="stat-number text-danger">{{ statistics.totalCritical }}</div>
+                        <small class="text-muted">Problèmes détectés</small>
+                    </div>
+                    <i class="bi bi-exclamation-triangle stat-icon text-danger"></i>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card stat-card" style="border-left-color: var(--critical-color)">
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card stat-card h-100" style="border-left-color: var(--info-color)">
             <div class="card-body">
-                <h6 class="text-muted">Problèmes critiques</h6>
-                <h2 class="mb-0">{{ statistics.totalCritical }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card stat-card" style="border-left-color: var(--major-color)">
-            <div class="card-body">
-                <h6 class="text-muted">Problèmes majeurs</h6>
-                <h2 class="mb-0">{{ statistics.totalMajor }}</h2>
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Total problèmes</div>
+                        <div class="stat-number text-info">
+                            {{ statistics.totalCritical + statistics.totalMajor + statistics.totalMinor }}
+                        </div>
+                        <small class="text-muted">Tous niveaux</small>
+                    </div>
+                    <i class="bi bi-bug stat-icon text-info"></i>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-{% if conformity_evolution|length > 0 %}
-<div class="row">
-    <div class="col-12">
+{# Charts Row #}
+<div class="row g-4 mb-4">
+    {# Issues Distribution Pie Chart #}
+    <div class="col-lg-12">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> Répartition des problèmes
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                {% if statistics.totalCritical + statistics.totalMajor + statistics.totalMinor > 0 %}
+                <div class="chart-container-small w-100">
+                    <canvas id="issuesChart"></canvas>
+                </div>
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="bi bi-check-circle" style="font-size: 3rem;"></i>
+                    <p class="mt-2">Aucun problème détecté</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Most Audited URLs #}
+{% if most_audited_urls|length > 0 %}
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-graph-up"></i> Évolution de la conformité</h5>
+                <i class="bi bi-bar-chart"></i> Sites les plus audités
             </div>
             <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="conformityChart"></canvas>
+                <div class="chart-container-small">
+                    <canvas id="topUrlsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list-ol"></i> Top 5 des URLs
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for item in most_audited_urls %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="text-truncate" style="max-width: 400px;">
+                            <i class="bi bi-link-45deg text-primary"></i>
+                            {{ item.url }}
+                        </div>
+                        <span class="badge bg-primary rounded-pill">{{ item.auditCount }}</span>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -62,59 +174,120 @@
 </div>
 {% endif %}
 
+{# My Projects Section #}
+{% if active_projects|length > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-folder"></i> Mes projets actifs</span>
+                <a href="{{ path('app_project_list') }}" class="btn btn-sm btn-outline-primary">
+                    Voir tout <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for project in active_projects|slice(0, 6) %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100" style="border-left: 4px solid {{ project.color }};">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">
+                                            <a href="{{ path('app_project_show', {id: project.id}) }}" class="text-decoration-none" style="color: var(--text-dark);">
+                                                {{ project.name }}
+                                            </a>
+                                        </h6>
+                                        {% if project.status == 'completed' %}
+                                            <span class="badge bg-success">Terminé</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">Actif</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if project.clientName %}
+                                        <small class="text-muted d-block mb-2">
+                                            <i class="bi bi-building"></i> {{ project.clientName }}
+                                        </small>
+                                    {% endif %}
+                                    <div class="d-flex gap-3 mt-3">
+                                        <div>
+                                            <div class="fw-bold" style="color: var(--text-dark);">{{ project.auditCount }}</div>
+                                            <small class="text-muted">Audits</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# Recent Audits Table #}
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Audits récents</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history"></i> Audits récents</span>
+                <a href="{{ path('app_audit_list') }}" class="btn btn-sm btn-outline-primary">
+                    Voir tout <i class="bi bi-arrow-right"></i>
+                </a>
             </div>
             <div class="card-body">
                 {% if recent_audits|length > 0 %}
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover align-middle">
                             <thead>
                                 <tr>
                                     <th>URL</th>
                                     <th>Date</th>
-                                    <th>Statut</th>
-                                    <th>Conformité</th>
-                                    <th>Problèmes</th>
-                                    <th>Actions</th>
+                                    <th class="text-center">Statut</th>
+                                    <th class="text-center">Problèmes</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for audit in recent_audits %}
                                 <tr>
                                     <td>
-                                        <a href="{{ path('app_audit_show', {id: audit.id}) }}">
-                                            {{ audit.url|length > 50 ? audit.url|slice(0, 50) ~ '...' : audit.url }}
-                                        </a>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-link-45deg text-primary me-2"></i>
+                                            <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="text-decoration-none">
+                                                {{ audit.url|length > 60 ? audit.url|slice(0, 60) ~ '...' : audit.url }}
+                                            </a>
+                                        </div>
                                     </td>
-                                    <td>{{ audit.createdAt|date('d/m/Y H:i') }}</td>
                                     <td>
+                                        <small class="text-muted">
+                                            {{ audit.createdAt|date('d/m/Y') }}<br>
+                                            {{ audit.createdAt|date('H:i') }}
+                                        </small>
+                                    </td>
+                                    <td class="text-center">
                                         {% if audit.status == 'completed' %}
-                                            <span class="badge bg-success">Terminé</span>
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Terminé
+                                            </span>
                                         {% elseif audit.status == 'running' %}
-                                            <span class="badge bg-primary">En cours</span>
+                                            <span class="badge bg-primary">
+                                                <i class="bi bi-hourglass-split"></i> En cours
+                                            </span>
                                         {% elseif audit.status == 'failed' %}
-                                            <span class="badge bg-danger">Échoué</span>
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle"></i> Échoué
+                                            </span>
                                         {% else %}
                                             <span class="badge bg-secondary">{{ audit.status }}</span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {% if audit.conformityRate %}
-                                            <strong>{{ audit.conformityRate }}%</strong>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <span class="badge severity-critical">{{ audit.criticalCount }}</span>
-                                        <span class="badge severity-major">{{ audit.majorCount }}</span>
+                                    <td class="text-center">
+                                        <span class="badge severity-critical me-1">{{ audit.criticalCount }}</span>
+                                        <span class="badge severity-major me-1">{{ audit.majorCount }}</span>
                                         <span class="badge severity-minor">{{ audit.minorCount }}</span>
                                     </td>
-                                    <td>
+                                    <td class="text-end">
                                         <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye"></i> Voir
                                         </a>
@@ -125,9 +298,9 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="alert alert-info">
+                    <div class="alert alert-info mb-0">
                         <i class="bi bi-info-circle"></i> Aucun audit pour le moment.
-                        <a href="{{ path('app_audit_new') }}">Créez votre premier audit</a>
+                        <a href="{{ path('app_audit_new') }}" class="alert-link">Créez votre premier audit</a>
                     </div>
                 {% endif %}
             </div>
@@ -137,51 +310,115 @@
 {% endblock %}
 
 {% block javascripts %}
-{% if conformity_evolution|length > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('conformityChart');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [
-                {% for item in conformity_evolution %}
-                    '{{ item.createdAt|date('d/m/Y') }}'{% if not loop.last %},{% endif %}
-                {% endfor %}
+// Chart.js default config - adapt to theme
+const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+Chart.defaults.font.family = 'Open Sans, sans-serif';
+Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-medium').trim();
+
+// Helper function to get grid color
+function getGridColor() {
+    return isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+}
+
+// Issues Distribution Pie Chart
+{% if statistics.totalCritical + statistics.totalMajor + statistics.totalMinor > 0 %}
+const issuesCtx = document.getElementById('issuesChart');
+new Chart(issuesCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Critiques', 'Majeurs', 'Mineurs'],
+        datasets: [{
+            data: [{{ statistics.totalCritical }}, {{ statistics.totalMajor }}, {{ statistics.totalMinor }}],
+            backgroundColor: [
+                '#dc3545',
+                '#fd7e14',
+                '#ffc107'
             ],
-            datasets: [{
-                label: 'Taux de conformité (%)',
-                data: [
-                    {% for item in conformity_evolution %}
-                        {{ item.conformityRate }}{% if not loop.last %},{% endif %}
-                    {% endfor %}
-                ],
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
+            borderWidth: 2,
+            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--card-bg').trim()
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 15,
+                    usePointStyle: true
                 }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        }
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                        return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
                     }
                 }
             }
         }
-    });
-</script>
+    }
+});
 {% endif %}
+
+// Top URLs Bar Chart
+{% if most_audited_urls|length > 0 %}
+const topUrlsCtx = document.getElementById('topUrlsChart');
+new Chart(topUrlsCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for item in most_audited_urls %}
+                '{{ item.url|length > 30 ? item.url|slice(0, 30) ~ '...' : item.url }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Nombre d\'audits',
+            data: [
+                {% for item in most_audited_urls %}
+                    {{ item.auditCount }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: '#f59c16',
+            borderColor: '#d98913',
+            borderWidth: 1,
+            borderRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                grid: {
+                    color: getGridColor()
+                }
+            },
+            y: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    color: Chart.defaults.color
+                }
+            }
+        }
+    }
+});
+{% endif %}
+</script>
 {% endblock %}

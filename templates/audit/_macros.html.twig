@@ -1,0 +1,107 @@
+{# Macro for severity badge #}
+{% macro severityBadge(severity) %}
+    {% if severity == 'critical' %}
+        <span class="badge severity-critical">Critique</span>
+    {% elseif severity == 'major' %}
+        <span class="badge severity-major">Majeur</span>
+    {% elseif severity == 'minor' %}
+        <span class="badge severity-minor">Mineur</span>
+    {% endif %}
+{% endmacro %}
+
+{# Macro for priority badge #}
+{% macro priorityBadge(priority) %}
+    {% if priority >= 80 %}
+        <span class="badge bg-danger" title="Priorité très haute">
+            <i class="bi bi-exclamation-triangle-fill"></i> Priorité 1
+        </span>
+    {% elseif priority >= 60 %}
+        <span class="badge bg-warning text-dark" title="Priorité haute">
+            <i class="bi bi-exclamation-triangle"></i> Priorité 2
+        </span>
+    {% elseif priority >= 40 %}
+        <span class="badge bg-info" title="Priorité moyenne">
+            <i class="bi bi-info-circle"></i> Priorité 3
+        </span>
+    {% else %}
+        <span class="badge bg-secondary" title="Priorité basse">
+            <i class="bi bi-circle"></i> Priorité 4
+        </span>
+    {% endif %}
+{% endmacro %}
+
+{# Macro for rendering issue group accordion #}
+{% macro issueAccordion(groups, severity, themeNumber, criterionKey, parentAccordionId) %}
+    {% import _self as macros %}
+    {% set safe_criterion_key = criterionKey|replace({'.': '_', ',': '_', ' ': '_', ':': '_'}) %}
+
+    {% for group in groups %}
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#theme{{ themeNumber }}_crit{{ safe_criterion_key }}_{{ severity }}{{ loop.index }}"
+                    aria-expanded="false"
+                    aria-controls="theme{{ themeNumber }}_crit{{ safe_criterion_key }}_{{ severity }}{{ loop.index }}">
+                <strong>{{ group.errorType }}</strong>
+                <span class="badge bg-dark ms-2">{{ group.occurrences|length }} occurrence(s)</span>
+
+                {# Priority badge #}
+                {% if group.priorityScore is defined %}
+                    <span class="ms-2">{{ macros.priorityBadge(group.priorityScore) }}</span>
+                {% endif %}
+
+                {# WCAG/RGAA badges #}
+                {% if group.wcagCriteria %}
+                    <span class="badge bg-secondary ms-2">WCAG {{ group.wcagCriteria }}</span>
+                {% endif %}
+                {% if group.rgaaCriteria %}
+                    <span class="badge bg-info ms-2">RGAA {{ group.rgaaCriteria }}</span>
+                {% endif %}
+            </button>
+        </h2>
+        <div id="theme{{ themeNumber }}_crit{{ safe_criterion_key }}_{{ severity }}{{ loop.index }}"
+             class="accordion-collapse collapse"
+             data-bs-parent="#{{ parentAccordionId }}">
+            <div class="accordion-body">
+                {# Technical error rendering #}
+                {{ macros.technicalIssue(group) }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endmacro %}
+
+{# Macro for technical issues #}
+{% macro technicalIssue(group) %}
+    <h6><i class="bi bi-exclamation-circle"></i> Description</h6>
+    <p>{{ group.description }}</p>
+
+    {% if group.impactUser %}
+    <h6><i class="bi bi-person-x"></i> Impact utilisateur</h6>
+    <p>{{ group.impactUser }}</p>
+    {% endif %}
+
+    {% if group.recommendation %}
+    <h6><i class="bi bi-lightbulb"></i> Recommandation</h6>
+    <p>{{ group.recommendation }}</p>
+    {% endif %}
+
+    {% if group.codeFix %}
+    <h6><i class="bi bi-code-square"></i> Exemple de correction</h6>
+    <pre><code>{{ group.codeFix }}</code></pre>
+    {% endif %}
+
+    <h6 class="mt-3"><i class="bi bi-list-ul"></i> Occurrences ({{ group.occurrences|length }})</h6>
+    <div class="list-group">
+        {% for occurrence in group.occurrences %}
+        <div class="list-group-item">
+            {% if occurrence.selector %}
+            <div><strong>Sélecteur :</strong> <code>{{ occurrence.selector }}</code></div>
+            {% endif %}
+            {% if occurrence.context %}
+            <div class="text-muted small mt-1"><strong>Contexte :</strong> {{ occurrence.context|slice(0, 150) }}{% if occurrence.context|length > 150 %}...{% endif %}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% endmacro %}

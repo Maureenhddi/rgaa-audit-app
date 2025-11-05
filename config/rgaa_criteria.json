@@ -278,7 +278,7 @@
       "description": "Chaque lien est-il explicite ?",
       "level": "A",
       "topic": "Liens",
-      "autoTestable": false
+      "autoTestable": true
     },
     {
       "number": "6.2",
@@ -318,7 +318,7 @@
       "description": "Pour chaque script qui initie un changement de contexte, l'utilisateur est-il averti ou en a-t-il le contrôle ?",
       "level": "A",
       "topic": "Scripts",
-      "autoTestable": false
+      "autoTestable": true
     },
     {
       "number": "7.5",
@@ -518,7 +518,7 @@
       "description": "Dans chaque page web, l'information reste-t-elle compréhensible lorsque l'espacement des paragraphes est augmenté jusqu'à 2 fois la taille de la police au moins ?",
       "level": "AA",
       "topic": "Présentation de l'information",
-      "autoTestable": false
+      "autoTestable": true
     },
     {
       "number": "10.11",
@@ -630,7 +630,7 @@
       "description": "Dans chaque formulaire, le contrôle de saisie est-il utilisé de manière pertinente ?",
       "level": "A",
       "topic": "Formulaires",
-      "autoTestable": false
+      "autoTestable": true
     },
     {
       "number": "11.11",
@@ -638,7 +638,7 @@
       "description": "Dans chaque formulaire, le contrôle de saisie est-il accompagné, si nécessaire, de suggestions facilitant la correction des erreurs de saisie ?",
       "level": "AA",
       "topic": "Formulaires",
-      "autoTestable": false
+      "autoTestable": true
     },
     {
       "number": "11.12",
@@ -678,7 +678,7 @@
       "description": "La page « plan du site » est-elle pertinente ?",
       "level": "AA",
       "topic": "Navigation",
-      "autoTestable": false
+      "autoTestable": true
     },
     {
       "number": "12.4",
@@ -686,7 +686,7 @@
       "description": "Dans chaque ensemble de pages, le moteur de recherche est-il atteignable de manière identique ?",
       "level": "AA",
       "topic": "Navigation",
-      "autoTestable": false
+      "autoTestable": true
     },
     {
       "number": "12.5",

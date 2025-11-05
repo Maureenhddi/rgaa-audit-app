@@ -2,75 +2,263 @@
 
 {% block title %}Historique des audits - {{ parent() }}{% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .filters-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .filter-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 20px;
+        font-size: 0.875rem;
+    }
+    .filter-badge .btn-close {
+        font-size: 0.65rem;
+        opacity: 0.8;
+        filter: brightness(0) invert(1);
+    }
+    .pagination .page-link {
+        color: var(--text-medium);
+        border-color: var(--border-color);
+    }
+    .pagination .page-link:hover {
+        background-color: var(--bg-light);
+        color: var(--primary-color);
+    }
+    .pagination .page-item.active .page-link {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    .audit-row:hover {
+        background-color: var(--bg-light);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="bi bi-clock-history"></i> Historique des audits</h1>
-    <a href="{{ path('app_audit_new') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Nouvel audit
-    </a>
+    <div>
+        <h1><i class="bi bi-clock-history"></i> Historique des audits</h1>
+        <p class="text-muted mb-0">{{ total_audits }} audit{% if total_audits > 1 %}s{% endif %} trouvé{% if total_audits > 1 %}s{% endif %}</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if total_audits > 0 %}
+        <form method="post" action="{{ path('app_audit_recalculate_last') }}" style="display: inline;" onsubmit="return confirm('🔄 Recalculer le dernier audit avec les nouvelles améliorations (mapping RGAA corrigé, recommandations améliorées, taux de conformité recalculé) ?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('recalculate_last') }}">
+            <button type="submit" class="btn btn-warning btn-lg" title="Recalculer le dernier audit">
+                <i class="bi bi-arrow-clockwise"></i> Recalculer dernier audit
+            </button>
+        </form>
+        {% endif %}
+        <a href="{{ path('app_audit_new') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-plus-circle"></i> Nouvel audit
+        </a>
+    </div>
 </div>
 
+{# Filters Section #}
+<div class="filters-card">
+    <form method="get" action="{{ path('app_audit_list') }}" class="row g-3">
+        <div class="col-md-6">
+            <label for="search" class="form-label">
+                <i class="bi bi-search"></i> Rechercher par URL
+            </label>
+            <input
+                type="text"
+                class="form-control"
+                id="search"
+                name="search"
+                value="{{ search }}"
+                placeholder="Entrez une URL..."
+            >
+        </div>
+        <div class="col-md-3">
+            <label for="status" class="form-label">
+                <i class="bi bi-funnel"></i> Statut
+            </label>
+            <select class="form-select" id="status" name="status">
+                <option value="all" {% if status == 'all' %}selected{% endif %}>Tous les statuts</option>
+                <option value="completed" {% if status == 'completed' %}selected{% endif %}>Terminé</option>
+                <option value="running" {% if status == 'running' %}selected{% endif %}>En cours</option>
+                <option value="failed" {% if status == 'failed' %}selected{% endif %}>Échoué</option>
+                <option value="pending" {% if status == 'pending' %}selected{% endif %}>En attente</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="project_id" class="form-label">
+                <i class="bi bi-folder"></i> Projet
+            </label>
+            <select class="form-select" id="project_id" name="project_id">
+                <option value="">Tous les projets</option>
+                <option value="0" {% if project_id == 0 %}selected{% endif %}>Sans projet</option>
+                {% for project in projects %}
+                    <option value="{{ project.id }}" {% if project_id == project.id %}selected{% endif %}>
+                        {{ project.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-12 col-lg-auto d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary flex-fill">
+                <i class="bi bi-search"></i> Filtrer
+            </button>
+            {% if search or status != 'all' or project_id is not null %}
+            <a href="{{ path('app_audit_list') }}" class="btn btn-outline-secondary" title="Réinitialiser les filtres">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    {# Active Filters Display #}
+    {% if search or status != 'all' %}
+    <div class="mt-3">
+        <span class="text-muted me-2">Filtres actifs :</span>
+        {% if search %}
+        <span class="filter-badge me-2">
+            <i class="bi bi-search"></i>
+            URL: "{{ search }}"
+            <a href="{{ path('app_audit_list', {status: status}) }}" class="btn-close"></a>
+        </span>
+        {% endif %}
+        {% if status != 'all' %}
+        <span class="filter-badge">
+            <i class="bi bi-funnel"></i>
+            Statut: {{ status }}
+            <a href="{{ path('app_audit_list', {search: search}) }}" class="btn-close"></a>
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{# Results #}
 {% if audits|length > 0 %}
 <div class="card">
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th>URL</th>
-                        <th>Date</th>
-                        <th>Statut</th>
-                        <th>Conformité</th>
-                        <th>Problèmes</th>
-                        <th>Actions</th>
+                        <th style="width: 35%;">URL</th>
+                        <th style="width: 12%;">Projet</th>
+                        <th style="width: 10%;">Date</th>
+                        <th class="text-center" style="width: 8%;">Conformité</th>
+                        <th class="text-center" style="width: 10%;">Statut</th>
+                        <th class="text-center" style="width: 15%;">Problèmes</th>
+                        <th class="text-end" style="width: 10%;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for audit in audits %}
-                    <tr>
+                    <tr class="audit-row">
                         <td>
-                            <a href="{{ path('app_audit_show', {id: audit.id}) }}">
-                                {{ audit.url|length > 50 ? audit.url|slice(0, 50) ~ '...' : audit.url }}
-                            </a>
-                        </td>
-                        <td>{{ audit.createdAt|date('d/m/Y H:i') }}</td>
-                        <td>
-                            {% if audit.status == 'completed' %}
-                                <span class="badge bg-success">Terminé</span>
-                            {% elseif audit.status == 'running' %}
-                                <span class="badge bg-primary">En cours</span>
-                            {% elseif audit.status == 'failed' %}
-                                <span class="badge bg-danger">Échoué</span>
-                            {% else %}
-                                <span class="badge bg-secondary">{{ audit.status }}</span>
-                            {% endif %}
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-link-45deg text-primary fs-5 me-2"></i>
+                                <div class="text-truncate" style="max-width: 400px;">
+                                    <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="text-decoration-none fw-medium">
+                                        {{ audit.url }}
+                                    </a>
+                                </div>
+                            </div>
                         </td>
                         <td>
-                            {% if audit.conformityRate %}
-                                <strong class="{% if audit.conformityRate >= 75 %}text-success{% elseif audit.conformityRate >= 50 %}text-warning{% else %}text-danger{% endif %}">
-                                    {{ audit.conformityRate }}%
-                                </strong>
+                            {% if audit.project %}
+                                <a href="{{ path('app_project_show', {id: audit.project.id}) }}" class="text-decoration-none">
+                                    <i class="bi bi-folder" style="color: {{ audit.project.color }};"></i>
+                                    {{ audit.project.name }}
+                                </a>
                             {% else %}
                                 <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>
-                            <span class="badge severity-critical">{{ audit.criticalCount }}</span>
-                            <span class="badge severity-major">{{ audit.majorCount }}</span>
-                            <span class="badge severity-minor">{{ audit.minorCount }}</span>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3"></i> {{ audit.createdAt|date('d/m/Y') }}
+                                <br>
+                                <i class="bi bi-clock"></i> {{ audit.createdAt|date('H:i') }}
+                            </small>
                         </td>
-                        <td>
+                        <td class="text-center">
+                            {% if audit.conformityRate is not null %}
+                                {% set rate = audit.conformityRate|number_format(1) %}
+                                {% if rate >= 90 %}
+                                    <span class="badge bg-success fs-6">{{ rate }}%</span>
+                                {% elseif rate >= 70 %}
+                                    <span class="badge bg-info fs-6">{{ rate }}%</span>
+                                {% elseif rate >= 50 %}
+                                    <span class="badge bg-warning fs-6">{{ rate }}%</span>
+                                {% else %}
+                                    <span class="badge bg-danger fs-6">{{ rate }}%</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if audit.status == 'completed' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Terminé
+                                </span>
+                            {% elseif audit.status == 'running' %}
+                                <span class="badge bg-primary">
+                                    <i class="bi bi-hourglass-split"></i> En cours
+                                </span>
+                            {% elseif audit.status == 'failed' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> Échoué
+                                </span>
+                            {% elseif audit.status == 'pending' %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock"></i> En attente
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ audit.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-1">
+                                <span class="badge severity-critical" title="Critiques">
+                                    <i class="bi bi-exclamation-triangle"></i> {{ audit.criticalCount }}
+                                </span>
+                                <span class="badge severity-major" title="Majeurs">
+                                    <i class="bi bi-exclamation-circle"></i> {{ audit.majorCount }}
+                                </span>
+                                <span class="badge severity-minor" title="Mineurs">
+                                    <i class="bi bi-info-circle"></i> {{ audit.minorCount }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="text-end">
                             <div class="btn-group">
-                                <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ path('app_audit_show', {id: audit.id}) }}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Voir les détails">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="{{ path('app_export_audit_pdf', {id: audit.id}) }}" class="btn btn-sm btn-outline-success">
+                                {% if audit.status == 'completed' %}
+                                <a href="{{ path('app_export_audit_pdf', {id: audit.id}) }}"
+                                   class="btn btn-sm btn-outline-success"
+                                   title="Exporter en PDF">
                                     <i class="bi bi-file-pdf"></i>
                                 </a>
-                                <form method="post" action="{{ path('app_audit_delete', {id: audit.id}) }}" style="display: inline;"
-                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet audit ?');">
+                                {% endif %}
+                                <form method="post"
+                                      action="{{ path('app_audit_delete', {id: audit.id}) }}"
+                                      style="display: inline;"
+                                      onsubmit="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer cet audit ?');">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ audit.id) }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -82,11 +270,72 @@
             </table>
         </div>
     </div>
+
+    {# Pagination #}
+    {% if total_pages > 1 %}
+    <div class="card-footer bg-transparent">
+        <nav aria-label="Navigation des pages">
+            <ul class="pagination justify-content-center mb-0">
+                {# Previous Button #}
+                <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ path('app_audit_list', {page: current_page - 1, search: search, status: status, project_id: project_id}) }}" aria-label="Précédent">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                {# Page Numbers #}
+                {% for page in 1..total_pages %}
+                    {% if page == 1 or page == total_pages or (page >= current_page - 2 and page <= current_page + 2) %}
+                        <li class="page-item {% if page == current_page %}active{% endif %}">
+                            <a class="page-link" href="{{ path('app_audit_list', {page: page, search: search, status: status, project_id: project_id}) }}">
+                                {{ page }}
+                            </a>
+                        </li>
+                    {% elseif page == current_page - 3 or page == current_page + 3 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {# Next Button #}
+                <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ path('app_audit_list', {page: current_page + 1, search: search, status: status, project_id: project_id}) }}" aria-label="Suivant">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <p class="text-center text-muted mt-3 mb-0">
+            Page {{ current_page }} sur {{ total_pages }}
+            <span class="mx-2">•</span>
+            {{ total_audits }} audit{% if total_audits > 1 %}s{% endif %} au total
+        </p>
+    </div>
+    {% endif %}
 </div>
+
 {% else %}
-<div class="alert alert-info">
-    <i class="bi bi-info-circle"></i> Aucun audit pour le moment.
-    <a href="{{ path('app_audit_new') }}" class="alert-link">Créez votre premier audit</a>
+{# Empty State #}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 4rem; opacity: 0.3;"></i>
+        <h4 class="mt-3 mb-2">Aucun audit trouvé</h4>
+
+        {% if search or status != 'all' %}
+            <p class="text-muted mb-3">Aucun résultat ne correspond à vos critères de recherche.</p>
+            <a href="{{ path('app_audit_list') }}" class="btn btn-outline-primary">
+                <i class="bi bi-x-lg"></i> Réinitialiser les filtres
+            </a>
+        {% else %}
+            <p class="text-muted mb-3">Vous n'avez pas encore effectué d'audit.</p>
+            <a href="{{ path('app_audit_new') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Créer mon premier audit
+            </a>
+        {% endif %}
+    </div>
 </div>
 {% endif %}
+
 {% endblock %}

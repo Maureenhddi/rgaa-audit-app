@@ -2,117 +2,487 @@
 
 {% block title %}Nouvel audit - {{ parent() }}{% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .new-audit-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    .new-audit-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .new-audit-header p {
+        font-size: 1.1rem;
+        color: var(--text-light);
+    }
+    .form-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    .form-card h5 {
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        color: var(--text-dark);
+    }
+    .url-input-group {
+        position: relative;
+    }
+    .url-input-group .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.2rem;
+        color: var(--text-light);
+    }
+    .url-input-group input {
+        padding-left: 3rem;
+        font-size: 1.1rem;
+        height: 60px;
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+    .url-input-group input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(1, 109, 174, 0.15);
+    }
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+    }
+    .feature-item {
+        background: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    .feature-item:hover {
+        transform: translateY(-4px);
+    }
+    .feature-item .icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    .feature-item h6 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+    .feature-item p {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        margin: 0;
+    }
+    .submit-btn {
+        height: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(1, 109, 174, 0.3);
+    }
+    .progress-section {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--info-color) 100%);
+        color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    .progress-section h5 {
+        color: white;
+        margin-bottom: 1rem;
+    }
+    .step-item {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .step-item.active {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+    .step-item .step-icon {
+        font-size: 1.5rem;
+    }
+    .quick-links {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    .quick-link {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border-color);
+    }
+    .quick-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="new-audit-header">
+    <h1><i class="bi bi-rocket-takeoff"></i> Nouvel audit</h1>
+    <p>Analysez l'accessibilité de votre site en quelques secondes</p>
+</div>
+
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0"><i class="bi bi-plus-circle"></i> Lancer un nouvel audit RGAA</h3>
+    <div class="col-lg-8">
+        <form method="post" action="{{ path('app_audit_new') }}" id="audit-form">
+            {# URL Input #}
+            <div class="form-card">
+                <h5><i class="bi bi-link-45deg"></i> URL du site à auditer</h5>
+                <div class="url-input-group">
+                    <i class="bi bi-globe input-icon"></i>
+                    <input type="url"
+                           class="form-control"
+                           id="url"
+                           name="url"
+                           placeholder="https://example.com"
+                           required
+                           autofocus>
+                </div>
+                <small class="text-muted mt-2 d-block">
+                    Entrez l'URL complète de la page à auditer
+                </small>
             </div>
-            <div class="card-body">
-                <p class="text-muted">
-                    Entrez l'URL du site web que vous souhaitez auditer pour l'accessibilité RGAA.
-                    L'audit analysera automatiquement la page avec Playwright et Pa11y, puis générera
-                    des recommandations détaillées avec l'IA.
+
+            {# Project Selection #}
+            {% if projects|length > 0 %}
+            <div class="form-card">
+                <h5><i class="bi bi-folder"></i> Associer à un projet</h5>
+                <select class="form-select form-select-lg" id="project_id" name="project_id" style="border-radius: 12px;">
+                    <option value="">Aucun projet</option>
+                    {% for project in projects %}
+                        <option value="{{ project.id }}">
+                            {{ project.name }}{% if project.clientName %} - {{ project.clientName }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted mt-2 d-block">
+                    Optionnel : organisez vos audits par projet
+                </small>
+            </div>
+            {% endif %}
+
+            {# Deep Image Analysis Options #}
+            <div class="form-card">
+                <h5><i class="bi bi-robot"></i> Analyses IA des images (optionnel)</h5>
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle"></i> Sélectionnez les critères RGAA à vérifier par intelligence artificielle.
+                    Chaque analyse examine individuellement toutes les images de la page.
                 </p>
 
-                <form method="post" action="{{ path('app_audit_new') }}">
-                    <div class="mb-3">
-                        <label for="url" class="form-label">URL du site à auditer</label>
-                        <input type="url"
-                               class="form-control form-control-lg"
-                               id="url"
-                               name="url"
-                               placeholder="https://example.com"
-                               required
-                               autofocus>
-                        <div class="form-text">
-                            Exemple : https://www.example.com ou https://example.com/page
+                <div class="row g-3">
+                    {# RGAA 1.3 - Alt Relevance #}
+                    <div class="col-md-6">
+                        <div class="form-check p-3" style="background: linear-gradient(135deg, #f093fb15 0%, #f5576c15 100%); border-radius: 12px; border: 2px solid transparent; transition: all 0.3s;">
+                            <input class="form-check-input" type="checkbox" id="ia_alt_relevance" name="image_analysis_types[]" value="alt-relevance" style="cursor: pointer;">
+                            <label class="form-check-label" for="ia_alt_relevance" style="cursor: pointer;">
+                                <strong><i class="bi bi-check2-square"></i> Pertinence des alt (RGAA 1.3)</strong>
+                                <small class="d-block text-muted mt-1">
+                                    Vérifie si l'attribut alt décrit correctement le contenu de l'image
+                                </small>
+                            </label>
                         </div>
                     </div>
 
-                    <div class="alert alert-info">
-                        <h6><i class="bi bi-info-circle"></i> Ce qui sera analysé :</h6>
-                        <ul class="mb-0">
-                            <li><strong>Playwright (Axe-core + HTML_CodeSniffer)</strong> : Navigation clavier, gestion du focus, éléments interactifs, structure HTML/CSS, contraste, sémantique, ARIA</li>
-                            <li><strong>Gemini AI</strong> : Contextualisation et recommandations détaillées</li>
-                        </ul>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
-                            <i class="bi bi-rocket-takeoff"></i> Lancer l'audit
-                        </button>
-                        <a href="{{ path('app_dashboard') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Retour au dashboard
-                        </a>
-                    </div>
-                </form>
-
-                <!-- Progression de l'audit -->
-                <div id="audit-progress" class="mt-4" style="display: none;">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                Audit en cours...
-                            </h5>
-                            <p class="text-muted mb-3">Cela peut prendre quelques minutes. Merci de patienter.</p>
-
-                            <div class="progress mb-3" style="height: 25px;">
-                                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated"
-                                     role="progressbar" style="width: 0%">0%</div>
-                            </div>
-
-                            <div class="list-group">
-                                <div id="step-1" class="list-group-item">
-                                    <div class="d-flex align-items-center">
-                                        <span class="spinner-border spinner-border-sm me-2 step-spinner"></span>
-                                        <i class="bi bi-check-circle-fill text-success me-2 step-check" style="display: none;"></i>
-                                        <strong>Étape 1/3 :</strong>&nbsp;<span>Préparation de l'audit...</span>
-                                    </div>
-                                </div>
-                                <div id="step-2" class="list-group-item text-muted">
-                                    <div class="d-flex align-items-center">
-                                        <span class="spinner-border spinner-border-sm me-2 step-spinner" style="display: none;"></span>
-                                        <i class="bi bi-check-circle-fill text-success me-2 step-check" style="display: none;"></i>
-                                        <strong>Étape 2/3 :</strong>&nbsp;<span>Analyse Playwright avec Axe-core et HTML_CodeSniffer...</span>
-                                    </div>
-                                </div>
-                                <div id="step-3" class="list-group-item text-muted">
-                                    <div class="d-flex align-items-center">
-                                        <span class="spinner-border spinner-border-sm me-2 step-spinner" style="display: none;"></span>
-                                        <i class="bi bi-check-circle-fill text-success me-2 step-check" style="display: none;"></i>
-                                        <strong>Étape 3/3 :</strong>&nbsp;<span>Analyse IA Gemini (recommandations)...</span>
-                                    </div>
-                                </div>
-                            </div>
+                    {# RGAA 1.2 - Decorative Detection #}
+                    <div class="col-md-6">
+                        <div class="form-check p-3" style="background: linear-gradient(135deg, #a8edea15 0%, #fed6e315 100%); border-radius: 12px; border: 2px solid transparent; transition: all 0.3s;">
+                            <input class="form-check-input" type="checkbox" id="ia_decorative" name="image_analysis_types[]" value="decorative-detection" style="cursor: pointer;">
+                            <label class="form-check-label" for="ia_decorative" style="cursor: pointer;">
+                                <strong><i class="bi bi-palette"></i> Images décoratives (RGAA 1.2)</strong>
+                                <small class="d-block text-muted mt-1">
+                                    Détecte si les images décoratives ont bien alt="" ou role="presentation"
+                                </small>
+                            </label>
                         </div>
                     </div>
+
+                    {# RGAA 8.9 - Text in Image #}
+                    <div class="col-md-6">
+                        <div class="form-check p-3" style="background: linear-gradient(135deg, #ffecd215 0%, #fcb69f15 100%); border-radius: 12px; border: 2px solid transparent; transition: all 0.3s;">
+                            <input class="form-check-input" type="checkbox" id="ia_text_image" name="image_analysis_types[]" value="text-in-image" style="cursor: pointer;">
+                            <label class="form-check-label" for="ia_text_image" style="cursor: pointer;">
+                                <strong><i class="bi bi-fonts"></i> Texte dans images (RGAA 8.9)</strong>
+                                <small class="d-block text-muted mt-1">
+                                    Détecte si du texte est présent dans l'image (à éviter sauf logos)
+                                </small>
+                            </label>
+                        </div>
+                    </div>
+
+                    {# RGAA 3.2 - Text Contrast #}
+                    <div class="col-md-6">
+                        <div class="form-check p-3" style="background: linear-gradient(135deg, #e0c3fc15 0%, #8ec5fc15 100%); border-radius: 12px; border: 2px solid transparent; transition: all 0.3s;">
+                            <input class="form-check-input" type="checkbox" id="ia_contrast" name="image_analysis_types[]" value="text-contrast" style="cursor: pointer;">
+                            <label class="form-check-label" for="ia_contrast" style="cursor: pointer;">
+                                <strong><i class="bi bi-circle-half"></i> Contraste texte (RGAA 3.2)</strong>
+                                <small class="d-block text-muted mt-1">
+                                    Vérifie le contraste des textes présents dans les images (≥4.5:1)
+                                </small>
+                            </label>
+                        </div>
+                    </div>
+
+                    {# RGAA 3.3 - Color Only Info #}
+                    <div class="col-md-6">
+                        <div class="form-check p-3" style="background: linear-gradient(135deg, #fbc2eb15 0%, #a6c1ee15 100%); border-radius: 12px; border: 2px solid transparent; transition: all 0.3s;">
+                            <input class="form-check-input" type="checkbox" id="ia_color_only" name="image_analysis_types[]" value="color-only-info" style="cursor: pointer;">
+                            <label class="form-check-label" for="ia_color_only" style="cursor: pointer;">
+                                <strong><i class="bi bi-droplet"></i> Info par couleur (RGAA 3.3)</strong>
+                                <small class="d-block text-muted mt-1">
+                                    Détecte si l'information est donnée uniquement par la couleur
+                                </small>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="alert alert-success mt-3 mb-0" style="font-size: 0.9rem;">
+                    <i class="bi bi-check-circle"></i> <strong>Labels de formulaires (RGAA 11.1) :</strong> Tests automatiques activés par défaut via Playwright
+                    <br><small class="text-muted">Vérifie automatiquement : label manquant, caché, trop éloigné, générique, ou placeholder utilisé comme label</small>
+                </div>
+
+                <div class="alert alert-info mt-3 mb-0" style="font-size: 0.9rem;">
+                    <i class="bi bi-clock"></i> <strong>Durée :</strong> +20-60 secondes par type d'analyse sélectionné
+                    <br><i class="bi bi-stars"></i> <strong>Recommandé :</strong> Sélectionnez uniquement les analyses pertinentes pour votre site (images, textes, couleurs)
+                </div>
+            </div>
+
+            {# Contextual Analysis - ALWAYS ENABLED (Automatic) #}
+            <div class="form-card">
+                <h5><i class="bi bi-lightning-charge"></i> Analyses contextuelles hybrides (automatiques)</h5>
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle"></i> Combine les tests automatiques Playwright avec l'IA pour analyser le <strong>contexte</strong> et la <strong>pertinence sémantique</strong>.
+                    <br>✅ Playwright détecte les problèmes techniques, ✨ l'IA évalue la qualité contextuelle.
+                </p>
+
+                <div class="alert alert-success mb-3" style="font-size: 0.95rem;">
+                    <i class="bi bi-check-circle-fill"></i> <strong>Activées automatiquement :</strong> Ces analyses sont lancées par défaut sur chaque audit
+                </div>
+
+                <div class="row g-3">
+                    {# RGAA 3.2 - Contrast Context #}
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded" style="background: linear-gradient(135deg, #fa709a15 0%, #fee14015 100%);">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong><i class="bi bi-circle-half"></i> Contraste contextuel (RGAA 3.2)</strong>
+                            </div>
+                            <small class="d-block text-muted">
+                                Analyse visuelle du contraste sur arrière-plans complexes (dégradés, images, motifs)
+                            </small>
+                        </div>
+                    </div>
+
+                    {# RGAA 6.1, 9.1 - Heading Relevance #}
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded" style="background: linear-gradient(135deg, #30cfd015 0%, #33086715 100%);">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong><i class="bi bi-type-h1"></i> Pertinence des titres (RGAA 6.1, 9.1)</strong>
+                            </div>
+                            <small class="d-block text-muted">
+                                Vérifie si les titres décrivent bien le contenu qu'ils introduisent
+                            </small>
+                        </div>
+                    </div>
+
+                    {# RGAA 6.2 - Link Context #}
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded" style="background: linear-gradient(135deg, #a1c4fd15 0%, #c2e9fb15 100%);">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong><i class="bi bi-link-45deg"></i> Clarté des liens (RGAA 6.2)</strong>
+                            </div>
+                            <small class="d-block text-muted">
+                                Détecte les liens ambigus hors contexte ("cliquez ici", "en savoir plus")
+                            </small>
+                        </div>
+                    </div>
+
+                    {# RGAA 5.7 - Table Headers #}
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded" style="background: linear-gradient(135deg, #d299c215 0%, #fef9d715 100%);">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <strong><i class="bi bi-table"></i> En-têtes de tableaux (RGAA 5.7)</strong>
+                            </div>
+                            <small class="d-block text-muted">
+                                Vérifie si les en-têtes de tableaux sont descriptifs et clairs
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3 mb-0" style="font-size: 0.9rem;">
+                    <i class="bi bi-lightning-charge"></i> <strong>Hybride :</strong> Tests automatiques + IA contextuelle
+                    <br><i class="bi bi-speedometer2"></i> <strong>Performance :</strong> +10-30 secondes pour l'analyse contextuelle
+                    <br><i class="bi bi-stars"></i> <strong>Innovation :</strong> Approche unique combinant code et IA pour une précision maximale
+                </div>
+            </div>
+
+            {# Submit Button #}
+            <div class="d-flex justify-content-center mb-4">
+                <button type="submit" class="btn btn-primary submit-btn" id="submit-btn" style="min-width: 250px;">
+                    <i class="bi bi-play-circle"></i> Lancer l'audit
+                </button>
+            </div>
+        </form>
+
+        {# Progress Section (hidden by default) #}
+        <div id="audit-progress" class="progress-section" style="display: none;">
+            <h5><i class="bi bi-hourglass-split"></i> Analyse en cours...</h5>
+            <p class="mb-3">L'audit peut prendre quelques minutes. Veuillez patienter.</p>
+
+            <div class="progress mb-3" style="height: 30px; border-radius: 15px;">
+                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated"
+                     role="progressbar" style="width: 0%">0%</div>
+            </div>
+
+            <div id="step-1" class="step-item">
+                <span class="spinner-border spinner-border-sm step-spinner"></span>
+                <i class="bi bi-check-circle-fill step-check step-icon" style="display: none;"></i>
+                <div>
+                    <strong>Étape 1/3</strong><br>
+                    <small>Préparation de l'audit</small>
+                </div>
+            </div>
+            <div id="step-2" class="step-item">
+                <span class="spinner-border spinner-border-sm step-spinner" style="display: none;"></span>
+                <i class="bi bi-check-circle-fill step-check step-icon" style="display: none;"></i>
+                <div>
+                    <strong>Étape 2/3</strong><br>
+                    <small>Analyse Playwright (Axe-core + A11yLint RGAA)</small>
+                </div>
+            </div>
+            <div id="step-3" class="step-item">
+                <span class="spinner-border spinner-border-sm step-spinner" style="display: none;"></span>
+                <i class="bi bi-check-circle-fill step-check step-icon" style="display: none;"></i>
+                <div>
+                    <strong>Étape 3/3</strong><br>
+                    <small>Analyse IA Gemini (recommandations)</small>
                 </div>
             </div>
         </div>
 
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-question-circle"></i> À propos de l'audit RGAA</h5>
+        {# What's analyzed #}
+        <div class="form-card">
+            <h5><i class="bi bi-gear"></i> Ce qui sera analysé automatiquement</h5>
+            <p class="text-muted mb-3">
+                L'audit combine <strong>4 outils complémentaires</strong> (Playwright, Axe-core, A11yLint RGAA, Gemini Vision) pour détecter automatiquement <strong>~50-60% des problèmes d'accessibilité réels</strong>, couvrant environ <strong>30-40% des critères RGAA</strong>.
+            </p>
+            <div class="alert alert-info mb-4" style="font-size: 0.9rem;">
+                <i class="bi bi-info-circle"></i> <strong>À savoir :</strong> Environ <strong>60-70% des critères RGAA nécessitent une vérification humaine</strong> pour évaluer la pertinence, la compréhensibilité et le contexte (alt text pertinent, clarté du langage, transcriptions médias, etc.). Une checklist manuelle est disponible pour vous guider.
             </div>
-            <div class="card-body">
-                <p>
-                    Le <strong>Référentiel Général d'Amélioration de l'Accessibilité (RGAA)</strong>
-                    est le référentiel français pour l'accessibilité numérique, basé sur les WCAG 2.1.
-                </p>
-                <p>
-                    Il comporte <strong>106 critères</strong> répartis en 13 thématiques pour garantir
-                    l'accessibilité des sites web aux personnes en situation de handicap.
-                </p>
-                <h6>Niveaux de criticité :</h6>
-                <ul>
-                    <li><span class="badge severity-critical">Critique</span> : Bloque l'accès au contenu</li>
-                    <li><span class="badge severity-major">Majeur</span> : Impact significatif sur l'expérience</li>
-                    <li><span class="badge severity-minor">Mineur</span> : Amélioration recommandée</li>
-                </ul>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="icon" style="color: var(--info-color);">
+                        <i class="bi bi-keyboard"></i>
+                    </div>
+                    <h6>Navigation clavier</h6>
+                    <p>Éléments focusables, tabindex, focus visible</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon" style="color: var(--success-color);">
+                        <i class="bi bi-code-square"></i>
+                    </div>
+                    <h6>Structure HTML</h6>
+                    <p>Headings, landmarks, sémantique</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon" style="color: var(--warning-color);">
+                        <i class="bi bi-palette"></i>
+                    </div>
+                    <h6>Contraste</h6>
+                    <p>Ratios de contraste texte/fond</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon" style="color: #e74c3c;">
+                        <i class="bi bi-ui-checks"></i>
+                    </div>
+                    <h6>Formulaires</h6>
+                    <p>Labels, aria-required, groupes</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon" style="color: #9b59b6;">
+                        <i class="bi bi-images"></i>
+                    </div>
+                    <h6>Images</h6>
+                    <p>Présence d'attributs alt (pas la pertinence)</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon" style="color: #16a085;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h6>ARIA</h6>
+                    <p>Rôles, propriétés, états valides</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon text-primary">
+                        <i class="bi bi-play-circle"></i>
+                    </div>
+                    <h6>Playwright</h6>
+                    <p>Tests interactifs réels (clavier, focus)</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon" style="color: #5a67d8;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h6>Axe-core</h6>
+                    <p>90+ règles WCAG 2.1 AA</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon text-success">
+                        <i class="bi bi-flag-fill"></i>
+                    </div>
+                    <h6>A11yLint RGAA</h6>
+                    <p>Règles RGAA 4.1 françaises</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        <i class="bi bi-eye-fill"></i>
+                    </div>
+                    <h6>Gemini Vision</h6>
+                    <p>Analyse visuelle par IA (alt, couleurs, contexte)</p>
+                </div>
             </div>
+        </div>
+
+        {# Quick Links #}
+        <div class="quick-links">
+            <a href="{{ path('app_dashboard') }}" class="quick-link">
+                <i class="bi bi-arrow-left"></i> Retour au dashboard
+            </a>
+            <a href="{{ path('app_audit_list') }}" class="quick-link">
+                <i class="bi bi-list-ul"></i> Voir mes audits
+            </a>
         </div>
     </div>
 </div>
@@ -121,29 +491,29 @@
 {% block javascripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
+    const form = document.getElementById('audit-form');
     const submitBtn = document.getElementById('submit-btn');
     const progressDiv = document.getElementById('audit-progress');
 
     form.addEventListener('submit', function(e) {
-        // Afficher la progression
+        // Disable button and show progress
         submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Démarrage...';
         progressDiv.style.display = 'block';
 
-        // Simuler la progression des étapes
-        let currentStep = 1;
-        const totalSteps = 4;
+        // Scroll to progress
+        progressDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        // Étape 1 : Immédiatement
+        // Step 1: Immediate
         updateStep(1, 25);
 
-        // Étape 2 : Après 3 secondes (Playwright avec Axe-core et HTML_CodeSniffer)
+        // Step 2: After 3 seconds
         setTimeout(() => {
             completeStep(1);
             updateStep(2, 60);
         }, 3000);
 
-        // Étape 3 : Après 8 secondes (Gemini)
+        // Step 3: After 8 seconds
         setTimeout(() => {
             completeStep(2);
             updateStep(3, 90);
@@ -152,7 +522,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateStep(stepNum, progress) {
         const step = document.getElementById('step-' + stepNum);
-        step.classList.remove('text-muted');
         step.classList.add('active');
         step.querySelector('.step-spinner').style.display = 'inline-block';
 

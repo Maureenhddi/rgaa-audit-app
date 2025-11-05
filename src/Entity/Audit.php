@@ -20,6 +20,10 @@ class Audit
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
+    #[ORM\ManyToOne(inversedBy: 'audits')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Project $project = null;
+
     #[ORM\Column(length: 500)]
     private ?string $url = null;
 
@@ -59,6 +63,9 @@ class Audit
     #[ORM\Column(nullable: true)]
     private ?int $notApplicableCriteria = 0;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $notTestedCriteria = 0;
+
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $nonConformDetails = null;
 
@@ -70,6 +77,9 @@ class Audit
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $errorMessage = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $screenshotPath = null;
 
     public function __construct()
     {
@@ -92,6 +102,18 @@ class Audit
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getProject(): ?Project
+    {
+        return $this->project;
+    }
+
+    public function setProject(?Project $project): static
+    {
+        $this->project = $project;
 
         return $this;
     }
@@ -252,6 +274,18 @@ class Audit
         return $this;
     }
 
+    public function getNotTestedCriteria(): ?int
+    {
+        return $this->notTestedCriteria;
+    }
+
+    public function setNotTestedCriteria(?int $notTestedCriteria): static
+    {
+        $this->notTestedCriteria = $notTestedCriteria;
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, AuditResult>
      */
@@ -331,6 +365,18 @@ class Audit
                 $manualCheck->setAudit(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getScreenshotPath(): ?string
+    {
+        return $this->screenshotPath;
+    }
+
+    public function setScreenshotPath(?string $screenshotPath): static
+    {
+        $this->screenshotPath = $screenshotPath;
 
         return $this;
     }
