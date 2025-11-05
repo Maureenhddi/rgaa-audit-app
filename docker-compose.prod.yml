@@ -13,10 +13,10 @@ services:
       - php
     networks:
       - rgaa_network
-      - traefik_network
+      - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik_network"
+      - "traefik.docker.network=traefik-public"
 
       # HTTP
       - "traefik.http.routers.rgaa-audit.rule=Host(`${DOMAIN}`)"
@@ -52,6 +52,9 @@ services:
       DATABASE_URL: "mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}?serverVersion=8.0"
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_API_URL: ${GEMINI_API_URL}
+      NODE_SCRIPTS_PATH: ${NODE_SCRIPTS_PATH}
+      NODE_EXECUTABLE: ${NODE_EXECUTABLE}
+      PLAYWRIGHT_BROWSERS_PATH: ${PLAYWRIGHT_BROWSERS_PATH}
     depends_on:
       - db
     networks:
@@ -79,5 +82,5 @@ volumes:
 networks:
   rgaa_network:
     driver: bridge
-  traefik_network:
+  traefik-public:
     external: true

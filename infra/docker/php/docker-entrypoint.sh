@@ -14,8 +14,27 @@ if [ -d "audit-scripts" ] && [ ! -d "audit-scripts/node_modules" ]; then
     echo "Installing Node.js dependencies..."
     cd audit-scripts
     npm install || echo "npm install failed, continuing..."
-    npx playwright install --with-deps chromium || echo "Playwright install failed, continuing..."
     cd ..
+fi
+
+# Installer les navigateurs Playwright si nécessaire
+if [ -d "audit-scripts" ]; then
+    PLAYWRIGHT_CACHE="${PLAYWRIGHT_BROWSERS_PATH:-/var/lib/playwright}"
+    # Créer et définir les permissions du répertoire
+    mkdir -p "$PLAYWRIGHT_CACHE"
+    chown -R www-data:www-data "$PLAYWRIGHT_CACHE" 2>/dev/null || true
+
+    if [ ! -d "$PLAYWRIGHT_CACHE" ] || [ -z "$(ls -A $PLAYWRIGHT_CACHE 2>/dev/null)" ]; then
+        echo "Installing Playwright browsers to $PLAYWRIGHT_CACHE..."
+        cd audit-scripts
+        # Utiliser le CLI de Playwright directement pour installer la bonne version
+        ./node_modules/playwright/cli.js install chromium 2>&1 | grep -E "(Downloaded|playwright build)" || true
+        cd ..
+        # S'assurer que www-data peut accéder aux navigateurs
+        chown -R www-data:www-data "$PLAYWRIGHT_CACHE" 2>/dev/null || true
+    else
+        echo "Playwright browsers already installed in $PLAYWRIGHT_CACHE"
+    fi
 fi
 
 # Créer les répertoires nécessaires
