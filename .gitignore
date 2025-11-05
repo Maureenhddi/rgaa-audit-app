@@ -45,7 +45,7 @@ Thumbs.db
 ###> Docker ###
 .env.docker
 .env.docker.local
-.env.docker.production
+.env.docker.production.local
 docker-compose.override.yml
 compose.override.yaml
 ###< Docker ###
