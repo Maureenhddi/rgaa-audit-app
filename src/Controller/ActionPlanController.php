@@ -16,6 +16,26 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/action-plan')]
 class ActionPlanController extends AbstractController
 {
+    #[Route('/', name: 'app_action_plan_list', methods: ['GET'])]
+    public function list(ActionPlanRepository $actionPlanRepository): Response
+    {
+        $user = $this->getUser();
+
+        // Get all action plans for user's projects
+        $actionPlans = $actionPlanRepository->createQueryBuilder('ap')
+            ->join('ap.campaign', 'c')
+            ->join('c.project', 'p')
+            ->where('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('ap.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $this->render('action_plan/list.html.twig', [
+            'action_plans' => $actionPlans,
+        ]);
+    }
+
     #[Route('/generate/{campaignId}', name: 'app_action_plan_generate', methods: ['POST'])]
     public function generate(
         int $campaignId,

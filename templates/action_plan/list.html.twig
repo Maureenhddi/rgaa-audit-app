@@ -1,0 +1,157 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Plans d'action - RGAA Audit{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1><i class="bi bi-list-check"></i> Plans d'action pluriannuels</h1>
+                <a href="{{ path('app_campaign_list') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left"></i> Retour aux campagnes
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if action_plans is empty %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            Aucun plan d'action généré pour le moment.
+            <br>
+            <small>Générez un plan d'action depuis une campagne d'audit complétée.</small>
+        </div>
+    {% else %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            {% for plan in action_plans %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-calendar-check"></i> {{ plan.name }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-folder"></i> {{ plan.campaign.project.name }}
+                                </small>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-collection"></i> {{ plan.campaign.name }}
+                                </small>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center p-2">
+                                            <div class="fs-4 fw-bold text-primary">{{ plan.items|length }}</div>
+                                            <small class="text-muted">Actions</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body text-center p-2">
+                                            <div class="fs-4 fw-bold text-success">{{ plan.completionPercentage }}%</div>
+                                            <small class="text-muted">Complété</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span><i class="bi bi-calendar-range"></i> Durée</span>
+                                    <span>{{ plan.durationYears }} an(s)</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span><i class="bi bi-calendar-event"></i> Période</span>
+                                    <span>{{ plan.startDate|date('d/m/Y') }} - {{ plan.endDate|date('d/m/Y') }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span><i class="bi bi-exclamation-triangle"></i> Issues</span>
+                                    <span>
+                                        <span class="badge bg-danger">{{ plan.criticalIssues }}</span>
+                                        <span class="badge bg-warning text-dark">{{ plan.majorIssues }}</span>
+                                        <span class="badge bg-info">{{ plan.minorIssues }}</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {% if plan.currentConformityRate %}
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-1">Taux de conformité</small>
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar bg-danger" style="width: {{ plan.currentConformityRate }}%">
+                                        {{ plan.currentConformityRate }}%
+                                    </div>
+                                    {% if plan.targetConformityRate > plan.currentConformityRate %}
+                                    <div class="progress-bar progress-bar-striped bg-success"
+                                         style="width: {{ plan.targetConformityRate - plan.currentConformityRate }}%">
+                                        <i class="bi bi-arrow-right"></i> {{ plan.targetConformityRate }}%
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if plan.quickWins|length > 0 %}
+                            <div class="alert alert-success py-2 px-3 mb-0">
+                                <i class="bi bi-lightning-charge-fill"></i>
+                                <strong>{{ plan.quickWins|length }}</strong> Quick Win(s)
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex gap-2">
+                                <a href="{{ path('app_action_plan_show', {id: plan.id}) }}"
+                                   class="btn btn-primary btn-sm flex-grow-1">
+                                    <i class="bi bi-eye"></i> Voir le plan
+                                </a>
+                                <button type="button"
+                                        class="btn btn-outline-danger btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal{{ plan.id }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="bi bi-clock"></i> Créé le {{ plan.createdAt|date('d/m/Y à H:i') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                {# Delete Modal #}
+                <div class="modal fade" id="deleteModal{{ plan.id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirmer la suppression</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                Êtes-vous sûr de vouloir supprimer le plan d'action <strong>{{ plan.name }}</strong> ?
+                                <br><br>
+                                Cette action est irréversible et supprimera toutes les {{ plan.items|length }} actions associées.
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <form method="post" action="{{ path('app_action_plan_delete', {id: plan.id}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_action_plan_' ~ plan.id) }}">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-trash"></i> Supprimer
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
