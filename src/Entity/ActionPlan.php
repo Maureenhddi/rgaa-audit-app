@@ -344,7 +344,7 @@ class ActionPlan
         }
 
         $completed = $this->items->filter(function (ActionPlanItem $item) {
-            return $item->getStatus() === 'completed';
+            return $item->getStatus() === \App\Enum\ActionStatus::COMPLETED;
         })->count();
 
         return round(($completed / $total) * 100, 2);
