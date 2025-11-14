@@ -1,0 +1,234 @@
+{% extends 'base.html.twig' %}
+{% import 'action_plan/_macros.html.twig' as macros %}
+
+{% block title %}Plan d'action pluriannuel - {{ parent() }}{% endblock %}
+
+{% block content %}
+{# Breadcrumb #}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('app_project_list') }}">Projets</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_project_show', {id: action_plan.campaign.project.id}) }}">{{ action_plan.campaign.project.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_campaign_show', {id: action_plan.campaign.id}) }}">{{ action_plan.campaign.name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Plan d'action</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-12">
+        {# Header #}
+        <div class="card mb-4 shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h2 class="mb-2">
+                            <i class="bi bi-calendar-check"></i> {{ action_plan.name }}
+                        </h2>
+                        <p class="mb-3">{{ action_plan.description }}</p>
+                        <div class="d-flex gap-3">
+                            <span><i class="bi bi-calendar-range"></i> {{ action_plan.startDate|date('d/m/Y') }} → {{ action_plan.endDate|date('d/m/Y') }}</span>
+                            <span><i class="bi bi-clock-history"></i> Durée : {{ action_plan.durationYears }} an(s)</span>
+                            <span><i class="bi bi-list-task"></i> {{ action_plan.items|length }} actions</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <h3 class="mb-1">{{ action_plan.completionPercentage }}%</h3>
+                        <small>Progression</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Metrics Row #}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center border-primary">
+                    <div class="card-body">
+                        <h5 class="text-primary">{{ action_plan.currentConformityRate }}%</h5>
+                        <small class="text-muted">Conformité actuelle</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-success">
+                    <div class="card-body">
+                        <h5 class="text-success">{{ action_plan.targetConformityRate }}%</h5>
+                        <small class="text-muted">Objectif cible</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-danger">
+                    <div class="card-body">
+                        <h5 class="text-danger">{{ action_plan.criticalIssues }}</h5>
+                        <small class="text-muted">Critiques</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <h5 class="text-warning">{{ action_plan.majorIssues + action_plan.minorIssues }}</h5>
+                        <small class="text-muted">Majeurs + Mineurs</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Executive Summary #}
+        {% if action_plan.executiveSummary %}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-file-text"></i> Résumé exécutif</h5>
+            </div>
+            <div class="card-body">
+                <div class="markdown-content">
+                    {{ action_plan.executiveSummary|raw|nl2br }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Quick Wins Section #}
+        {% if quick_wins|length > 0 %}
+        <div class="card mb-4 shadow-sm border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-lightning-charge-fill"></i> Quick Wins - Actions prioritaires (3-6 mois)</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <strong>🎯 Actions à fort impact et faible effort</strong> - Ces corrections critiques doivent être traitées en priorité absolue.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%">#</th>
+                                <th style="width: 35%">Action</th>
+                                <th style="width: 15%">Catégorie</th>
+                                <th style="width: 10%">Effort</th>
+                                <th style="width: 10%">Impact</th>
+                                <th style="width: 15%">Planning</th>
+                                <th style="width: 10%">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in quick_wins %}
+                            <tr>
+                                <td>{{ item.priority }}</td>
+                                <td>
+                                    <strong>{{ item.title }}</strong>
+                                    {% if item.affectedPages|length > 0 %}
+                                        <br><small class="text-muted">{{ item.affectedPages|length }} page(s) affectée(s)</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ item.categoryLabel }}</span>
+                                </td>
+                                <td>{{ item.estimatedEffort }}h</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" style="width: {{ item.impactScore }}%">{{ item.impactScore }}</div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-info">{{ item.quarterLabel }}</span></td>
+                                <td>
+                                    {{ macros.status_dropdown(item, item.statusBadgeClass) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Timeline by Year/Quarter #}
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-calendar3"></i> Planning pluriannuel</h5>
+            </div>
+            <div class="card-body">
+                {% for year, quarters in items_by_year %}
+                    <div class="year-section mb-4">
+                        <h4 class="mb-3 pb-2 border-bottom">
+                            <i class="bi bi-calendar-event"></i> Année {{ year }}
+                            {% if year == current_year %}
+                                <span class="badge bg-primary">En cours</span>
+                            {% elseif year < current_year %}
+                                <span class="badge bg-secondary">Passée</span>
+                            {% else %}
+                                <span class="badge bg-info">À venir</span>
+                            {% endif %}
+                        </h4>
+
+                        <div class="row">
+                            {% for quarter, items in quarters %}
+                                {% if items|length > 0 %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 {% if items|length > 0 %}border-primary{% endif %}">
+                                        <div class="card-header bg-primary text-white">
+                                            <strong>{{ quarter }} {{ year }}</strong> - {{ items|length }} action(s)
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <ul class="list-group list-group-flush">
+                                                {% for item in items %}
+                                                <li class="list-group-item">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div class="flex-grow-1">
+                                                            <div class="d-flex gap-2 mb-1">
+                                                                <span class="badge {{ item.severityBadgeClass }}">{{ item.severity }}</span>
+                                                                <span class="badge bg-secondary">{{ item.categoryLabel }}</span>
+                                                                {% if item.quickWin %}
+                                                                    <span class="badge bg-success"><i class="bi bi-lightning-charge-fill"></i> Quick Win</span>
+                                                                {% endif %}
+                                                            </div>
+                                                            <strong>{{ item.title }}</strong>
+                                                            {% if item.description %}
+                                                                <p class="mb-1 small text-muted">{{ item.description|slice(0, 100) }}{% if item.description|length > 100 %}...{% endif %}</p>
+                                                            {% endif %}
+                                                            <div class="small text-muted">
+                                                                <i class="bi bi-clock"></i> {{ item.estimatedEffort }}h
+                                                                {% if item.affectedPages|length > 0 %}
+                                                                    | <i class="bi bi-file-earmark"></i> {{ item.affectedPages|length }} page(s)
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="d-flex flex-column gap-2">
+                                                            <span class="badge {{ item.statusBadgeClass }}">{{ item.status }}</span>
+                                                            {{ macros.status_dropdown(item) }}
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Actions #}
+        <div class="mt-4 d-flex justify-content-between">
+            <a href="{{ path('app_campaign_show', {id: action_plan.campaign.id}) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Retour à la campagne
+            </a>
+            <div>
+                <form method="post" action="{{ path('app_action_plan_delete', {id: action_plan.id}) }}" style="display: inline;"
+                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce plan d\'action ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_action_plan_' ~ action_plan.id) }}">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash"></i> Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

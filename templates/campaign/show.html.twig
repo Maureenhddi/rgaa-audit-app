@@ -1,0 +1,380 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ campaign.name }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .campaign-header {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .campaign-header::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 6px;
+        background: {{ campaign.project.color }};
+    }
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-card .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+    .stat-card .stat-label {
+        color: var(--text-light);
+        font-size: 0.9rem;
+    }
+    .page-audit-row:hover {
+        background-color: var(--bg-light);
+    }
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--border-color);
+        overflow: hidden;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{# Breadcrumb #}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('app_project_list') }}">Projets</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_project_show', {id: campaign.project.id}) }}">{{ campaign.project.name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ campaign.name }}</li>
+    </ol>
+</nav>
+
+{# Campaign Header #}
+<div class="campaign-header">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="flex-grow-1">
+            <h1 class="mb-2">
+                <i class="bi bi-clipboard-data"></i> {{ campaign.name }}
+                {% if campaign.isArchived %}
+                    <span class="badge bg-secondary ms-2">Archivé</span>
+                {% elseif campaign.status == 'completed' %}
+                    <span class="badge bg-success ms-2">Terminé</span>
+                {% elseif campaign.status == 'in_progress' %}
+                    <span class="badge bg-primary ms-2">En cours</span>
+                {% else %}
+                    <span class="badge bg-warning ms-2">Brouillon</span>
+                {% endif %}
+            </h1>
+            <p class="text-muted mb-2">
+                <i class="bi bi-folder"></i> Projet : <a href="{{ path('app_project_show', {id: campaign.project.id}) }}">{{ campaign.project.name }}</a>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            {% if campaign.status != 'completed' and campaign.areAllPagesAudited() %}
+                <form method="post" action="{{ path('app_campaign_complete', {id: campaign.id}) }}" class="d-inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ campaign.id) }}">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Marquer comme terminé
+                    </button>
+                </form>
+            {% endif %}
+            <a href="{{ path('app_campaign_edit', {id: campaign.id}) }}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+            <form method="post" action="{{ path('app_campaign_archive', {id: campaign.id}) }}" class="d-inline" onsubmit="return confirm('{% if campaign.isArchived %}Êtes-vous sûr de vouloir désarchiver cette campagne ?{% else %}Êtes-vous sûr de vouloir archiver cette campagne ?{% endif %}');">
+                <input type="hidden" name="_token" value="{{ csrf_token('archive' ~ campaign.id) }}">
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi bi-{% if campaign.isArchived %}arrow-counterclockwise{% else %}archive{% endif %}"></i>
+                    {% if campaign.isArchived %}Désarchiver{% else %}Archiver{% endif %}
+                </button>
+            </form>
+            <form method="post" action="{{ path('app_campaign_delete', {id: campaign.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette campagne ? Cette action est irréversible et supprimera tous les audits associés.');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ campaign.id) }}">
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash"></i> Supprimer
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if campaign.description %}
+        <div class="mt-3">
+            <h5 class="text-muted mb-2">Description</h5>
+            <p class="mb-0">{{ campaign.description }}</p>
+        </div>
+    {% endif %}
+
+    <div class="row mt-3">
+        <div class="col-md-4">
+            <small class="text-muted">
+                <i class="bi bi-calendar"></i> Début : {{ campaign.startDate|date('d/m/Y') }}
+            </small>
+        </div>
+        <div class="col-md-4">
+            <small class="text-muted">
+                <i class="bi bi-calendar-check"></i> Fin prévue :
+                {% if campaign.endDate %}
+                    {{ campaign.endDate|date('d/m/Y') }}
+                {% else %}
+                    Non définie
+                {% endif %}
+            </small>
+        </div>
+        <div class="col-md-4">
+            <small class="text-muted">
+                <i class="bi bi-list-ul"></i> Type :
+                {% if campaign.sampleType == 'representative' %}
+                    Représentatif
+                {% elseif campaign.sampleType == 'exhaustive' %}
+                    Exhaustif
+                {% else %}
+                    Personnalisé
+                {% endif %}
+            </small>
+        </div>
+    </div>
+</div>
+
+{# Statistics #}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ campaign.totalPages ?? 0 }}</div>
+            <div class="stat-label">Page{% if campaign.totalPages > 1 %}s{% endif %} auditée{% if campaign.totalPages > 1 %}s{% endif %}</div>
+            <div class="progress-bar-custom mt-2">
+                {% set progress = campaign.totalPages > 0 ? (campaign.completedPageAuditsCount / campaign.totalPages * 100) : 0 %}
+                <div class="progress-bar-fill" style="width: {{ progress }}%"></div>
+            </div>
+            <small class="text-muted">{{ campaign.completedPageAuditsCount }} / {{ campaign.totalPages }} terminées</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">
+                {% if campaign.avgConformityRate %}
+                    {{ campaign.avgConformityRate }}%
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+            <div class="stat-label">Conformité moyenne</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-value">{{ campaign.totalIssues ?? 0 }}</div>
+            <div class="stat-label">Problèmes totaux</div>
+            {% if campaign.totalIssues > 0 %}
+                <div class="mt-2">
+                    <span class="badge bg-danger">{{ campaign.criticalCount ?? 0 }} critique{% if campaign.criticalCount > 1 %}s{% endif %}</span>
+                    <span class="badge bg-warning">{{ campaign.majorCount ?? 0 }} majeur{% if campaign.majorCount > 1 %}s{% endif %}</span>
+                    <span class="badge bg-info">{{ campaign.minorCount ?? 0 }} mineur{% if campaign.minorCount > 1 %}s{% endif %}</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <a href="{{ path('app_audit_new', {campaign_id: campaign.id}) }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle"></i> Auditer une page
+            </a>
+        </div>
+    </div>
+</div>
+
+{# Action Plan Section #}
+{% if campaign.hasCompletedAudits %}
+<div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <i class="bi bi-calendar-check-fill"></i> <strong>Générer un plan d'action pluriannuel</strong>
+        <p class="mb-0 mt-1">Vous avez {{ campaign.pageAudits|length }} audit(s) complété(s). Générez un plan d'action sur 2-3 ans pour améliorer progressivement votre conformité RGAA.</p>
+    </div>
+    <div>
+        {% if campaign.actionPlans|length > 0 %}
+            <a href="{{ path('app_action_plan_show', {id: campaign.actionPlans|first.id}) }}" class="btn btn-outline-success">
+                <i class="bi bi-eye"></i> Voir le plan
+            </a>
+        {% endif %}
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generatePlanModal">
+            <i class="bi bi-magic"></i> Générer le plan
+        </button>
+    </div>
+</div>
+
+{# Modal for plan generation #}
+<div class="modal fade" id="generatePlanModal" tabindex="-1" aria-labelledby="generatePlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generatePlanModalLabel">
+                    <i class="bi bi-calendar-check"></i> Générer un plan d'action pluriannuel
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{{ path('app_action_plan_generate', {campaignId: campaign.id}) }}">
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ csrf_token('generate_action_plan_' ~ campaign.id) }}">
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Le plan d'action sera généré automatiquement en analysant les {{ campaign.pageAudits|length }} page(s) auditée(s) de votre campagne.
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="duration_years" class="form-label">Durée du plan</label>
+                        <select class="form-select" id="duration_years" name="duration_years" required>
+                            <option value="1">1 an</option>
+                            <option value="2" selected>2 ans (recommandé)</option>
+                            <option value="3">3 ans</option>
+                            <option value="4">4 ans</option>
+                            <option value="5">5 ans</option>
+                        </select>
+                        <small class="text-muted">Plus la durée est longue, plus les actions seront étalées dans le temps.</small>
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6>Ce qui sera généré :</h6>
+                            <ul class="mb-0">
+                                <li>📊 État des lieux et objectifs</li>
+                                <li>🎯 Liste d'actions priorisées par trimestre</li>
+                                <li>⚡ Quick wins (actions à fort impact rapide)</li>
+                                <li>📅 Planning détaillé sur {{ campaign.pageAudits|length > 1 ? 'plusieurs' : 'toute la' }} années</li>
+                                <li>📈 Prévisions de progression</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-magic"></i> Générer maintenant
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# Pages List #}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-file-earmark-text"></i> Pages de la campagne
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if campaign.pageAudits|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>URL</th>
+                            <th>Type</th>
+                            <th>Statut</th>
+                            <th>Conformité</th>
+                            <th class="text-center">Problèmes</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for audit in campaign.pageAudits %}
+                            <tr class="page-audit-row">
+                                <td>
+                                    <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="text-decoration-none">
+                                        {{ audit.url|length > 60 ? audit.url|slice(0, 60) ~ '...' : audit.url }}
+                                    </a>
+                                    {% if audit.pageTitle %}
+                                        <br><small class="text-muted">{{ audit.pageTitle }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if audit.pageType == 'homepage' %}
+                                        <span class="badge bg-info">Accueil</span>
+                                    {% elseif audit.pageType == 'form' %}
+                                        <span class="badge bg-warning">Formulaire</span>
+                                    {% elseif audit.pageType == 'listing' %}
+                                        <span class="badge bg-secondary">Liste</span>
+                                    {% elseif audit.pageType == 'article' %}
+                                        <span class="badge bg-primary">Article</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">Autre</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if audit.status == constant('App\\Enum\\AuditStatus::COMPLETED') %}
+                                        <span class="badge bg-success">Terminé</span>
+                                    {% elseif audit.status == constant('App\\Enum\\AuditStatus::RUNNING') %}
+                                        <span class="badge bg-warning">En cours</span>
+                                    {% elseif audit.status == constant('App\\Enum\\AuditStatus::FAILED') %}
+                                        <span class="badge bg-danger">Échoué</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">En attente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if audit.conformityRate %}
+                                        <strong>{{ audit.conformityRate }}%</strong>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if audit.totalIssues %}
+                                        <span class="badge bg-secondary">{{ audit.totalIssues }}</span>
+                                        {% if audit.criticalCount %}
+                                            <span class="badge bg-danger" title="Critiques">{{ audit.criticalCount }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ audit.createdAt|date('d/m/Y H:i') }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Voir
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-light);"></i>
+                <h4 class="mt-3 mb-2">Aucune page auditée</h4>
+                <p class="text-muted mb-4">Commencez par auditer des pages pour cette campagne.</p>
+                <a href="{{ path('app_audit_new', {campaign_id: campaign.id}) }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Auditer une page
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

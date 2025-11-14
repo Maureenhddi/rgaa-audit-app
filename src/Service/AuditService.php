@@ -143,6 +143,12 @@ class AuditService
             $audit->setStatus(AuditStatus::COMPLETED);
             $audit->setUpdatedAt(new \DateTimeImmutable());
 
+            // If audit is part of a campaign, recalculate campaign statistics
+            if ($audit->getCampaign()) {
+                $this->logger->info('Recalculating campaign statistics');
+                $audit->getCampaign()->recalculateStatistics();
+            }
+
             $this->entityManager->flush();
 
             $this->logger->info('Audit completed successfully', [

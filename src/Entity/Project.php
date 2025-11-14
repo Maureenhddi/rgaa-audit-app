@@ -38,6 +38,9 @@ class Project
     #[ORM\OneToMany(mappedBy: 'project', targetEntity: Audit::class)]
     private Collection $audits;
 
+    #[ORM\OneToMany(mappedBy: 'project', targetEntity: AuditCampaign::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
+    private Collection $auditCampaigns;
+
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -50,6 +53,7 @@ class Project
     public function __construct()
     {
         $this->audits = new ArrayCollection();
+        $this->auditCampaigns = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
     }
@@ -250,5 +254,52 @@ class Project
         }
 
         return round($total / $completedAudits->count(), 2);
+    }
+
+    /**
+     * @return Collection<int, AuditCampaign>
+     */
+    public function getAuditCampaigns(): Collection
+    {
+        return $this->auditCampaigns;
+    }
+
+    public function addAuditCampaign(AuditCampaign $auditCampaign): static
+    {
+        if (!$this->auditCampaigns->contains($auditCampaign)) {
+            $this->auditCampaigns->add($auditCampaign);
+            $auditCampaign->setProject($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAuditCampaign(AuditCampaign $auditCampaign): static
+    {
+        if ($this->auditCampaigns->removeElement($auditCampaign)) {
+            if ($auditCampaign->getProject() === $this) {
+                $auditCampaign->setProject(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get campaign count
+     */
+    public function getCampaignCount(): int
+    {
+        return $this->auditCampaigns->count();
+    }
+
+    /**
+     * Get active campaigns count
+     */
+    public function getActiveCampaignCount(): int
+    {
+        return $this->auditCampaigns->filter(fn(AuditCampaign $campaign) =>
+            $campaign->getStatus() !== 'archived'
+        )->count();
     }
 }

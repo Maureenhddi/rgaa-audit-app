@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Audit;
+use App\Repository\AuditCampaignRepository;
 use App\Repository\AuditRepository;
 use App\Repository\AuditResultRepository;
 use App\Repository\ProjectRepository;
@@ -21,14 +22,35 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class AuditController extends AbstractController
 {
     #[Route('/new', name: 'app_audit_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, AuditService $auditService, ValidatorInterface $validator, EntityManagerInterface $entityManager, ProjectRepository $projectRepository): Response
-    {
-        // Get active projects for the select dropdown (needed for both GET and POST)
-        $projects = $projectRepository->findActiveByUser($this->getUser());
+    public function new(
+        Request $request,
+        AuditService $auditService,
+        ValidatorInterface $validator,
+        EntityManagerInterface $entityManager,
+        AuditCampaignRepository $campaignRepository
+    ): Response {
+        $user = $this->getUser();
+
+        // Check if campaign_id is provided (required)
+        $campaignId = $request->query->get('campaign_id') ?? $request->request->get('campaign_id');
+
+        if (!$campaignId) {
+            $this->addFlash('error', 'Vous devez sélectionner une campagne d\'audit. Veuillez d\'abord créer une campagne dans un projet.');
+            return $this->redirectToRoute('app_project_list');
+        }
+
+        // Get and verify campaign
+        $campaign = $campaignRepository->findOneByIdAndUser((int) $campaignId, $user);
+
+        if (!$campaign) {
+            $this->addFlash('error', 'Campagne non trouvée ou vous n\'avez pas accès à cette campagne.');
+            return $this->redirectToRoute('app_project_list');
+        }
 
         if ($request->isMethod('POST')) {
             $url = $request->request->get('url');
-            $projectId = $request->request->get('project_id');
+            $pageType = $request->request->get('page_type', 'other');
+            $action = $request->request->get('duplicate_action'); // 'replace' or 'create_new'
 
             // Get selected image analysis types (array)
             $imageAnalysisTypes = $request->request->all('image_analysis_types') ?? [];
@@ -48,31 +70,59 @@ class AuditController extends AbstractController
 
             if (count($errors) > 0) {
                 $this->addFlash('error', 'URL invalide. Veuillez entrer une URL valide (ex: https://example.com)');
-                return $this->redirectToRoute('app_audit_new');
+                return $this->redirectToRoute('app_audit_new', ['campaign_id' => $campaignId]);
+            }
+
+            // Check for existing audit with same URL in this campaign
+            $existingAudit = $campaignRepository->findExistingAuditByUrl($campaign, $url);
+
+            // If duplicate found and no action specified, show modal to user
+            if ($existingAudit && !$action) {
+                return $this->render('audit/new.html.twig', [
+                    'campaign' => $campaign,
+                    'existing_audit' => $existingAudit,
+                    'duplicate_url' => $url,
+                    'page_type' => $pageType,
+                    'image_analysis_types' => $imageAnalysisTypes,
+                ]);
             }
 
             try {
-                $audit = $auditService->runCompleteAudit($url, $this->getUser(), $imageAnalysisTypes, $contextualAnalysisTypes);
-
-                // Associate with project if selected
-                if ($projectId) {
-                    $project = $projectRepository->findOneByIdAndUser((int) $projectId, $this->getUser());
-                    if ($project) {
-                        $audit->setProject($project);
-                        $entityManager->flush();
-                    }
+                // If replacing, delete the old audit first
+                if ($action === 'replace' && $existingAudit) {
+                    $entityManager->remove($existingAudit);
+                    $entityManager->flush();
                 }
 
-                $this->addFlash('success', 'L\'audit a été complété avec succès !');
+                $audit = $auditService->runCompleteAudit($url, $user, $imageAnalysisTypes, $contextualAnalysisTypes);
+
+                // Associate with campaign and project
+                $audit->setCampaign($campaign);
+                $audit->setProject($campaign->getProject());
+                $audit->setPageType($pageType);
+
+                // Update campaign status to in_progress if it was draft
+                if ($campaign->getStatus() === 'draft') {
+                    $campaign->setStatus('in_progress');
+                }
+
+                $entityManager->flush();
+
+                if ($action === 'replace') {
+                    $this->addFlash('success', 'L\'ancien audit a été remplacé par le nouvel audit !');
+                } else {
+                    $this->addFlash('success', 'L\'audit de la page a été complété avec succès !');
+                }
+
                 return $this->redirectToRoute('app_audit_show', ['id' => $audit->getId()]);
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Erreur lors du lancement de l\'audit : ' . $e->getMessage());
-                return $this->redirectToRoute('app_audit_new');
+                return $this->redirectToRoute('app_audit_new', ['campaign_id' => $campaignId]);
             }
         }
 
         return $this->render('audit/new.html.twig', [
-            'projects' => $projects,
+            'campaign' => $campaign,
         ]);
     }
 

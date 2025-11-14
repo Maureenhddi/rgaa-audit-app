@@ -1,0 +1,153 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes campagnes d'audit - {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-clipboard-data"></i> Mes campagnes d'audit</h1>
+</div>
+
+{# Filters #}
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Recherche</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Nom de la campagne ou du projet">
+            </div>
+            <div class="col-md-4">
+                <label for="status" class="form-label">Statut</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="all" {% if status == 'all' %}selected{% endif %}>Tous</option>
+                    <option value="draft" {% if status == 'draft' %}selected{% endif %}>Brouillon</option>
+                    <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>En cours</option>
+                    <option value="completed" {% if status == 'completed' %}selected{% endif %}>Terminé</option>
+                    <option value="archived" {% if status == 'archived' %}selected{% endif %}>Archivé</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# Campaigns List #}
+{% if campaigns|length > 0 %}
+    <div class="row">
+        {% for campaign in campaigns %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title mb-0">
+                                <a href="{{ path('app_campaign_show', {id: campaign.id}) }}" class="text-decoration-none">
+                                    {{ campaign.name }}
+                                </a>
+                            </h5>
+                            {% if campaign.isArchived %}
+                                <span class="badge bg-secondary">Archivé</span>
+                            {% elseif campaign.status == 'completed' %}
+                                <span class="badge bg-success">Terminé</span>
+                            {% elseif campaign.status == 'in_progress' %}
+                                <span class="badge bg-primary">En cours</span>
+                            {% else %}
+                                <span class="badge bg-warning">Brouillon</span>
+                            {% endif %}
+                        </div>
+
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-folder"></i>
+                            <a href="{{ path('app_project_show', {id: campaign.project.id}) }}">{{ campaign.project.name }}</a>
+                        </p>
+
+                        {% if campaign.description %}
+                            <p class="card-text text-muted small">
+                                {{ campaign.description|length > 100 ? campaign.description|slice(0, 100) ~ '...' : campaign.description }}
+                            </p>
+                        {% endif %}
+
+                        <div class="row text-center mt-3">
+                            <div class="col-4">
+                                <div class="stat-value">{{ campaign.totalPages ?? 0 }}</div>
+                                <div class="stat-label">Page{% if campaign.totalPages > 1 %}s{% endif %}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-value">
+                                    {% if campaign.avgConformityRate %}
+                                        {{ campaign.avgConformityRate }}%
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                                <div class="stat-label">Conformité</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-value">{{ campaign.totalIssues ?? 0 }}</div>
+                                <div class="stat-label">Problème{% if campaign.totalIssues > 1 %}s{% endif %}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">{{ campaign.startDate|date('d/m/Y') }}</small>
+                            <a href="{{ path('app_campaign_show', {id: campaign.id}) }}" class="btn btn-sm btn-outline-primary">
+                                Voir <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {# Pagination #}
+    {% if total_pages > 1 %}
+        <nav aria-label="Navigation pagination">
+            <ul class="pagination justify-content-center">
+                {% for page in 1..total_pages %}
+                    <li class="page-item {% if page == current_page %}active{% endif %}">
+                        <a class="page-link" href="{{ path('app_campaign_list', {page: page, search: search, status: status}) }}">{{ page }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    {% endif %}
+
+    <div class="text-center text-muted">
+        <small>{{ total_campaigns }} campagne{% if total_campaigns > 1 %}s{% endif %} au total</small>
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 4rem; color: var(--text-light);"></i>
+        <h3 class="mt-3">Aucune campagne trouvée</h3>
+        <p class="text-muted mb-4">
+            {% if search or status != 'all' %}
+                Aucune campagne ne correspond à vos critères de recherche.
+                <br>
+                <a href="{{ path('app_campaign_list') }}">Réinitialiser les filtres</a>
+            {% else %}
+                Commencez par créer un projet, puis lancez votre première campagne d'audit.
+                <br>
+                <a href="{{ path('app_project_list') }}" class="btn btn-primary mt-3">
+                    <i class="bi bi-folder-plus"></i> Voir mes projets
+                </a>
+            {% endif %}
+        </p>
+    </div>
+{% endif %}
+
+<style>
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+</style>
+{% endblock %}

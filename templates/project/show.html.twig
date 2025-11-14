@@ -130,19 +130,19 @@
     <div class="col-md-3">
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="bi bi-file-earmark-text" style="color: var(--info-color);"></i>
+                <i class="bi bi-clipboard-data" style="color: var(--info-color);"></i>
             </div>
-            <div class="stat-value">{{ project.auditCount }}</div>
-            <div class="stat-label">Audit{% if project.auditCount > 1 %}s{% endif %}</div>
+            <div class="stat-value">{{ project.campaignCount }}</div>
+            <div class="stat-label">Campagne{% if project.campaignCount > 1 %}s{% endif %}</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="stat-card">
             <div class="stat-icon">
-                <i class="bi bi-check-circle" style="color: var(--success-color);"></i>
+                <i class="bi bi-file-earmark-text" style="color: var(--success-color);"></i>
             </div>
-            <div class="stat-value">{{ project.completedAuditCount }}</div>
-            <div class="stat-label">Terminé{% if project.completedAuditCount > 1 %}s{% endif %}</div>
+            <div class="stat-value">{{ project.auditCount }}</div>
+            <div class="stat-label">Page{% if project.auditCount > 1 %}s{% endif %} auditée{% if project.auditCount > 1 %}s{% endif %}</div>
         </div>
     </div>
     <div class="col-md-3">
@@ -177,63 +177,67 @@
     </div>
 </div>
 
-{# Audits List #}
+{# Campaigns List #}
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-            <i class="bi bi-list-check"></i> Audits du projet
+            <i class="bi bi-clipboard-data"></i> Campagnes d'audit
         </h5>
-        <a href="{{ path('app_audit_new') }}" class="btn btn-sm btn-primary">
-            <i class="bi bi-plus-circle"></i> Nouvel audit
+        <a href="{{ path('app_campaign_new', {projectId: project.id}) }}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-circle"></i> Nouvelle campagne
         </a>
     </div>
     <div class="card-body">
-        {% if project.audits|length > 0 %}
+        {% if project.auditCampaigns|length > 0 %}
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th>URL</th>
+                            <th>Nom</th>
                             <th>Statut</th>
-                            <th class="text-center">Problèmes</th>
-                            <th>Date</th>
+                            <th class="text-center">Pages</th>
+                            <th>Conformité</th>
+                            <th>Date début</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for audit in project.audits %}
+                        {% for campaign in project.auditCampaigns %}
                             <tr class="audit-row">
                                 <td>
-                                    <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="text-decoration-none">
-                                        {{ audit.url|length > 50 ? audit.url|slice(0, 50) ~ '...' : audit.url }}
+                                    <a href="{{ path('app_campaign_show', {id: campaign.id}) }}" class="text-decoration-none">
+                                        {{ campaign.name }}
                                     </a>
                                 </td>
                                 <td>
-                                    {% if audit.status == constant('App\\Enum\\AuditStatus::COMPLETED') %}
+                                    {% if campaign.isArchived %}
+                                        <span class="badge bg-secondary">Archivé</span>
+                                    {% elseif campaign.status == 'completed' %}
                                         <span class="badge bg-success">Terminé</span>
-                                    {% elseif audit.status == constant('App\\Enum\\AuditStatus::RUNNING') %}
-                                        <span class="badge bg-warning">En cours</span>
-                                    {% elseif audit.status == constant('App\\Enum\\AuditStatus::FAILED') %}
-                                        <span class="badge bg-danger">Échoué</span>
+                                    {% elseif campaign.status == 'in_progress' %}
+                                        <span class="badge bg-primary">En cours</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">En attente</span>
+                                        <span class="badge bg-warning">Brouillon</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center">
-                                    {% if audit.totalIssues %}
-                                        <span class="badge bg-secondary">{{ audit.totalIssues }}</span>
-                                        {% if audit.criticalCount %}
-                                            <span class="badge bg-danger" title="Critiques">{{ audit.criticalCount }}</span>
-                                        {% endif %}
+                                    <span class="badge bg-info">{{ campaign.totalPages ?? 0 }}</span>
+                                    {% if campaign.totalPages > 0 %}
+                                        <small class="text-muted">({{ campaign.completedPageAuditsCount }} terminées)</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if campaign.avgConformityRate %}
+                                        <strong>{{ campaign.avgConformityRate }}%</strong>
                                     {% else %}
                                         -
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <small class="text-muted">{{ audit.createdAt|date('d/m/Y H:i') }}</small>
+                                    <small class="text-muted">{{ campaign.startDate|date('d/m/Y') }}</small>
                                 </td>
                                 <td>
-                                    <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ path('app_campaign_show', {id: campaign.id}) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-eye"></i> Voir
                                     </a>
                                 </td>
@@ -245,10 +249,14 @@
         {% else %}
             <div class="text-center py-5">
                 <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-light);"></i>
-                <h4 class="mt-3 mb-2">Aucun audit pour ce projet</h4>
-                <p class="text-muted mb-4">Commencez par créer un audit pour ce projet.</p>
-                <a href="{{ path('app_audit_new') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Créer un audit
+                <h4 class="mt-3 mb-2">Aucune campagne d'audit</h4>
+                <p class="text-muted mb-4">
+                    Créez une campagne d'audit pour auditer plusieurs pages de ce projet.
+                    <br>
+                    <small>Une campagne permet d'obtenir une vue d'ensemble de la conformité du site.</small>
+                </p>
+                <a href="{{ path('app_campaign_new', {projectId: project.id}) }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Créer une campagne
                 </a>
             </div>
         {% endif %}

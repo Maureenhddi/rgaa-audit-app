@@ -24,8 +24,18 @@ class Audit
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Project $project = null;
 
+    #[ORM\ManyToOne(inversedBy: 'pageAudits')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
+    private ?AuditCampaign $campaign = null;
+
     #[ORM\Column(length: 500)]
     private ?string $url = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $pageType = null; // homepage, form, listing, article, other
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $pageTitle = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -114,6 +124,18 @@ class Audit
     public function setProject(?Project $project): static
     {
         $this->project = $project;
+
+        return $this;
+    }
+
+    public function getCampaign(): ?AuditCampaign
+    {
+        return $this->campaign;
+    }
+
+    public function setCampaign(?AuditCampaign $campaign): static
+    {
+        $this->campaign = $campaign;
 
         return $this;
     }
@@ -377,6 +399,30 @@ class Audit
     public function setScreenshotPath(?string $screenshotPath): static
     {
         $this->screenshotPath = $screenshotPath;
+
+        return $this;
+    }
+
+    public function getPageType(): ?string
+    {
+        return $this->pageType;
+    }
+
+    public function setPageType(?string $pageType): static
+    {
+        $this->pageType = $pageType;
+
+        return $this;
+    }
+
+    public function getPageTitle(): ?string
+    {
+        return $this->pageTitle;
+    }
+
+    public function setPageTitle(?string $pageTitle): static
+    {
+        $this->pageTitle = $pageTitle;
 
         return $this;
     }

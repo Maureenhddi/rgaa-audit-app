@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ is_edit ? 'Modifier' : 'Nouvelle' }} campagne - {{ parent() }}{% endblock %}
+
+{% block content %}
+{# Breadcrumb #}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('app_project_list') }}">Projets</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_project_show', {id: project.id}) }}">{{ project.name }}</a></li>
+        {% if is_edit %}
+            <li class="breadcrumb-item"><a href="{{ path('app_campaign_show', {id: campaign.id}) }}">{{ campaign.name }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Modifier</li>
+        {% else %}
+            <li class="breadcrumb-item active" aria-current="page">Nouvelle campagne</li>
+        {% endif %}
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-clipboard-data"></i>
+                    {% if is_edit %}
+                        Modifier la campagne d'audit
+                    {% else %}
+                        Nouvelle campagne d'audit
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if not is_edit %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Qu'est-ce qu'une campagne d'audit ?</strong>
+                        <p class="mb-0 mt-2">
+                            Une campagne d'audit vous permet d'auditer <strong>plusieurs pages</strong> d'un même site web.
+                            Après avoir créé la campagne, vous pourrez ajouter autant de pages que nécessaire et obtenir
+                            une vue d'ensemble de la conformité RGAA du site.
+                        </p>
+                    </div>
+                {% endif %}
+
+                {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_row(form.name) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_row(form.description) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_row(form.sampleType) }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.startDate) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.endDate) }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% if is_edit %}{{ path('app_campaign_show', {id: campaign.id}) }}{% else %}{{ path('app_project_show', {id: project.id}) }}{% endif %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-{% if is_edit %}check{% else %}plus-circle{% endif %}"></i>
+                            {% if is_edit %}
+                                Enregistrer les modifications
+                            {% else %}
+                                Créer la campagne
+                            {% endif %}
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        {% if not is_edit %}
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-lightbulb"></i> Prochaines étapes</h5>
+                    <ol class="mb-0">
+                        <li>Créez votre campagne d'audit</li>
+                        <li>Ajoutez les pages à auditer (accueil, contact, formulaires, etc.)</li>
+                        <li>Lancez les audits page par page</li>
+                        <li>Consultez les résultats globaux de la campagne</li>
+                        <li>Exportez le rapport PDF complet</li>
+                    </ol>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% macro status_dropdown(item, button_class = 'btn-outline-primary') %}
+<div class="dropdown">
+    <button class="btn btn-sm {{ button_class }} dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        {{ item.statusLabel }}
+    </button>
+    <ul class="dropdown-menu">
+        <li>
+            <form method="post" action="{{ path('app_action_plan_item_update_status', {id: item.id}) }}" style="margin: 0;">
+                <input type="hidden" name="_token" value="{{ csrf_token('update_item_status_' ~ item.id) }}">
+                <input type="hidden" name="status" value="pending">
+                <button type="submit" class="dropdown-item">
+                    <i class="bi bi-circle text-secondary"></i> En attente
+                </button>
+            </form>
+        </li>
+        <li>
+            <form method="post" action="{{ path('app_action_plan_item_update_status', {id: item.id}) }}" style="margin: 0;">
+                <input type="hidden" name="_token" value="{{ csrf_token('update_item_status_' ~ item.id) }}">
+                <input type="hidden" name="status" value="in_progress">
+                <button type="submit" class="dropdown-item">
+                    <i class="bi bi-arrow-repeat text-primary"></i> En cours
+                </button>
+            </form>
+        </li>
+        <li>
+            <form method="post" action="{{ path('app_action_plan_item_update_status', {id: item.id}) }}" style="margin: 0;">
+                <input type="hidden" name="_token" value="{{ csrf_token('update_item_status_' ~ item.id) }}">
+                <input type="hidden" name="status" value="completed">
+                <button type="submit" class="dropdown-item">
+                    <i class="bi bi-check-circle text-success"></i> Complétée
+                </button>
+            </form>
+        </li>
+        <li>
+            <form method="post" action="{{ path('app_action_plan_item_update_status', {id: item.id}) }}" style="margin: 0;">
+                <input type="hidden" name="_token" value="{{ csrf_token('update_item_status_' ~ item.id) }}">
+                <input type="hidden" name="status" value="blocked">
+                <button type="submit" class="dropdown-item">
+                    <i class="bi bi-x-circle text-danger"></i> Bloquée
+                </button>
+            </form>
+        </li>
+    </ul>
+</div>
+{% endmacro %}
