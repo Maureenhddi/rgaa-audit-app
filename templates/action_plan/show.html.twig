@@ -4,6 +4,206 @@
 {% block title %}Plan d'action pluriannuel - {{ parent() }}{% endblock %}
 
 {% block content %}
+<style>
+    body {
+        background: linear-gradient(135deg, #1a1d29 0%, #0f1117 100%) !important;
+        color: #e9ecef !important;
+    }
+
+    .plan-hero {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        border-radius: 16px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(30, 58, 138, 0.5);
+    }
+
+    .stat-card-plan {
+        background: linear-gradient(135deg, #252836 0%, #2d3142 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        border: 2px solid #3d4356;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+
+    .stat-card-plan:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.3);
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: #60a5fa;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+    }
+
+    .progress-ring {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+
+    .markdown-content {
+        line-height: 1.8;
+        color: #d1d5db;
+    }
+
+    .markdown-content h2 {
+        color: #60a5fa;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #3b82f6;
+    }
+
+    .markdown-content h3 {
+        color: #93c5fd;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .markdown-content ul, .markdown-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content li {
+        margin-bottom: 0.5rem;
+    }
+
+    .markdown-content strong {
+        color: #f3f4f6;
+        font-weight: 600;
+    }
+
+    .markdown-content p {
+        margin-bottom: 1rem;
+    }
+
+    .action-item-card {
+        background: linear-gradient(135deg, #1e2330 0%, #252836 100%);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 2px solid #3d4356;
+        border-left: 5px solid #3d4356;
+        transition: all 0.2s ease;
+        color: #e9ecef;
+    }
+
+    .action-item-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        transform: translateX(4px);
+        border-color: #4b5563;
+    }
+
+    .action-item-card.severity-critical {
+        border-left-color: #ef4444;
+        background: linear-gradient(135deg, #3d1f1f 0%, #4a1f1f 100%);
+        border-right-color: #991b1b;
+    }
+
+    .action-item-card.severity-critical:hover {
+        border-color: #ef4444;
+        background: linear-gradient(135deg, #4a1f1f 0%, #5a2424 100%);
+    }
+
+    .action-item-card.severity-major {
+        border-left-color: #f59e0b;
+        background: linear-gradient(135deg, #3d2e1f 0%, #4a361f 100%);
+        border-right-color: #92400e;
+    }
+
+    .action-item-card.severity-major:hover {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, #4a361f 0%, #5a4024 100%);
+    }
+
+    .action-item-card.severity-minor {
+        border-left-color: #06b6d4;
+        background: linear-gradient(135deg, #1f2d3d 0%, #1f3a4a 100%);
+        border-right-color: #155e75;
+    }
+
+    .action-item-card.severity-minor:hover {
+        border-color: #06b6d4;
+        background: linear-gradient(135deg, #1f3a4a 0%, #244a5a 100%);
+    }
+
+    .filter-btn {
+        border-radius: 6px;
+        padding: 0.375rem 0.875rem;
+        border: 1px solid #3d4356;
+        background: transparent;
+        color: #9ca3af;
+        transition: all 0.15s ease;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .filter-btn.active {
+        background: #1e40af;
+        color: white;
+        border-color: #3b82f6;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+
+    .filter-btn:hover {
+        border-color: #60a5fa;
+        background: rgba(59, 130, 246, 0.1);
+        color: #60a5fa;
+    }
+
+    .filter-btn.active:hover {
+        color: white;
+        background: #1e3a8a;
+    }
+
+    .quarter-section {
+        background: linear-gradient(135deg, #1e2330 0%, #252836 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 2px solid #3d4356;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .year-header {
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(30, 58, 138, 0.6);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 2rem;
+    }
+</style>
+
 {# Breadcrumb #}
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
@@ -14,221 +214,450 @@
     </ol>
 </nav>
 
-<div class="row">
-    <div class="col-12">
-        {# Header #}
-        <div class="card mb-4 shadow-sm border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h2 class="mb-2">
-                            <i class="bi bi-calendar-check"></i> {{ action_plan.name }}
-                        </h2>
-                        <p class="mb-3">{{ action_plan.description }}</p>
-                        <div class="d-flex gap-3">
-                            <span><i class="bi bi-calendar-range"></i> {{ action_plan.startDate|date('d/m/Y') }} → {{ action_plan.endDate|date('d/m/Y') }}</span>
-                            <span><i class="bi bi-clock-history"></i> Durée : {{ action_plan.durationYears }} an(s)</span>
-                            <span><i class="bi bi-list-task"></i> {{ action_plan.items|length }} actions</span>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <h3 class="mb-1">{{ action_plan.completionPercentage }}%</h3>
-                        <small>Progression</small>
-                    </div>
-                </div>
+{# Hero Section #}
+<div class="plan-hero">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1 class="mb-2">
+                <i class="bi bi-calendar-check"></i> {{ action_plan.name }}
+            </h1>
+            <p class="mb-3 opacity-90">{{ action_plan.description }}</p>
+            <div class="d-flex flex-wrap gap-3">
+                <span><i class="bi bi-calendar-range"></i> {{ action_plan.startDate|date('d/m/Y') }} → {{ action_plan.endDate|date('d/m/Y') }}</span>
+                <span><i class="bi bi-clock-history"></i> Durée : {{ action_plan.durationYears }} an(s)</span>
+                <span><i class="bi bi-list-task"></i> {{ action_plan.items|length }} actions planifiées</span>
             </div>
         </div>
-
-        {# Metrics Row #}
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card text-center border-primary">
-                    <div class="card-body">
-                        <h5 class="text-primary">{{ action_plan.currentConformityRate }}%</h5>
-                        <small class="text-muted">Conformité actuelle</small>
-                    </div>
-                </div>
+        <div class="col-lg-4 text-center">
+            <div class="progress-ring">
+                <svg viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="12"/>
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="white" stroke-width="12"
+                            stroke-dasharray="{{ action_plan.completionPercentage * 3.39 }} 339"
+                            stroke-linecap="round" transform="rotate(-90 60 60)"/>
+                    <text x="60" y="60" text-anchor="middle" dy="7" font-size="28" font-weight="bold" fill="white">
+                        {{ action_plan.completionPercentage|number_format(0) }}%
+                    </text>
+                </svg>
             </div>
-            <div class="col-md-3">
-                <div class="card text-center border-success">
-                    <div class="card-body">
-                        <h5 class="text-success">{{ action_plan.targetConformityRate }}%</h5>
-                        <small class="text-muted">Objectif cible</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center border-danger">
-                    <div class="card-body">
-                        <h5 class="text-danger">{{ action_plan.criticalIssues }}</h5>
-                        <small class="text-muted">Critiques</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center border-warning">
-                    <div class="card-body">
-                        <h5 class="text-warning">{{ action_plan.majorIssues + action_plan.minorIssues }}</h5>
-                        <small class="text-muted">Majeurs + Mineurs</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {# Executive Summary #}
-        {% if action_plan.executiveSummary %}
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="bi bi-file-text"></i> Résumé exécutif</h5>
-            </div>
-            <div class="card-body">
-                <div class="markdown-content">
-                    {{ action_plan.executiveSummary|raw|nl2br }}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        {# Quick Wins Section #}
-        {% if quick_wins|length > 0 %}
-        <div class="card mb-4 shadow-sm border-success">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-lightning-charge-fill"></i> Quick Wins - Actions prioritaires (3-6 mois)</h5>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-success">
-                    <strong>🎯 Actions à fort impact et faible effort</strong> - Ces corrections critiques doivent être traitées en priorité absolue.
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th style="width: 5%">#</th>
-                                <th style="width: 35%">Action</th>
-                                <th style="width: 15%">Catégorie</th>
-                                <th style="width: 10%">Effort</th>
-                                <th style="width: 10%">Impact</th>
-                                <th style="width: 15%">Planning</th>
-                                <th style="width: 10%">Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in quick_wins %}
-                            <tr>
-                                <td>{{ item.priority }}</td>
-                                <td>
-                                    <strong>{{ item.title }}</strong>
-                                    {% if item.affectedPages|length > 0 %}
-                                        <br><small class="text-muted">{{ item.affectedPages|length }} page(s) affectée(s)</small>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge bg-secondary">{{ item.categoryLabel }}</span>
-                                </td>
-                                <td>{{ item.estimatedEffort }}h</td>
-                                <td>
-                                    <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar bg-success" style="width: {{ item.impactScore }}%">{{ item.impactScore }}</div>
-                                    </div>
-                                </td>
-                                <td><span class="badge bg-info">{{ item.quarterLabel }}</span></td>
-                                <td>
-                                    {{ macros.status_dropdown(item, item.statusBadgeClass) }}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        {# Timeline by Year/Quarter #}
-        <div class="card shadow-sm">
-            <div class="card-header bg-light">
-                <h5 class="mb-0"><i class="bi bi-calendar3"></i> Planning pluriannuel</h5>
-            </div>
-            <div class="card-body">
-                {% for year, quarters in items_by_year %}
-                    <div class="year-section mb-4">
-                        <h4 class="mb-3 pb-2 border-bottom">
-                            <i class="bi bi-calendar-event"></i> Année {{ year }}
-                            {% if year == current_year %}
-                                <span class="badge bg-primary">En cours</span>
-                            {% elseif year < current_year %}
-                                <span class="badge bg-secondary">Passée</span>
-                            {% else %}
-                                <span class="badge bg-info">À venir</span>
-                            {% endif %}
-                        </h4>
-
-                        <div class="row">
-                            {% for quarter, items in quarters %}
-                                {% if items|length > 0 %}
-                                <div class="col-md-6 mb-3">
-                                    <div class="card h-100 {% if items|length > 0 %}border-primary{% endif %}">
-                                        <div class="card-header bg-primary text-white">
-                                            <strong>{{ quarter }} {{ year }}</strong> - {{ items|length }} action(s)
-                                        </div>
-                                        <div class="card-body p-0">
-                                            <ul class="list-group list-group-flush">
-                                                {% for item in items %}
-                                                <li class="list-group-item">
-                                                    <div class="d-flex justify-content-between align-items-start">
-                                                        <div class="flex-grow-1">
-                                                            <div class="d-flex gap-2 mb-1">
-                                                                <span class="badge {{ item.severityBadgeClass }}">{{ item.severityLabel }}</span>
-                                                                <span class="badge bg-secondary">{{ item.categoryLabel }}</span>
-                                                                {% if item.quickWin %}
-                                                                    <span class="badge bg-success"><i class="bi bi-lightning-charge-fill"></i> Quick Win</span>
-                                                                {% endif %}
-                                                            </div>
-                                                            <strong>{{ item.title }}</strong>
-                                                            {% if item.description %}
-                                                                <p class="mb-1 small text-muted">{{ item.description|slice(0, 100) }}{% if item.description|length > 100 %}...{% endif %}</p>
-                                                            {% endif %}
-                                                            <div class="small text-muted">
-                                                                <i class="bi bi-clock"></i> {{ item.estimatedEffort }}h
-                                                                {% if item.affectedPages|length > 0 %}
-                                                                    | <i class="bi bi-file-earmark"></i> {{ item.affectedPages|length }} page(s)
-                                                                {% endif %}
-                                                            </div>
-                                                        </div>
-                                                        <div class="d-flex flex-column gap-2">
-                                                            <span class="badge {{ item.statusBadgeClass }}">{{ item.statusLabel }}</span>
-                                                            {{ macros.status_dropdown(item) }}
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {# Actions #}
-        <div class="mt-4 d-flex justify-content-between">
-            <a href="{{ path('app_campaign_show', {id: action_plan.campaign.id}) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Retour à la campagne
-            </a>
-            <div>
-                <form method="post" action="{{ path('app_action_plan_delete', {id: action_plan.id}) }}" style="display: inline;"
-                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce plan d\'action ?');">
-                    <input type="hidden" name="_token" value="{{ csrf_token('delete_action_plan_' ~ action_plan.id) }}">
-                    <button type="submit" class="btn btn-outline-danger">
-                        <i class="bi bi-trash"></i> Supprimer
-                    </button>
-                </form>
-            </div>
+            <div class="mt-2 opacity-90">Progression globale</div>
         </div>
     </div>
 </div>
+
+{# Statistics Cards #}
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-plan">
+            <div class="stat-value" style="color: #60a5fa;">{{ action_plan.currentConformityRate }}%</div>
+            <div class="stat-label">Conformité actuelle</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-plan">
+            <div class="stat-value" style="color: #34d399;">{{ action_plan.targetConformityRate }}%</div>
+            <div class="stat-label">Objectif cible</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-plan">
+            <div class="stat-value" style="color: #f87171;">{{ action_plan.criticalIssues }}</div>
+            <div class="stat-label">Problèmes critiques</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-plan">
+            <div class="stat-value" style="color: #22d3ee;">{{ action_plan.items.filter(i => i.status.value == 'completed').count }}</div>
+            <div class="stat-label">Actions complétées</div>
+        </div>
+    </div>
+</div>
+
+{# Executive Summary with proper Markdown rendering #}
+{% if action_plan.executiveSummary %}
+<div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #3b82f6 !important; border: 2px solid #1e40af;">
+    <div class="card-header" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border-bottom: 2px solid #3b82f6;">
+        <h4 class="mb-0" style="color: #ffffff;"><i class="bi bi-file-text"></i> Résumé exécutif</h4>
+    </div>
+    <div class="card-body p-4" style="background: linear-gradient(135deg, #1e2330 0%, #252836 100%);">
+        <div class="markdown-content">
+            {{ action_plan.executiveSummary|raw }}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# Quick Wins Section #}
+{% if quick_wins|length > 0 %}
+<div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #10b981 !important; border: 2px solid #059669;">
+    <div class="card-header" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white;">
+        <h4 class="mb-0"><i class="bi bi-lightning-charge-fill"></i> Quick Wins - Actions prioritaires</h4>
+    </div>
+    <div class="card-body" style="background: linear-gradient(135deg, #1e2330 0%, #252836 100%);">
+        <div class="alert border-0" style="background: linear-gradient(135deg, #1f3d2f 0%, #1a3526 100%); color: #6ee7b7; border-left: 4px solid #10b981 !important;">
+            <strong><i class="bi bi-info-circle"></i> Actions à fort impact et faible effort</strong> - Ces corrections critiques doivent être traitées en priorité absolue pour des gains rapides.
+        </div>
+        <div class="row g-3">
+            {% for item in quick_wins %}
+            <div class="col-12">
+                <div class="action-item-card severity-{{ item.severity.value }}">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <div class="d-flex gap-2 mb-2">
+                                <span class="badge {{ item.severityBadgeClass }}">{{ item.severityLabel }}</span>
+                                <span class="badge bg-secondary">{{ item.categoryLabel }}</span>
+                                <span class="badge bg-success"><i class="bi bi-lightning-charge-fill"></i> Quick Win</span>
+                            </div>
+                            <strong class="d-block mb-1">{{ item.title }}</strong>
+                            {% if item.affectedPages|length > 0 %}
+                                <small class="text-muted"><i class="bi bi-file-earmark"></i> {{ item.affectedPages|length }} page(s) affectée(s)</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="small text-muted">Effort</div>
+                            <strong>{{ item.estimatedEffort }}h</strong>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="small text-muted">Impact</div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: {{ item.impactScore }}%"></div>
+                            </div>
+                            <small>{{ item.impactScore }}/100</small>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <span class="badge bg-info">{{ item.quarterLabel }}</span>
+                        </div>
+                        <div class="col-md-1">
+                            {{ macros.status_dropdown(item) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# Filters - Compact version #}
+<div class="mb-4 p-3" style="background: rgba(30, 35, 48, 0.5); border-radius: 12px; border: 1px solid #3d4356;">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span style="color: #9ca3af; font-size: 0.875rem; margin-right: 0.5rem;">
+            <i class="bi bi-funnel"></i> Filtrer :
+        </span>
+        <button class="filter-btn active" data-filter="all">Toutes</button>
+        <button class="filter-btn" data-filter="critical">Critiques</button>
+        <button class="filter-btn" data-filter="major">Majeures</button>
+        <button class="filter-btn" data-filter="minor">Mineures</button>
+        <span style="color: #4b5563; margin: 0 0.5rem;">|</span>
+        <button class="filter-btn" data-filter="pending">En attente</button>
+        <button class="filter-btn" data-filter="completed">Complétées</button>
+    </div>
+</div>
+
+{# Timeline by Year/Quarter #}
+<div class="mb-4">
+    {% for year, quarters in items_by_year %}
+        <div class="year-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-1">
+                        <i class="bi bi-calendar-event"></i> Année {{ year }}
+                    </h3>
+                    <small class="opacity-90">
+                        {% set year_items = 0 %}
+                        {% for quarter, items in quarters %}
+                            {% set year_items = year_items + items|length %}
+                        {% endfor %}
+                        {{ year_items }} action(s) planifiée(s)
+                    </small>
+                </div>
+                <div>
+                    {% if year == current_year %}
+                        <span class="badge bg-light text-dark"><i class="bi bi-play-fill"></i> En cours</span>
+                    {% elseif year < current_year %}
+                        <span class="badge bg-light text-dark opacity-75"><i class="bi bi-clock-history"></i> Passée</span>
+                    {% else %}
+                        <span class="badge bg-light text-dark opacity-75"><i class="bi bi-calendar-plus"></i> À venir</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            {% for quarter, items in quarters %}
+                {% if items|length > 0 %}
+                <div class="col-lg-6">
+                    <div class="quarter-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">
+                                <i class="bi bi-calendar3"></i> {{ quarter }} {{ year }}
+                            </h5>
+                            <span class="badge bg-primary">{{ items|length }} action(s)</span>
+                        </div>
+
+                        {% for item in items %}
+                        <div class="action-item-card severity-{{ item.severity.value }}"
+                             data-severity="{{ item.severity.value }}"
+                             data-status="{{ item.status.value }}"
+                             data-category="{{ item.category.value }}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex flex-wrap gap-1 mb-2">
+                                        <span class="badge {{ item.severityBadgeClass }}">{{ item.severityLabel }}</span>
+                                        <span class="badge bg-secondary">{{ item.categoryLabel }}</span>
+                                        {% if item.quickWin %}
+                                            <span class="badge bg-success"><i class="bi bi-lightning-charge-fill"></i></span>
+                                        {% endif %}
+                                    </div>
+                                    <strong class="d-block mb-1">{{ item.title }}</strong>
+                                    {% if item.description %}
+                                        <p class="mb-2 small text-muted">{{ item.description|slice(0, 150) }}{% if item.description|length > 150 %}...{% endif %}</p>
+                                    {% endif %}
+                                    <div class="d-flex flex-wrap gap-3 small text-muted">
+                                        <span><i class="bi bi-clock"></i> {{ item.estimatedEffort }}h</span>
+                                        {% if item.affectedPages|length > 0 %}
+                                            <span><i class="bi bi-file-earmark"></i> {{ item.affectedPages|length }} page(s)</span>
+                                        {% endif %}
+                                        <span><i class="bi bi-graph-up"></i> Impact: {{ item.impactScore }}/100</span>
+                                    </div>
+                                </div>
+                                <div class="ms-3">
+                                    {{ macros.status_dropdown(item) }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
+
+{# HTML Export for Website #}
+<div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #1e2330 0%, #252836 100%); border: 2px solid #3d4356 !important;">
+    <div class="card-header" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border-bottom: 2px solid #3b82f6;">
+        <h4 class="mb-0" style="color: #ffffff;">
+            <i class="bi bi-code-square"></i> Texte pour votre site web
+        </h4>
+        <small style="color: #d1d5db; opacity: 0.9;">Code HTML prêt à copier-coller sur votre site</small>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label" style="color: #d1d5db; margin-bottom: 0;">
+                    <i class="bi bi-clipboard-check"></i> Code HTML
+                </label>
+                <button class="btn btn-sm btn-success" onclick="copyHtmlCode()" id="copyBtn">
+                    <i class="bi bi-clipboard"></i> Copier le code
+                </button>
+            </div>
+            <textarea id="htmlCode" class="form-control" rows="15" readonly style="background: #1a1d29; color: #60a5fa; border: 2px solid #3d4356; font-family: 'Courier New', monospace; font-size: 0.9rem;">{% set totalActions = action_plan.items|length %}
+{% set completedActions = action_plan.items.filter(i => i.status.value == 'completed').count %}
+{% set criticalActions = action_plan.items.filter(i => i.severity.value == 'critical').count %}
+{% set quickWinActions = action_plan.items.filter(i => i.quickWin).count %}
+<div class="plan-action-rgaa">
+    <h2>Plan d'action pluriannuel RGAA - {{ action_plan.campaign.project.name }}</h2>
+
+    <div class="plan-summary">
+        <p><strong>Notre engagement pour l'accessibilité numérique</strong></p>
+        <p>Dans le cadre de notre démarche d'amélioration continue de l'accessibilité de nos services numériques, nous avons établi un plan d'action pluriannuel sur {{ action_plan.durationYears }} ans ({{ action_plan.startDate|date('Y') }}-{{ action_plan.endDate|date('Y') }}) visant à atteindre une conformité RGAA optimale.</p>
+    </div>
+
+    <div class="plan-objectifs">
+        <h3>Nos objectifs</h3>
+        <ul>
+            <li><strong>Conformité actuelle :</strong> {{ action_plan.currentConformityRate }}%</li>
+            <li><strong>Objectif cible :</strong> {{ action_plan.targetConformityRate }}% d'ici {{ action_plan.endDate|date('Y') }}</li>
+            <li><strong>Actions planifiées :</strong> {{ totalActions }} actions sur {{ action_plan.durationYears }} an(s)</li>
+            <li><strong>Actions prioritaires :</strong> {{ quickWinActions }} quick wins identifiés</li>
+        </ul>
+    </div>
+
+    <div class="plan-progression">
+        <h3>Notre progression</h3>
+        <p>À ce jour, nous avons complété <strong>{{ completedActions }} action(s)</strong> sur {{ totalActions }}, soit un taux de réalisation de <strong>{{ action_plan.completionPercentage }}%</strong>.</p>
+
+        <div class="plan-stats">
+            <p><strong>Répartition des problématiques identifiées :</strong></p>
+            <ul>
+                <li>{{ action_plan.criticalIssues }} problèmes critiques</li>
+                <li>{{ action_plan.majorIssues }} problèmes majeurs</li>
+                <li>{{ action_plan.minorIssues }} problèmes mineurs</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="plan-approche">
+        <h3>Notre approche</h3>
+        <p>Notre plan d'action s'articule autour de trois axes principaux :</p>
+        <ol>
+            <li><strong>Quick Wins ({{ quickWinActions }} actions)</strong> - Corrections rapides à fort impact sur l'accessibilité</li>
+            <li><strong>Améliorations structurelles</strong> - Refonte des composants non conformes et mise en place de bonnes pratiques</li>
+            <li><strong>Conformité complète</strong> - Audits de contrôle et certification finale</li>
+        </ol>
+    </div>
+
+    <div class="plan-engagement">
+        <h3>Notre engagement</h3>
+        <p>Nous nous engageons à publier un bilan annuel de l'avancement de ce plan d'action et à maintenir ce document à jour. Pour toute question ou signalement concernant l'accessibilité de nos services, vous pouvez nous contacter.</p>
+        <p><em>Dernière mise à jour : {{ "now"|date('d/m/Y') }}</em></p>
+    </div>
+</div>
+
+<style>
+.plan-action-rgaa {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    line-height: 1.6;
+}
+
+.plan-action-rgaa h2 {
+    color: #0066cc;
+    border-bottom: 3px solid #0066cc;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.plan-action-rgaa h3 {
+    color: #004c99;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.plan-summary, .plan-objectifs, .plan-progression, .plan-approche, .plan-engagement {
+    margin-bottom: 2rem;
+}
+
+.plan-action-rgaa ul, .plan-action-rgaa ol {
+    margin-left: 1.5rem;
+}
+
+.plan-action-rgaa li {
+    margin-bottom: 0.5rem;
+}
+
+.plan-stats {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-left: 4px solid #0066cc;
+    margin: 1rem 0;
+}
+
+.plan-action-rgaa strong {
+    color: #212529;
+}
+
+.plan-engagement em {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+</style></textarea>
+        </div>
+        <div class="alert border-0" style="background: linear-gradient(135deg, #1f3d2f 0%, #1a3526 100%); color: #6ee7b7; border-left: 4px solid #10b981 !important;">
+            <i class="bi bi-info-circle"></i> <strong>Comment utiliser ce code ?</strong><br>
+            1. Cliquez sur "Copier le code"<br>
+            2. Collez le code dans une page HTML de votre site web<br>
+            3. Le style CSS est inclus pour un rendu optimal<br>
+            4. Vous pouvez personnaliser les couleurs et le design selon votre charte graphique
+        </div>
+    </div>
+</div>
+
+{# Actions #}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <a href="{{ path('app_campaign_show', {id: action_plan.campaign.id}) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour à la campagne
+    </a>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="bi bi-printer"></i> Imprimer
+        </button>
+        <form method="post" action="{{ path('app_action_plan_delete', {id: action_plan.id}) }}" style="display: inline;"
+              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce plan d\'action ?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete_action_plan_' ~ action_plan.id) }}">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> Supprimer
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter functionality
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const actionItems = document.querySelectorAll('.action-item-card');
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+
+            // Update active button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            // Filter items
+            actionItems.forEach(item => {
+                const severity = item.dataset.severity;
+                const status = item.dataset.status;
+
+                if (filter === 'all') {
+                    item.style.display = '';
+                } else if (filter === 'critical' || filter === 'major' || filter === 'minor') {
+                    item.style.display = severity === filter ? '' : 'none';
+                } else if (filter === 'pending' || filter === 'completed') {
+                    item.style.display = status === filter ? '' : 'none';
+                }
+            });
+        });
+    });
+});
+
+// Function to copy HTML code to clipboard
+function copyHtmlCode() {
+    const htmlCode = document.getElementById('htmlCode');
+    const copyBtn = document.getElementById('copyBtn');
+
+    // Select the text
+    htmlCode.select();
+    htmlCode.setSelectionRange(0, 99999); // For mobile devices
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(htmlCode.value).then(function() {
+        // Success feedback
+        const originalContent = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copié !';
+        copyBtn.classList.remove('btn-success');
+        copyBtn.classList.add('btn-primary');
+
+        setTimeout(function() {
+            copyBtn.innerHTML = originalContent;
+            copyBtn.classList.remove('btn-primary');
+            copyBtn.classList.add('btn-success');
+        }, 2000);
+    }).catch(function(err) {
+        // Fallback for older browsers
+        try {
+            document.execCommand('copy');
+            const originalContent = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copié !';
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-primary');
+
+            setTimeout(function() {
+                copyBtn.innerHTML = originalContent;
+                copyBtn.classList.remove('btn-primary');
+                copyBtn.classList.add('btn-success');
+            }, 2000);
+        } catch(err) {
+            alert('Erreur lors de la copie. Veuillez sélectionner le texte manuellement.');
+        }
+    });
+}
+</script>
+
 {% endblock %}
