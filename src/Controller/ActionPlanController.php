@@ -21,15 +21,31 @@ class ActionPlanController extends AbstractController
     {
         $user = $this->getUser();
 
-        // Get all action plans for user's projects
+        if (!$user) {
+            throw $this->createAccessDeniedException('Vous devez être connecté pour accéder à cette page.');
+        }
+
+        // DEBUG: Log user info
+        error_log('ACTION PLAN LIST - User: ' . $user->getName() . ' (ID: ' . $user->getId() . ')');
+        error_log('ACTION PLAN LIST - User class: ' . get_class($user));
+
+        // Get all action plans for user's projects with eager loading
         $actionPlans = $actionPlanRepository->createQueryBuilder('ap')
+            ->addSelect('c', 'p', 'items')
             ->join('ap.campaign', 'c')
             ->join('c.project', 'p')
+            ->leftJoin('ap.items', 'items')
             ->where('p.user = :user')
             ->setParameter('user', $user)
             ->orderBy('ap.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
+
+        // DEBUG: Log results
+        error_log('ACTION PLAN LIST - Results count: ' . count($actionPlans));
+        foreach ($actionPlans as $plan) {
+            error_log('ACTION PLAN LIST - Plan: ' . $plan->getName() . ' (ID: ' . $plan->getId() . ')');
+        }
 
         return $this->render('action_plan/list.html.twig', [
             'action_plans' => $actionPlans,

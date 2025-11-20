@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Plans d'action{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1>Plans d'action</h1>
+
+    <p>Nombre de plans: {{ action_plans|length }}</p>
+    <p>Utilisateur: {{ app.user ? app.user.name : 'Non connecté' }}</p>
+
+    <ul>
+    {% for plan in action_plans %}
+        <li>
+            <strong>{{ plan.name }}</strong><br>
+            ID: {{ plan.id }}<br>
+            Campagne: {{ plan.campaign.name }}<br>
+            Projet: {{ plan.campaign.project.name }}<br>
+            Nombre d'items: {{ plan.items|length }}<br>
+            <a href="{{ path('app_action_plan_show', {id: plan.id}) }}">Voir</a>
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+{% endblock %}
