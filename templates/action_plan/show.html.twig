@@ -440,9 +440,9 @@
 <div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #1e2330 0%, #252836 100%); border: 2px solid #3d4356 !important;">
     <div class="card-header" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border-bottom: 2px solid #3b82f6;">
         <h4 class="mb-0" style="color: #ffffff;">
-            <i class="bi bi-code-square"></i> Texte pour votre site web
+            <i class="bi bi-file-earmark-text"></i> Schéma pluriannuel pour votre site web
         </h4>
-        <small style="color: #d1d5db; opacity: 0.9;">Code HTML prêt à copier-coller sur votre site</small>
+        <small style="color: #d1d5db; opacity: 0.9;">Document officiel prêt à publier - Conforme à l'article 47 de la loi n° 2005-102</small>
     </div>
     <div class="card-body">
         <div class="mb-3">
@@ -454,115 +454,250 @@
                     <i class="bi bi-clipboard"></i> Copier le code
                 </button>
             </div>
-            <textarea id="htmlCode" class="form-control" rows="15" readonly style="background: #1a1d29; color: #60a5fa; border: 2px solid #3d4356; font-family: 'Courier New', monospace; font-size: 0.9rem;">{% set totalActions = action_plan.items|length %}
+            <textarea id="htmlCode" class="form-control" rows="20" readonly style="background: #1a1d29; color: #60a5fa; border: 2px solid #3d4356; font-family: 'Courier New', monospace; font-size: 0.85rem;">{% set totalActions = action_plan.items|length %}
 {% set completedActions = action_plan.items.filter(i => i.status.value == 'completed').count %}
 {% set criticalActions = action_plan.items.filter(i => i.severity.value == 'critical').count %}
+{% set majorActions = action_plan.items.filter(i => i.severity.value == 'major').count %}
+{% set minorActions = action_plan.items.filter(i => i.severity.value == 'minor').count %}
 {% set quickWinActions = action_plan.items.filter(i => i.quickWin).count %}
 <div class="plan-action-rgaa">
-    <h2>Plan d'action pluriannuel RGAA - {{ action_plan.campaign.project.name }}</h2>
+    <h1>Schéma pluriannuel de mise en accessibilité</h1>
 
-    <div class="plan-summary">
-        <p><strong>Notre engagement pour l'accessibilité numérique</strong></p>
-        <p>Dans le cadre de notre démarche d'amélioration continue de l'accessibilité de nos services numériques, nous avons établi un plan d'action pluriannuel sur {{ action_plan.durationYears }} ans ({{ action_plan.startDate|date('Y') }}-{{ action_plan.endDate|date('Y') }}) visant à atteindre une conformité RGAA optimale.</p>
-    </div>
+    <p class="intro">
+        <strong>[Nom de votre organisation]</strong> s'engage à rendre ses sites internet accessibles conformément à l'article 47 de la loi n° 2005-102 du 11 février 2005.
+    </p>
 
-    <div class="plan-objectifs">
-        <h3>Nos objectifs</h3>
+    <p>
+        Ce schéma pluriannuel s'applique à <strong>{{ action_plan.campaign.project.name }}</strong> et couvre la période <strong>{{ action_plan.startDate|date('Y') }}-{{ action_plan.endDate|date('Y') }}</strong>.
+    </p>
+
+    <h2>Politique d'accessibilité</h2>
+    <p>
+        L'accessibilité numérique est au cœur de notre démarche d'inclusion. Nous nous engageons à garantir l'égalité d'accès à nos services numériques pour tous les utilisateurs, quelles que soient leurs capacités.
+    </p>
+
+    <h2>État de conformité actuel</h2>
+    <p>
+        L'audit de conformité réalisé par <strong>{{ action_plan.auditedBy ?? 'ITROOM' }}</strong> révèle que <strong>{{ action_plan.currentConformityRate }}%</strong> des critères du RGAA version 4.1 sont respectés.
+    </p>
+
+    <div class="conformite-stats">
+        <p><strong>Résultats détaillés de l'audit :</strong></p>
         <ul>
-            <li><strong>Conformité actuelle :</strong> {{ action_plan.currentConformityRate }}%</li>
-            <li><strong>Objectif cible :</strong> {{ action_plan.targetConformityRate }}% d'ici {{ action_plan.endDate|date('Y') }}</li>
-            <li><strong>Actions planifiées :</strong> {{ totalActions }} actions sur {{ action_plan.durationYears }} an(s)</li>
-            <li><strong>Actions prioritaires :</strong> {{ quickWinActions }} quick wins identifiés</li>
+            <li>Taux de conformité actuel : <strong>{{ action_plan.currentConformityRate }}%</strong></li>
+            <li>Objectif de conformité visé : <strong>{{ action_plan.targetConformityRate }}%</strong></li>
+            <li>Nombre total de pages auditées : <strong>{{ action_plan.campaign.pageAudits|length }}</strong></li>
+            <li>Problèmes critiques identifiés : <strong>{{ action_plan.criticalIssues }}</strong></li>
+            <li>Problèmes majeurs identifiés : <strong>{{ action_plan.majorIssues }}</strong></li>
+            <li>Problèmes mineurs identifiés : <strong>{{ action_plan.minorIssues }}</strong></li>
         </ul>
     </div>
 
-    <div class="plan-progression">
-        <h3>Notre progression</h3>
-        <p>À ce jour, nous avons complété <strong>{{ completedActions }} action(s)</strong> sur {{ totalActions }}, soit un taux de réalisation de <strong>{{ action_plan.completionPercentage }}%</strong>.</p>
+    <h2>Plan d'action {{ action_plan.startDate|date('Y') }}-{{ action_plan.endDate|date('Y') }}</h2>
+    <p>
+        Pour atteindre notre objectif de conformité de <strong>{{ action_plan.targetConformityRate }}%</strong>, nous avons établi un plan d'action comportant <strong>{{ totalActions }} actions correctives</strong> réparties sur <strong>{{ action_plan.durationYears }} an(s)</strong>.
+    </p>
 
-        <div class="plan-stats">
-            <p><strong>Répartition des problématiques identifiées :</strong></p>
-            <ul>
-                <li>{{ action_plan.criticalIssues }} problèmes critiques</li>
-                <li>{{ action_plan.majorIssues }} problèmes majeurs</li>
-                <li>{{ action_plan.minorIssues }} problèmes mineurs</li>
-            </ul>
-        </div>
+    <h3>Actions prioritaires (Quick Wins)</h3>
+    <p>
+        Nous avons identifié <strong>{{ quickWinActions }} actions prioritaires</strong> à fort impact et faible effort, qui seront traitées en premier pour améliorer rapidement l'accessibilité du site.
+    </p>
+
+    <h3>Répartition par gravité</h3>
+    <ul>
+        <li><strong>{{ criticalActions }} actions critiques</strong> - Problèmes bloquants empêchant l'accès au contenu</li>
+        <li><strong>{{ majorActions }} actions majeures</strong> - Problèmes importants limitant significativement l'utilisation</li>
+        <li><strong>{{ minorActions }} actions mineures</strong> - Problèmes gênants mais non bloquants</li>
+    </ul>
+
+    <h3>Principales non-conformités à corriger</h3>
+    <ul>
+        <li>Amélioration de la navigation au clavier (focus visibles, ordre de tabulation logique)</li>
+        <li>Ajout d'alternatives textuelles pour les images et contenus non textuels</li>
+        <li>Correction des contrastes de couleurs insuffisants</li>
+        <li>Structuration correcte des titres et des landmarks ARIA</li>
+        <li>Amélioration de l'étiquetage des champs de formulaires</li>
+        <li>Ajout d'annonces pour les messages dynamiques (ARIA live regions)</li>
+        <li>Implémentation d'un lien d'évitement "Aller au contenu"</li>
+        <li>Mise en place d'un mode de navigation alternatif (plan du site, moteur de recherche)</li>
+    </ul>
+
+    <h3>Calendrier de réalisation</h3>
+{% for year in 1..action_plan.durationYears %}
+    <p><strong>Année {{ year }} ({{ (action_plan.startDate|date_modify("+" ~ (year - 1) ~ " year"))|date('Y') }}) :</strong></p>
+    <ul>
+{% set yearActions = action_plan.items|filter(i => i.year == year) %}
+        <li>{{ yearActions|length }} actions planifiées</li>
+        <li>Effort total estimé : {{ yearActions|reduce((carry, item) => carry + item.effort, 0) }} heures</li>
+{% if year == 1 %}
+        <li>Focus sur les actions critiques et quick wins</li>
+{% elseif year == action_plan.durationYears %}
+        <li>Finalisation des actions et audit de conformité final</li>
+{% else %}
+        <li>Poursuite des améliorations structurelles</li>
+{% endif %}
+    </ul>
+{% endfor %}
+
+    <h2>Moyens mis en œuvre</h2>
+    <ul>
+        <li>Formation des équipes de développement aux bonnes pratiques RGAA</li>
+        <li>Intégration de tests d'accessibilité dans le processus de développement</li>
+        <li>Audits réguliers par des experts en accessibilité numérique</li>
+        <li>Mise à jour continue de la documentation et des guides internes</li>
+        <li>Prise en compte de l'accessibilité dès la phase de conception</li>
+    </ul>
+
+    <h2>Suivi et publication</h2>
+    <p>
+        Ce plan d'action fait l'objet d'un suivi régulier. Un bilan annuel sera publié pour rendre compte de l'avancement des travaux et des résultats obtenus.
+    </p>
+
+    <div class="avancement">
+        <p><strong>Avancement actuel :</strong></p>
+        <ul>
+            <li>Actions complétées : <strong>{{ completedActions }}</strong> sur {{ totalActions }} ({{ action_plan.completionPercentage|number_format(0) }}%)</li>
+            <li>Actions en cours : <strong>{{ action_plan.items.filter(i => i.status.value == 'in_progress').count }}</strong></li>
+            <li>Actions planifiées : <strong>{{ action_plan.items.filter(i => i.status.value == 'pending').count }}</strong></li>
+        </ul>
     </div>
 
-    <div class="plan-approche">
-        <h3>Notre approche</h3>
-        <p>Notre plan d'action s'articule autour de trois axes principaux :</p>
-        <ol>
-            <li><strong>Quick Wins ({{ quickWinActions }} actions)</strong> - Corrections rapides à fort impact sur l'accessibilité</li>
-            <li><strong>Améliorations structurelles</strong> - Refonte des composants non conformes et mise en place de bonnes pratiques</li>
-            <li><strong>Conformité complète</strong> - Audits de contrôle et certification finale</li>
-        </ol>
-    </div>
+    <h2>Contact</h2>
+    <p>
+        Pour toute question relative à l'accessibilité de nos services numériques ou pour signaler un problème d'accessibilité, vous pouvez nous contacter :
+    </p>
+    <ul>
+        <li>Par email : <strong>[votre-email-accessibilite@domaine.fr]</strong></li>
+        <li>Via notre formulaire de contact : <strong>[URL de votre formulaire]</strong></li>
+    </ul>
 
-    <div class="plan-engagement">
-        <h3>Notre engagement</h3>
-        <p>Nous nous engageons à publier un bilan annuel de l'avancement de ce plan d'action et à maintenir ce document à jour. Pour toute question ou signalement concernant l'accessibilité de nos services, vous pouvez nous contacter.</p>
-        <p><em>Dernière mise à jour : {{ "now"|date('d/m/Y') }}</em></p>
-    </div>
+    <h2>Voies de recours</h2>
+    <p>
+        Si vous constatez un défaut d'accessibilité vous empêchant d'accéder à un contenu ou une fonctionnalité, que vous nous le signalez et que vous ne parvenez pas à obtenir une réponse de notre part, vous êtes en droit de faire parvenir vos doléances ou une demande de saisine au Défenseur des droits.
+    </p>
+    <p>Plusieurs moyens sont à votre disposition :</p>
+    <ul>
+        <li>Écrire un message au Défenseur des droits : <a href="https://formulaire.defenseurdesdroits.fr/" target="_blank">https://formulaire.defenseurdesdroits.fr/</a></li>
+        <li>Contacter le délégué du Défenseur des droits dans votre région</li>
+        <li>Envoyer un courrier par la poste (gratuit, ne pas mettre de timbre) à :<br>
+            Défenseur des droits<br>
+            Libre réponse 71120<br>
+            75342 Paris CEDEX 07
+        </li>
+    </ul>
+
+    <p class="mentions">
+        <em>Document établi le {{ action_plan.createdAt|date('d/m/Y') }}.<br>
+        Dernière mise à jour : {{ "now"|date('d/m/Y') }}.</em>
+    </p>
 </div>
 
 <style>
 .plan-action-rgaa {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 2rem;
-    line-height: 1.6;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.7;
+    color: #212529;
+    background: #ffffff;
+}
+
+.plan-action-rgaa h1 {
+    color: #0066cc;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 4px solid #0066cc;
 }
 
 .plan-action-rgaa h2 {
-    color: #0066cc;
-    border-bottom: 3px solid #0066cc;
+    color: #004c99;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
     padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e9ecef;
 }
 
 .plan-action-rgaa h3 {
-    color: #004c99;
+    color: #003d7a;
+    font-size: 1.2rem;
+    font-weight: 600;
     margin-top: 2rem;
     margin-bottom: 1rem;
 }
 
-.plan-summary, .plan-objectifs, .plan-progression, .plan-approche, .plan-engagement {
-    margin-bottom: 2rem;
+.plan-action-rgaa p {
+    margin-bottom: 1rem;
+}
+
+.plan-action-rgaa .intro {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
 }
 
 .plan-action-rgaa ul, .plan-action-rgaa ol {
-    margin-left: 1.5rem;
+    margin-left: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .plan-action-rgaa li {
-    margin-bottom: 0.5rem;
-}
-
-.plan-stats {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-left: 4px solid #0066cc;
-    margin: 1rem 0;
+    margin-bottom: 0.7rem;
 }
 
 .plan-action-rgaa strong {
-    color: #212529;
+    color: #0066cc;
+    font-weight: 600;
 }
 
-.plan-engagement em {
+.conformite-stats, .avancement {
+    background: #f8f9fa;
+    border-left: 5px solid #0066cc;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.conformite-stats p:first-child, .avancement p:first-child {
+    margin-top: 0;
+    font-weight: 600;
+    color: #004c99;
+}
+
+.plan-action-rgaa .mentions {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
     color: #6c757d;
     font-size: 0.9rem;
+}
+
+.plan-action-rgaa a {
+    color: #0066cc;
+    text-decoration: underline;
+}
+
+.plan-action-rgaa a:hover {
+    color: #004c99;
+}
+
+@media print {
+    .plan-action-rgaa {
+        padding: 1rem;
+    }
 }
 </style></textarea>
         </div>
         <div class="alert border-0" style="background: linear-gradient(135deg, #1f3d2f 0%, #1a3526 100%); color: #6ee7b7; border-left: 4px solid #10b981 !important;">
-            <i class="bi bi-info-circle"></i> <strong>Comment utiliser ce code ?</strong><br>
-            1. Cliquez sur "Copier le code"<br>
-            2. Collez le code dans une page HTML de votre site web<br>
-            3. Le style CSS est inclus pour un rendu optimal<br>
-            4. Vous pouvez personnaliser les couleurs et le design selon votre charte graphique
+            <i class="bi bi-info-circle"></i> <strong>Comment utiliser ce schéma pluriannuel ?</strong><br>
+            1. Cliquez sur "Copier le code" pour copier tout le contenu HTML et CSS<br>
+            2. Remplacez <code style="color: #fbbf24;">[Nom de votre organisation]</code> par le nom de votre organisation<br>
+            3. Remplacez <code style="color: #fbbf24;">[votre-email-accessibilite@domaine.fr]</code> par votre email de contact<br>
+            4. Remplacez <code style="color: #fbbf24;">[URL de votre formulaire]</code> par l'URL de votre formulaire de contact<br>
+            5. Collez le code dans une page HTML de votre site (ex: /accessibilite/schema-pluriannuel.html)<br>
+            6. Le CSS est inclus et prêt pour l'impression - vous pouvez personnaliser les couleurs selon votre charte
         </div>
     </div>
 </div>
