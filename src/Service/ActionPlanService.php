@@ -35,8 +35,8 @@ class ActionPlanService
         // Create action plan entity
         $actionPlan = new ActionPlan();
         $actionPlan->setCampaign($campaign);
-        $actionPlan->setName("Plan d'action {$campaign->getName()}");
-        $actionPlan->setDescription("Plan pluriannuel de mise en conformité RGAA sur {$durationYears} ans");
+        $actionPlan->setName($this->cleanText("Plan d'action {$campaign->getName()}"));
+        $actionPlan->setDescription($this->cleanText("Plan pluriannuel de mise en conformite RGAA sur {$durationYears} ans"));
         $actionPlan->setStartDate(new \DateTime());
         $actionPlan->setEndDate((new \DateTime())->modify("+{$durationYears} years"));
         $actionPlan->setDurationYears($durationYears);
@@ -308,8 +308,10 @@ class ActionPlanService
     ): ActionPlanItem {
         $item = new ActionPlanItem();
         $item->setActionPlan($actionPlan);
-        $item->setTitle($issue['errorType']);
-        $item->setDescription($issue['description']);
+
+        // Clean all text fields to avoid encoding issues
+        $item->setTitle($this->cleanText($issue['errorType']));
+        $item->setDescription($this->cleanText($issue['description']));
         $item->setSeverity($severity);
         $item->setPriority($priority);
         $item->setYear($year);
@@ -325,7 +327,7 @@ class ActionPlanService
         $impactScore = $this->calculateImpactScore($issue, $severity);
         $item->setImpactScore($impactScore);
 
-        $item->setTechnicalDetails($issue['recommendation']);
+        $item->setTechnicalDetails($this->cleanText($issue['recommendation']));
         $item->setAffectedPages(array_unique($issue['affectedPages']));
         $item->setRgaaCriteria([$issue['rgaaCriteria'], $issue['wcagCriteria']]);
 
@@ -334,6 +336,20 @@ class ActionPlanService
         $item->setAcceptanceCriteria($acceptanceCriteria);
 
         return $item;
+    }
+
+    /**
+     * Clean text to avoid encoding issues
+     */
+    private function cleanText(string $text): string
+    {
+        // Remove or replace problematic characters
+        $text = str_replace([''', ''', '"', '"', '—', '–'], ["'", "'", '"', '"', '-', '-'], $text);
+        // Remove emojis and special UTF-8 characters
+        $text = preg_replace('/[\x{1F600}-\x{1F64F}\x{1F300}-\x{1F5FF}\x{1F680}-\x{1F6FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}]/u', '', $text);
+        // Ensure proper UTF-8 encoding
+        $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+        return $text;
     }
 
     /**
@@ -391,17 +407,28 @@ class ActionPlanService
     private function generateAcceptanceCriteria(array $issue): string
     {
         $criteria = [];
-        $criteria[] = "✅ Conformité RGAA {$issue['rgaaCriteria']} respectée";
-        $criteria[] = "✅ Correction appliquée sur " . count($issue['affectedPages']) . " page(s)";
-        $criteria[] = "✅ Tests automatisés d'accessibilité passent";
-        $criteria[] = "✅ Validation manuelle avec lecteur d'écran";
-        $criteria[] = "✅ Documentation technique mise à jour";
+        $criteria[] = "- Conformite RGAA {$issue['rgaaCriteria']} respectee";
+        $criteria[] = "- Correction appliquee sur " . count($issue['affectedPages']) . " page(s)";
+        $criteria[] = "- Tests automatises d'accessibilite passent";
+        $criteria[] = "- Validation manuelle avec lecteur d'ecran";
+        $criteria[] = "- Documentation technique mise a jour";
 
         if ($issue['impactUser']) {
-            $criteria[] = "✅ Impact utilisateur validé : " . substr($issue['impactUser'], 0, 100);
+            // Remove accents and special characters from user impact
+            $cleanImpact = $this->removeAccents(substr($issue['impactUser'], 0, 100));
+            $criteria[] = "- Impact utilisateur valide : " . $cleanImpact;
         }
 
         return implode("\n", $criteria);
+    }
+
+    /**
+     * Remove accents and special characters from text
+     */
+    private function removeAccents(string $text): string
+    {
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        return str_replace(['`', '´', '^', '~'], '', $text);
     }
 
     /**
