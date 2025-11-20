@@ -211,7 +211,7 @@
 
 {# Statistics Cards #}
 <div class="row g-4 mb-4">
-    <div class="col-lg-6 col-md-6">
+    <div class="col-lg-4 col-md-6">
         <div class="stat-card-modern">
             <div class="stat-value-modern text-primary">{{ campaign.totalPages ?? 0 }}</div>
             <div class="stat-label-modern">Pages auditées</div>
@@ -225,7 +225,25 @@
         </div>
     </div>
 
-    <div class="col-lg-6 col-md-6">
+    <div class="col-lg-4 col-md-6">
+        <div class="stat-card-modern">
+            <div class="stat-value-modern {% if campaign.avgConformityRate %}
+                {% if campaign.avgConformityRate >= 90 %}text-success
+                {% elseif campaign.avgConformityRate >= 70 %}text-info
+                {% elseif campaign.avgConformityRate >= 50 %}text-warning
+                {% else %}text-danger{% endif %}
+            {% endif %}">
+                {% if campaign.avgConformityRate %}
+                    {{ campaign.avgConformityRate }}%
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+            <div class="stat-label-modern">Conformité moyenne</div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-12">
         <div class="stat-card-modern d-flex flex-column justify-content-center align-items-center">
             {% if campaign.actionPlans|length > 0 %}
                 <a href="{{ path('app_action_plan_show', {id: campaign.actionPlans|last.id}) }}" class="btn btn-outline-success btn-lg w-100 mb-2">

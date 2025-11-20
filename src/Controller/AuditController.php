@@ -108,6 +108,10 @@ class AuditController extends AbstractController
 
                 $entityManager->flush();
 
+                // Recalculate campaign statistics after adding new audit
+                $campaign->recalculateStatistics();
+                $entityManager->flush();
+
                 if ($action === 'replace') {
                     $this->addFlash('success', 'L\'ancien audit a été remplacé par le nouvel audit !');
                 } else {
