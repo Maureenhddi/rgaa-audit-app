@@ -33,33 +33,9 @@ class SecurityController extends AbstractController
     #[Route('/register', name: 'app_register')]
     public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
     {
-        if ($this->getUser()) {
-            return $this->redirectToRoute('app_dashboard');
-        }
-
-        $user = new User();
-        $form = $this->createForm(RegistrationFormType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword(
-                $userPasswordHasher->hashPassword(
-                    $user,
-                    $form->get('plainPassword')->getData()
-                )
-            );
-
-            $entityManager->persist($user);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter.');
-
-            return $this->redirectToRoute('app_login');
-        }
-
-        return $this->render('security/register.html.twig', [
-            'registrationForm' => $form->createView(),
-        ]);
+        // L'inscription publique est désactivée
+        // Seul un super admin peut créer des comptes via l'interface d'administration
+        throw $this->createAccessDeniedException('L\'inscription publique est désactivée. Contactez un administrateur.');
     }
 
     #[Route('/logout', name: 'app_logout')]

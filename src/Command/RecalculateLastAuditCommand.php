@@ -180,6 +180,8 @@ class RecalculateLastAuditCommand extends Command
         foreach ($results as $result) {
             $criteriaNumber = $result->getRgaaCriteria();
             if ($criteriaNumber) {
+                // Normalize to 2 levels (e.g., "1.1.1" becomes "1.1")
+                $criteriaNumber = $this->normalizeRgaaCriteria($criteriaNumber);
                 $nonConformCriteriaNumbers[$criteriaNumber] = true;
             }
         }
@@ -286,5 +288,19 @@ class RecalculateLastAuditCommand extends Command
 
         // Generic fallback
         return 'Corriger l\'élément ' . ($result->getSelector() ?: 'identifié') . ' pour respecter le critère RGAA correspondant. Consulter la documentation RGAA 4.1 pour les exigences détaillées.';
+    }
+
+    /**
+     * Normalize RGAA criteria to 2 levels (theme.criterion)
+     * Converts "1.1.1" or "1.1.2" to "1.1"
+     * Keeps "1.1" as "1.1"
+     */
+    private function normalizeRgaaCriteria(string $criteria): string
+    {
+        // Extract first two levels: theme.criterion
+        if (preg_match('/^(\d+)\.(\d+)/', $criteria, $matches)) {
+            return $matches[1] . '.' . $matches[2];
+        }
+        return $criteria;
     }
 }

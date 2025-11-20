@@ -175,8 +175,8 @@
         <a href="{{ path('app_export_audit_csv', {id: audit.id}) }}" class="btn btn-primary">
             <i class="bi bi-filetype-csv"></i> Exporter CSV
         </a>
-        <a href="{{ path('app_audit_list') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Retour
+        <a href="{{ path('app_campaign_show', {id: audit.campaign.id}) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Retour à la campagne
         </a>
     </div>
 </div>

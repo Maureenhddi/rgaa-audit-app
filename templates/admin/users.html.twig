@@ -1,0 +1,106 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des utilisateurs - {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-people"></i> Gestion des utilisateurs</h1>
+            <p class="text-muted mb-0">Administration des comptes utilisateurs</p>
+        </div>
+        <a href="{{ path('app_admin_user_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Créer un utilisateur
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if users|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Rôles</th>
+                                <th>Date de création</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ user.name }}</strong>
+                                        {% if user.id == app.user.id %}
+                                            <span class="badge bg-info ms-2">Vous</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if 'ROLE_SUPER_ADMIN' in user.roles %}
+                                            <span class="badge bg-danger">Super Admin</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Utilisateur</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ user.createdAt|date('d/m/Y H:i') }}</small>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ path('app_admin_user_edit', {id: user.id}) }}" class="btn btn-outline-primary">
+                                                <i class="bi bi-pencil"></i> Modifier
+                                            </a>
+                                            {% if user.id != app.user.id %}
+                                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                {# Delete Modal #}
+                                {% if user.id != app.user.id %}
+                                <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirmer la suppression</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{{ user.name }}</strong> ({{ user.email }}) ?
+                                                <br><br>
+                                                <span class="text-danger">Cette action est irréversible.</span>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                <form method="post" action="{{ path('app_admin_user_delete', {id: user.id}) }}" class="d-inline">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ user.id) }}">
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="bi bi-trash"></i> Supprimer
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-people" style="font-size: 3rem; color: var(--text-light);"></i>
+                    <h4 class="mt-3">Aucun utilisateur</h4>
+                    <p class="text-muted">Créez votre premier utilisateur.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -103,7 +103,10 @@ class AuditCampaignRepository extends ServiceEntityRepository
     public function findOneByIdAndUser(int $id, User $user): ?AuditCampaign
     {
         return $this->createQueryBuilder('c')
+            ->addSelect('p', 'audits', 'plans')
             ->innerJoin('c.project', 'p')
+            ->leftJoin('c.pageAudits', 'audits')
+            ->leftJoin('c.actionPlans', 'plans')
             ->where('c.id = :id')
             ->andWhere('p.user = :user')
             ->setParameter('id', $id)

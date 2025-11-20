@@ -1,0 +1,88 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ user ? 'Modifier' : 'Créer' }} un utilisateur - {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="mb-4">
+                <a href="{{ path('app_admin_users') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="bi bi-person-{{ user ? 'gear' : 'plus' }}"></i>
+                        {{ user ? 'Modifier l\'utilisateur' : 'Créer un utilisateur' }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nom complet *</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="name"
+                                   name="name"
+                                   value="{{ user ? user.name : '' }}"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email"
+                                   class="form-control"
+                                   id="email"
+                                   name="email"
+                                   value="{{ user ? user.email : '' }}"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                Mot de passe {{ user ? '(laisser vide pour ne pas changer)' : '*' }}
+                            </label>
+                            <input type="password"
+                                   class="form-control"
+                                   id="password"
+                                   name="password"
+                                   {{ user ? '' : 'required' }}
+                                   minlength="6">
+                            <small class="text-muted">Minimum 6 caractères</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="is_admin"
+                                       name="is_admin"
+                                       value="1"
+                                       {{ user and 'ROLE_SUPER_ADMIN' in user.roles ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_admin">
+                                    <strong>Super Administrateur</strong>
+                                    <br>
+                                    <small class="text-muted">Peut créer et gérer d'autres utilisateurs</small>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-{{ user ? 'save' : 'plus-circle' }}"></i>
+                                {{ user ? 'Enregistrer les modifications' : 'Créer l\'utilisateur' }}
+                            </button>
+                            <a href="{{ path('app_admin_users') }}" class="btn btn-outline-secondary">
+                                Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

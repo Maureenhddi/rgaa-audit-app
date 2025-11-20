@@ -528,35 +528,8 @@ class AuditController extends AbstractController
     #[Route('/', name: 'app_audit_list', methods: ['GET'])]
     public function list(Request $request, AuditRepository $auditRepository, ProjectRepository $projectRepository): Response
     {
-        $user = $this->getUser();
-
-        // Get filters from query parameters
-        $search = $request->query->get('search');
-        $status = $request->query->get('status', 'all');
-        $projectId = $request->query->get('project_id') === '0' ? 0 : ($request->query->get('project_id') ? (int) $request->query->get('project_id') : null);
-        $page = max(1, (int) $request->query->get('page', 1));
-        $limit = 10;
-
-        // Get filtered audits with pagination
-        $audits = $auditRepository->findByUserWithFilters($user, $search, $status, $projectId, $page, $limit);
-
-        // Get total count for pagination
-        $totalAudits = $auditRepository->countByUserWithFilters($user, $search, $status, $projectId);
-        $totalPages = ceil($totalAudits / $limit);
-
-        // Get all projects for the filter dropdown
-        $projects = $projectRepository->findByUser($user);
-
-        return $this->render('audit/list.html.twig', [
-            'audits' => $audits,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
-            'total_audits' => $totalAudits,
-            'search' => $search,
-            'status' => $status,
-            'project_id' => $projectId,
-            'projects' => $projects,
-        ]);
+        // Redirect to campaign list instead of showing audit list
+        return $this->redirectToRoute('app_campaign_list');
     }
 
     #[Route('/{id}/delete', name: 'app_audit_delete', methods: ['POST'])]

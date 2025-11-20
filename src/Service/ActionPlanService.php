@@ -71,7 +71,7 @@ class ActionPlanService
     }
 
     /**
-     * Collect all issues from campaign audits grouped by type
+     * Collect all issues from campaign audits with intelligent grouping
      */
     private function collectIssuesFromCampaign(AuditCampaign $campaign): array
     {
@@ -92,24 +92,30 @@ class ActionPlanService
                     $severity = 'minor';
                 }
 
-                $errorType = $result->getErrorType();
-                $key = $errorType . '_' . $result->getRgaaCriteria();
+                // Normalize RGAA criteria to group similar issues
+                $rgaaCriteria = $this->normalizeRgaaCriteria($result->getRgaaCriteria());
+
+                // Group by RGAA criteria + error type for better consolidation
+                $key = $rgaaCriteria . '_' . $this->normalizeErrorType($result->getErrorType());
 
                 if (!isset($issues[$severity][$key])) {
                     $issues[$severity][$key] = [
-                        'errorType' => $errorType,
-                        'rgaaCriteria' => $result->getRgaaCriteria(),
+                        'errorType' => $result->getErrorType(),
+                        'rgaaCriteria' => $rgaaCriteria,
                         'wcagCriteria' => $result->getWcagCriteria(),
                         'description' => $result->getDescription(),
                         'recommendation' => $result->getRecommendation(),
-                        'impactUser' => $result->getImpactUser(),
+                        'impactUser' => $result->getImpactUser() ?? 'Impact sur l\'accessibilité',
                         'occurrences' => 0,
-                        'affectedPages' => []
+                        'affectedPages' => [],
+                        'complexity' => $this->estimateComplexity($result->getErrorType(), $result->getRecommendation())
                     ];
                 }
 
                 $issues[$severity][$key]['occurrences']++;
-                $issues[$severity][$key]['affectedPages'][] = $audit->getUrl();
+                if (!in_array($audit->getUrl(), $issues[$severity][$key]['affectedPages'])) {
+                    $issues[$severity][$key]['affectedPages'][] = $audit->getUrl();
+                }
             }
         }
 
@@ -117,88 +123,178 @@ class ActionPlanService
     }
 
     /**
-     * Generate action plan items from issues
+     * Normalize RGAA criteria to 2 levels (theme.criterion)
+     */
+    private function normalizeRgaaCriteria(string $criteria): string
+    {
+        if (preg_match('/^(\d+)\.(\d+)/', $criteria, $matches)) {
+            return $matches[1] . '.' . $matches[2];
+        }
+        return $criteria;
+    }
+
+    /**
+     * Normalize error type for better grouping
+     */
+    private function normalizeErrorType(string $errorType): string
+    {
+        // Remove numbers and special chars to group similar errors
+        $normalized = preg_replace('/\d+/', '', $errorType);
+        $normalized = preg_replace('/[^a-zA-Z\s]/', '', $normalized);
+        return trim(strtolower($normalized));
+    }
+
+    /**
+     * Estimate complexity based on error type and recommendation
+     */
+    private function estimateComplexity(string $errorType, ?string $recommendation): string
+    {
+        $lowComplexity = ['alt', 'label', 'title', 'aria-label', 'lang'];
+        $highComplexity = ['structure', 'navigation', 'form', 'table', 'script', 'keyboard', 'focus'];
+
+        $errorLower = strtolower($errorType);
+        $recommendationLower = strtolower($recommendation ?? '');
+
+        foreach ($highComplexity as $term) {
+            if (str_contains($errorLower, $term) || str_contains($recommendationLower, $term)) {
+                return 'high';
+            }
+        }
+
+        foreach ($lowComplexity as $term) {
+            if (str_contains($errorLower, $term)) {
+                return 'low';
+            }
+        }
+
+        return 'medium';
+    }
+
+    /**
+     * Generate action plan items with intelligent distribution
      */
     private function generateActionItems(ActionPlan $actionPlan, array $issues, int $durationYears): void
     {
         $currentYear = (int) date('Y');
         $currentQuarter = (int) ceil(date('n') / 3);
-        $priority = 1;
 
-        // Phase 1: Quick wins - Critical issues (Q1)
-        foreach ($issues['critical'] as $issue) {
-            $item = $this->createActionItem(
-                $actionPlan,
-                $issue,
-                ActionSeverity::CRITICAL,
-                $priority++,
-                $currentYear,
-                $currentQuarter,
-                true,
-                ActionCategory::TECHNICAL
-            );
-            $actionPlan->addItem($item);
-        }
+        // Calculate total available quarters
+        $totalQuarters = $durationYears * 4;
+        $maxItemsPerQuarter = 8; // Realistic workload
 
-        // Phase 2: High impact issues - Major issues (Q2-Q3)
-        $quarterOffset = 1;
-        foreach ($issues['major'] as $issue) {
+        // Prioritize all issues with smart scoring
+        $allPrioritizedIssues = $this->prioritizeIssues($issues);
+
+        $quarterOffset = 0;
+        $itemsInCurrentQuarter = 0;
+        $priorityCounter = 1;
+
+        foreach ($allPrioritizedIssues as $issueData) {
+            $issue = $issueData['issue'];
+            $severity = $issueData['severity'];
+            $priorityScore = $issueData['priorityScore'];
+
+            // Calculate target quarter
             $quarter = $currentQuarter + $quarterOffset;
             $year = $currentYear;
 
-            if ($quarter > 4) {
+            // Handle year rollover
+            while ($quarter > 4) {
                 $quarter -= 4;
                 $year++;
             }
 
+            // Don't plan beyond duration
+            if (($year - $currentYear) >= $durationYears) {
+                break;
+            }
+
+            // Determine if it's a quick win (critical + low complexity + few occurrences)
+            $isQuickWin = ($severity === ActionSeverity::CRITICAL) &&
+                         ($issue['complexity'] === 'low') &&
+                         ($issue['occurrences'] <= 5);
+
+            // Create action item
             $item = $this->createActionItem(
                 $actionPlan,
                 $issue,
-                ActionSeverity::MAJOR,
-                $priority++,
+                $severity,
+                $priorityCounter++,
                 $year,
                 $quarter,
-                false,
+                $isQuickWin,
                 $this->categorizeIssue($issue)
             );
             $actionPlan->addItem($item);
 
-            $quarterOffset++;
-            if ($quarterOffset > 2) $quarterOffset = 1; // Spread across Q2-Q3
-        }
+            $itemsInCurrentQuarter++;
 
-        // Phase 3: Long-term improvements - Minor issues (Year 2+)
-        $yearOffset = 1;
-        $quarterCycle = 1;
-        foreach ($issues['minor'] as $issue) {
-            $year = $currentYear + $yearOffset;
-            $quarter = $quarterCycle;
-
-            $item = $this->createActionItem(
-                $actionPlan,
-                $issue,
-                ActionSeverity::MINOR,
-                $priority++,
-                $year,
-                $quarter,
-                false,
-                $this->categorizeIssue($issue)
-            );
-            $actionPlan->addItem($item);
-
-            $quarterCycle++;
-            if ($quarterCycle > 4) {
-                $quarterCycle = 1;
-                $yearOffset++;
-                if ($yearOffset >= $durationYears) {
-                    break; // Don't plan beyond duration
-                }
+            // Move to next quarter if current is full
+            if ($itemsInCurrentQuarter >= $maxItemsPerQuarter) {
+                $quarterOffset++;
+                $itemsInCurrentQuarter = 0;
             }
         }
     }
 
     /**
-     * Create an action plan item from an issue
+     * Prioritize issues using a smart scoring algorithm
+     */
+    private function prioritizeIssues(array $issues): array
+    {
+        $prioritized = [];
+
+        foreach (['critical' => ActionSeverity::CRITICAL, 'major' => ActionSeverity::MAJOR, 'minor' => ActionSeverity::MINOR] as $severityKey => $severityEnum) {
+            foreach ($issues[$severityKey] as $issue) {
+                $priorityScore = $this->calculatePriorityScore($issue, $severityEnum);
+
+                $prioritized[] = [
+                    'issue' => $issue,
+                    'severity' => $severityEnum,
+                    'priorityScore' => $priorityScore
+                ];
+            }
+        }
+
+        // Sort by priority score (highest first)
+        usort($prioritized, function($a, $b) {
+            return $b['priorityScore'] <=> $a['priorityScore'];
+        });
+
+        return $prioritized;
+    }
+
+    /**
+     * Calculate priority score (Impact vs Effort matrix)
+     */
+    private function calculatePriorityScore(array $issue, ActionSeverity $severity): float
+    {
+        // Base score from severity
+        $severityWeight = match($severity) {
+            ActionSeverity::CRITICAL => 100,
+            ActionSeverity::MAJOR => 60,
+            ActionSeverity::MINOR => 30,
+        };
+
+        // Impact multiplier based on affected pages
+        $pageCount = count($issue['affectedPages']);
+        $impactMultiplier = min(2.0, 1 + ($pageCount / 10));
+
+        // Effort penalty based on complexity
+        $effortPenalty = match($issue['complexity']) {
+            'low' => 1.0,
+            'medium' => 0.7,
+            'high' => 0.4,
+        };
+
+        // Occurrence bonus (more occurrences = higher priority to fix once)
+        $occurrenceBonus = min(20, $issue['occurrences'] * 2);
+
+        return ($severityWeight * $impactMultiplier * $effortPenalty) + $occurrenceBonus;
+    }
+
+    /**
+     * Create an action plan item from an issue with improved estimation
      */
     private function createActionItem(
         ActionPlan $actionPlan,
@@ -221,47 +317,198 @@ class ActionPlanService
         $item->setQuickWin($quickWin);
         $item->setCategory($category);
 
-        // Estimate effort based on occurrences and severity
-        $baseEffort = $severity->getBaseEffort();
-        $estimatedEffort = $baseEffort * min(10, $issue['occurrences']);
+        // Improved effort estimation
+        $estimatedEffort = $this->calculateEffort($issue, $severity);
         $item->setEstimatedEffort($estimatedEffort);
 
-        // Calculate impact score
-        $impactScore = $severity->getImpactScore();
+        // Calculate impact score based on pages affected and severity
+        $impactScore = $this->calculateImpactScore($issue, $severity);
         $item->setImpactScore($impactScore);
 
         $item->setTechnicalDetails($issue['recommendation']);
         $item->setAffectedPages(array_unique($issue['affectedPages']));
         $item->setRgaaCriteria([$issue['rgaaCriteria'], $issue['wcagCriteria']]);
-        $item->setAcceptanceCriteria("✅ Conformité {$issue['rgaaCriteria']}\n✅ Tests automatisés passent\n✅ Validation manuelle OK");
+
+        // Generate detailed acceptance criteria
+        $acceptanceCriteria = $this->generateAcceptanceCriteria($issue);
+        $item->setAcceptanceCriteria($acceptanceCriteria);
 
         return $item;
     }
 
     /**
-     * Categorize issue type
+     * Calculate realistic effort in hours
+     */
+    private function calculateEffort(array $issue, ActionSeverity $severity): int
+    {
+        $baseEffort = $severity->getBaseEffort();
+
+        // Complexity multiplier
+        $complexityMultiplier = match($issue['complexity']) {
+            'low' => 1.0,
+            'medium' => 1.5,
+            'high' => 2.5,
+        };
+
+        // Pages multiplier (diminishing returns)
+        $pageCount = count($issue['affectedPages']);
+        if ($pageCount <= 1) {
+            $pageMultiplier = 1;
+        } elseif ($pageCount <= 5) {
+            $pageMultiplier = 1 + ($pageCount * 0.3); // +30% per page
+        } else {
+            $pageMultiplier = 2.5 + (($pageCount - 5) * 0.1); // Diminishing
+        }
+
+        // Occurrences factor (fixing one type of error across multiple instances)
+        $occurrenceFactor = 1 + min(5, $issue['occurrences'] * 0.2);
+
+        $totalEffort = $baseEffort * $complexityMultiplier * $pageMultiplier * $occurrenceFactor;
+
+        // Round up and cap at reasonable maximum
+        return min(160, (int) ceil($totalEffort)); // Max 4 weeks per item
+    }
+
+    /**
+     * Calculate impact score (0-100)
+     */
+    private function calculateImpactScore(array $issue, ActionSeverity $severity): int
+    {
+        $baseScore = $severity->getImpactScore();
+
+        // Boost score if affects multiple pages
+        $pageCount = count($issue['affectedPages']);
+        $pageBonus = min(20, $pageCount * 2);
+
+        $score = $baseScore + $pageBonus;
+
+        return min(100, $score);
+    }
+
+    /**
+     * Generate detailed acceptance criteria
+     */
+    private function generateAcceptanceCriteria(array $issue): string
+    {
+        $criteria = [];
+        $criteria[] = "✅ Conformité RGAA {$issue['rgaaCriteria']} respectée";
+        $criteria[] = "✅ Correction appliquée sur " . count($issue['affectedPages']) . " page(s)";
+        $criteria[] = "✅ Tests automatisés d'accessibilité passent";
+        $criteria[] = "✅ Validation manuelle avec lecteur d'écran";
+        $criteria[] = "✅ Documentation technique mise à jour";
+
+        if ($issue['impactUser']) {
+            $criteria[] = "✅ Impact utilisateur validé : " . substr($issue['impactUser'], 0, 100);
+        }
+
+        return implode("\n", $criteria);
+    }
+
+    /**
+     * Categorize issue type with improved pattern matching
      */
     private function categorizeIssue(array $issue): ActionCategory
     {
         $errorType = strtolower($issue['errorType']);
+        $description = strtolower($issue['description'] ?? '');
+        $recommendation = strtolower($issue['recommendation'] ?? '');
 
-        if (str_contains($errorType, 'heading') || str_contains($errorType, 'landmark') || str_contains($errorType, 'semantic')) {
-            return ActionCategory::STRUCTURAL;
-        }
+        $allText = $errorType . ' ' . $description . ' ' . $recommendation;
 
-        if (str_contains($errorType, 'alt') || str_contains($errorType, 'label') || str_contains($errorType, 'link') || str_contains($errorType, 'button')) {
-            return ActionCategory::CONTENT;
-        }
+        // Structural issues (HTML structure, semantics, landmarks)
+        $structuralPatterns = [
+            'heading', 'h1', 'h2', 'h3', 'landmark', 'region', 'main', 'nav', 'navigation',
+            'header', 'footer', 'aside', 'article', 'section', 'semantic', 'structure',
+            'hierarchy', 'outline', 'role', 'aria-role'
+        ];
 
-        if (str_contains($errorType, 'contrast') || str_contains($errorType, 'color') || str_contains($errorType, 'focus')) {
-            return ActionCategory::TECHNICAL;
-        }
+        // Content issues (alternative text, labels, links, buttons text)
+        $contentPatterns = [
+            'alt', 'alternative', 'label', 'aria-label', 'aria-labelledby', 'title',
+            'link text', 'button text', 'image', 'img', 'text', 'content',
+            'description', 'accessible name', 'legend', 'caption', 'figcaption'
+        ];
 
-        return ActionCategory::TECHNICAL;
+        // Technical issues (contrast, colors, focus, keyboard, scripts)
+        $technicalPatterns = [
+            'contrast', 'color', 'focus', 'keyboard', 'tabindex', 'script', 'javascript',
+            'css', 'style', 'interactive', 'click', 'hover', 'animation', 'autocomplete',
+            'input type', 'aria-live', 'aria-hidden', 'display', 'visibility'
+        ];
+
+        // Training issues (process, organization, governance)
+        $trainingPatterns = [
+            'process', 'procedure', 'documentation', 'guide', 'policy', 'training',
+            'team', 'workflow', 'validation', 'review'
+        ];
+
+        // Count matches for each category
+        $scores = [
+            'structural' => $this->countPatternMatches($allText, $structuralPatterns),
+            'content' => $this->countPatternMatches($allText, $contentPatterns),
+            'technical' => $this->countPatternMatches($allText, $technicalPatterns),
+            'training' => $this->countPatternMatches($allText, $trainingPatterns),
+        ];
+
+        // Get category with highest score
+        arsort($scores);
+        $topCategory = array_key_first($scores);
+
+        // Return matching category or default to TECHNICAL
+        return match($topCategory) {
+            'structural' => $scores['structural'] > 0 ? ActionCategory::STRUCTURAL : ActionCategory::TECHNICAL,
+            'content' => $scores['content'] > 0 ? ActionCategory::CONTENT : ActionCategory::TECHNICAL,
+            'training' => $scores['training'] > 0 ? ActionCategory::TRAINING : ActionCategory::TECHNICAL,
+            default => ActionCategory::TECHNICAL,
+        };
     }
 
     /**
-     * Generate executive summary using Gemini AI
+     * Count pattern matches in text
+     */
+    private function countPatternMatches(string $text, array $patterns): int
+    {
+        $count = 0;
+        foreach ($patterns as $pattern) {
+            if (str_contains($text, $pattern)) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Analyze category breakdown for summary
+     */
+    private function analyzeCategoryBreakdown(array $issues): string
+    {
+        $categories = [];
+
+        foreach ($issues as $severityLevel => $issueList) {
+            foreach ($issueList as $issue) {
+                $category = $this->categorizeIssue($issue);
+                $categoryLabel = $category->getLabel();
+
+                if (!isset($categories[$categoryLabel])) {
+                    $categories[$categoryLabel] = 0;
+                }
+                $categories[$categoryLabel]++;
+            }
+        }
+
+        arsort($categories);
+        $top3 = array_slice($categories, 0, 3, true);
+
+        $parts = [];
+        foreach ($top3 as $category => $count) {
+            $parts[] = "$category ($count)";
+        }
+
+        return implode(', ', $parts);
+    }
+
+    /**
+     * Generate executive summary using Gemini AI with improved prompt
      */
     private function generateExecutiveSummary(AuditCampaign $campaign, array $issues, int $durationYears): string
     {
@@ -270,24 +517,43 @@ class ActionPlanService
         $minorCount = count($issues['minor']);
         $totalIssues = $criticalCount + $majorCount + $minorCount;
 
+        $currentRate = (float) ($campaign->getAvgConformityRate() ?? 0);
+        $targetRate = min(100, $currentRate + (50 * $durationYears));
+
+        // Analyze main issue categories
+        $categoryBreakdown = $this->analyzeCategoryBreakdown($issues);
+
         $prompt = <<<PROMPT
-Tu es un expert en accessibilité web RGAA. Génère un résumé exécutif pour un plan d'action pluriannuel de mise en conformité RGAA.
+Tu es un expert en accessibilité web RGAA 4.1. Génère un résumé exécutif professionnel pour un plan d'action pluriannuel de mise en conformité RGAA.
 
-**Contexte de la campagne d'audit :**
-- Nom : {$campaign->getName()}
+**Contexte de l'audit :**
+- Campagne : {$campaign->getName()}
 - Pages auditées : {$campaign->getTotalPages()}
-- Taux de conformité actuel : {$campaign->getAvgConformityRate()}%
-- Problèmes détectés : {$totalIssues} ({$criticalCount} critiques, {$majorCount} majeurs, {$minorCount} mineurs)
+- Conformité actuelle : **{$currentRate}%**
+- Objectif cible : **{$targetRate}%** d'ici {$durationYears} an(s)
+- Problèmes identifiés : **{$totalIssues}** au total
+  - {$criticalCount} critiques (bloquants)
+  - {$majorCount} majeurs (impact significatif)
+  - {$minorCount} mineurs (améliorations)
+- Catégories principales : {$categoryBreakdown}
 
-**Durée du plan :** {$durationYears} ans
+**Génère un résumé exécutif structuré :**
 
-**Génère un résumé exécutif structuré contenant :**
-1. État des lieux (2-3 phrases)
-2. Objectifs du plan (liste à puces, 3-4 objectifs SMART)
-3. Approche recommandée (3-4 phases avec timing)
-4. Bénéfices attendus (liste à puces, 3-4 bénéfices concrets)
+## État des lieux
+(2-3 phrases décrivant la situation actuelle et les principaux enjeux identifiés)
 
-Format : Markdown, professionnel, concis (maximum 300 mots).
+## Objectifs stratégiques
+(4-5 objectifs SMART basés sur les données ci-dessus, avec métriques précises)
+
+## Approche par phases
+(Décrire 3-4 phases concrètes avec timing et priorités, en commençant par les quick wins critiques)
+
+## Retour sur investissement attendu
+(4-5 bénéfices concrets : conformité légale, expérience utilisateur, SEO, image de marque, etc.)
+
+**Ton :** Professionnel et factuel, orienté décideurs.
+**Format :** Markdown avec titres niveau 2 (##).
+**Longueur :** 350-400 mots maximum.
 PROMPT;
 
         try {

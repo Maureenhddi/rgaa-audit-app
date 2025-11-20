@@ -1279,6 +1279,12 @@
                                     <i class="bi bi-person-circle"></i> {{ app.user.name }}
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
+                                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                        <li><a class="dropdown-item text-danger" href="{{ path('app_admin_users') }}">
+                                            <i class="bi bi-shield-lock"></i> Administration
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    {% endif %}
                                     <li><a class="dropdown-item" href="{{ path('app_logout') }}">
                                         <i class="bi bi-box-arrow-right"></i> Déconnexion
                                     </a></li>
@@ -1324,11 +1330,6 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{{ path('app_audit_list') }}">
-                                            <i class="bi bi-clipboard-check"></i> Audits
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
                                         <a class="nav-link" href="{{ path('app_campaign_list') }}">
                                             <i class="bi bi-collection"></i> Campagnes
                                         </a>
@@ -1338,6 +1339,16 @@
                                             <i class="bi bi-list-check"></i> Plans d'action
                                         </a>
                                     </li>
+                                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                        <li class="nav-item mt-3">
+                                            <hr class="my-2" style="border-color: var(--border-color);">
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link text-danger" href="{{ path('app_admin_users') }}">
+                                                <i class="bi bi-shield-lock"></i> Administration
+                                            </a>
+                                        </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </nav>

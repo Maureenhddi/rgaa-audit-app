@@ -955,6 +955,8 @@ class AuditService
             if ($rgaaCriteria) {
                 $parts = explode(',', $rgaaCriteria);
                 $criteriaNumber = trim($parts[0]);
+                // Normalize to 2 levels (theme.criterion) by removing test number
+                $criteriaNumber = $this->normalizeRgaaCriteria($criteriaNumber);
             }
 
             // 2. Check our mapping
@@ -1007,6 +1009,23 @@ class AuditService
         } else {
             $this->logger->warning('No tested criteria found for conformity rate calculation');
         }
+    }
+
+    /**
+     * Normalize RGAA criteria to 2 levels (theme.criterion)
+     * Converts "1.1.1" or "1.1.2" to "1.1"
+     * Keeps "1.1" as "1.1"
+     *
+     * @param string $criteria Raw criteria number
+     * @return string Normalized criteria (2 levels)
+     */
+    private function normalizeRgaaCriteria(string $criteria): string
+    {
+        // Extract first two levels: theme.criterion
+        if (preg_match('/^(\d+)\.(\d+)/', $criteria, $matches)) {
+            return $matches[1] . '.' . $matches[2];
+        }
+        return $criteria;
     }
 
     /**
