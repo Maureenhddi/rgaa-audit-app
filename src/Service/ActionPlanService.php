@@ -343,8 +343,8 @@ class ActionPlanService
      */
     private function cleanText(string $text): string
     {
-        // Remove or replace problematic characters
-        $text = str_replace([''', ''', '"', '"', '—', '–'], ["'", "'", '"', '"', '-', '-'], $text);
+        // Remove or replace problematic characters (curly quotes, em dashes, etc)
+        $text = str_replace(["\xe2\x80\x98", "\xe2\x80\x99", "\xe2\x80\x9c", "\xe2\x80\x9d", "\xe2\x80\x94", "\xe2\x80\x93"], ["'", "'", '"', '"', '-', '-'], $text);
         // Remove emojis and special UTF-8 characters
         $text = preg_replace('/[\x{1F600}-\x{1F64F}\x{1F300}-\x{1F5FF}\x{1F680}-\x{1F6FF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}]/u', '', $text);
         // Ensure proper UTF-8 encoding
