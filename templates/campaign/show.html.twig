@@ -123,6 +123,15 @@
         opacity: 0.5;
         margin-bottom: 1.5rem;
     }
+
+    .card-header {
+        background: var(--card-bg) !important;
+        border-bottom: 2px solid var(--border-color) !important;
+    }
+
+    .card-header h5 {
+        color: var(--text-dark) !important;
+    }
 </style>
 {% endblock %}
 
@@ -327,7 +336,7 @@
 
 {# Pages List #}
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-0 pt-4 px-4">
+    <div class="card-header pt-4 px-4">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
                 <i class="bi bi-file-earmark-text"></i> Pages de la campagne ({{ campaign.pageAudits|length }})
