@@ -181,16 +181,42 @@ class ActionPlanService
         // Calculate end year (duration is inclusive: 2 ans = 2025 to 2027 = 3 years to plan)
         $endYear = $currentYear + $durationYears;
         $totalQuarters = ($durationYears + 1) * 4; // +1 because duration is inclusive
-        $maxItemsPerQuarter = 8; // Realistic workload
 
         // Prioritize all issues with smart scoring
         $allPrioritizedIssues = $this->prioritizeIssues($issues);
+        $totalIssues = count($allPrioritizedIssues);
+
+        // Calculate average items per quarter to spread evenly across duration
+        // But ensure we don't go below 2 or above 8 items per quarter
+        $avgItemsPerQuarter = max(2, min(8, ceil($totalIssues / $totalQuarters)));
+
+        // Separate quick wins (to be done first) from regular actions
+        $quickWins = [];
+        $regularActions = [];
+
+        foreach ($allPrioritizedIssues as $issueData) {
+            $issue = $issueData['issue'];
+            $severity = $issueData['severity'];
+
+            $isQuickWin = ($severity === ActionSeverity::CRITICAL) &&
+                         ($issue['complexity'] === 'low') &&
+                         ($issue['occurrences'] <= 5);
+
+            if ($isQuickWin) {
+                $quickWins[] = $issueData;
+            } else {
+                $regularActions[] = $issueData;
+            }
+        }
+
+        // Reorder: quick wins first, then regular actions
+        $orderedIssues = array_merge($quickWins, $regularActions);
 
         $quarterOffset = 0;
         $itemsInCurrentQuarter = 0;
         $priorityCounter = 1;
 
-        foreach ($allPrioritizedIssues as $issueData) {
+        foreach ($orderedIssues as $issueData) {
             $issue = $issueData['issue'];
             $severity = $issueData['severity'];
             $priorityScore = $issueData['priorityScore'];
@@ -210,7 +236,7 @@ class ActionPlanService
                 break;
             }
 
-            // Determine if it's a quick win (critical + low complexity + few occurrences)
+            // Determine if it's a quick win
             $isQuickWin = ($severity === ActionSeverity::CRITICAL) &&
                          ($issue['complexity'] === 'low') &&
                          ($issue['occurrences'] <= 5);
@@ -230,8 +256,8 @@ class ActionPlanService
 
             $itemsInCurrentQuarter++;
 
-            // Move to next quarter if current is full
-            if ($itemsInCurrentQuarter >= $maxItemsPerQuarter) {
+            // Move to next quarter when reaching target (spreads actions across duration)
+            if ($itemsInCurrentQuarter >= $avgItemsPerQuarter) {
                 $quarterOffset++;
                 $itemsInCurrentQuarter = 0;
             }
