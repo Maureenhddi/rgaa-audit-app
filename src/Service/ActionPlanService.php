@@ -178,8 +178,9 @@ class ActionPlanService
         $currentYear = (int) date('Y');
         $currentQuarter = (int) ceil(date('n') / 3);
 
-        // Calculate total available quarters
-        $totalQuarters = $durationYears * 4;
+        // Calculate end year (duration is inclusive: 2 ans = 2025 to 2027 = 3 years to plan)
+        $endYear = $currentYear + $durationYears;
+        $totalQuarters = ($durationYears + 1) * 4; // +1 because duration is inclusive
         $maxItemsPerQuarter = 8; // Realistic workload
 
         // Prioritize all issues with smart scoring
@@ -204,8 +205,8 @@ class ActionPlanService
                 $year++;
             }
 
-            // Don't plan beyond duration
-            if (($year - $currentYear) >= $durationYears) {
+            // Don't plan beyond end year (inclusive)
+            if ($year > $endYear) {
                 break;
             }
 

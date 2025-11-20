@@ -523,15 +523,18 @@
     </ul>
 
     <h3>Calendrier de réalisation</h3>
-{% for year in 1..action_plan.durationYears %}
-    <p><strong>Année {{ year }} ({{ (action_plan.startDate|date_modify("+" ~ (year - 1) ~ " year"))|date('Y') }}) :</strong></p>
+{% set startYear = action_plan.startDate|date('Y')|number_format(0, '', '') %}
+{% set endYear = action_plan.endDate|date('Y')|number_format(0, '', '') %}
+{% for calendarYear in startYear..endYear %}
+    {% set yearIndex = calendarYear - startYear + 1 %}
+    <p><strong>Année {{ yearIndex }} ({{ calendarYear }}) :</strong></p>
     <ul>
-{% set yearActions = action_plan.items|filter(i => i.year == year) %}
+{% set yearActions = action_plan.items|filter(i => i.year == calendarYear) %}
         <li>{{ yearActions|length }} actions planifiées</li>
         <li>Effort total estimé : {{ yearActions|reduce((carry, item) => carry + item.effort, 0) }} heures</li>
-{% if year == 1 %}
+{% if yearIndex == 1 %}
         <li>Focus sur les actions critiques et quick wins</li>
-{% elseif year == action_plan.durationYears %}
+{% elseif calendarYear == endYear %}
         <li>Finalisation des actions et audit de conformité final</li>
 {% else %}
         <li>Poursuite des améliorations structurelles</li>
