@@ -5,231 +5,286 @@
 {% block stylesheets %}
 {{ parent() }}
 <style>
-    .campaign-header {
+    .campaign-hero {
+        background: linear-gradient(135deg, {{ campaign.project.color }}15 0%, {{ campaign.project.color }}05 100%);
+        border-left: 5px solid {{ campaign.project.color }};
+        border-radius: 12px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .campaign-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--text-dark);
+    }
+
+    .stat-card-modern {
         background: var(--card-bg);
         border: 1px solid var(--border-color);
         border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
+        padding: 1.75rem;
+        transition: all 0.3s ease;
+        height: 100%;
     }
-    .campaign-header::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 6px;
-        background: {{ campaign.project.color }};
+
+    .stat-card-modern:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px var(--shadow-color);
     }
-    .stat-card {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1.5rem;
-        text-align: center;
-        transition: transform 0.2s ease;
-    }
-    .stat-card:hover {
-        transform: translateY(-2px);
-    }
-    .stat-card .stat-value {
-        font-size: 2.5rem;
+
+    .stat-value-modern {
+        font-size: 2.75rem;
         font-weight: 700;
-        color: var(--text-dark);
+        line-height: 1;
         margin-bottom: 0.5rem;
     }
-    .stat-card .stat-label {
+
+    .stat-label-modern {
         color: var(--text-light);
-        font-size: 0.9rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
     }
-    .page-audit-row:hover {
-        background-color: var(--bg-light);
-    }
-    .progress-bar-custom {
-        height: 8px;
-        border-radius: 4px;
+
+    .progress-modern {
+        height: 6px;
+        border-radius: 10px;
         background: var(--border-color);
         overflow: hidden;
+        margin-top: 0.75rem;
     }
-    .progress-bar-fill {
+
+    .progress-fill-modern {
         height: 100%;
-        background: var(--primary-color);
-        transition: width 0.3s ease;
+        background: {{ campaign.project.color }};
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+
+    .audit-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .audit-card:hover {
+        border-color: {{ campaign.project.color }};
+        box-shadow: 0 4px 15px var(--shadow-color);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .conformity-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .badge-excellent {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .badge-good {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-average {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-poor {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--text-light);
+        opacity: 0.5;
+        margin-bottom: 1.5rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 {# Breadcrumb #}
-<nav aria-label="breadcrumb" class="mb-3">
+<nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ path('app_project_list') }}">Projets</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_project_list') }}"><i class="bi bi-folder"></i> Projets</a></li>
         <li class="breadcrumb-item"><a href="{{ path('app_project_show', {id: campaign.project.id}) }}">{{ campaign.project.name }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{{ campaign.name }}</li>
     </ol>
 </nav>
 
-{# Campaign Header #}
-<div class="campaign-header">
+{# Campaign Hero Section #}
+<div class="campaign-hero">
     <div class="d-flex justify-content-between align-items-start mb-3">
         <div class="flex-grow-1">
-            <h1 class="mb-2">
+            <h1 class="campaign-title">
                 <i class="bi bi-clipboard-data"></i> {{ campaign.name }}
-                {% if campaign.isArchived %}
-                    <span class="badge bg-secondary ms-2">Archivé</span>
-                {% elseif campaign.status == 'completed' %}
-                    <span class="badge bg-success ms-2">Terminé</span>
-                {% elseif campaign.status == 'in_progress' %}
-                    <span class="badge bg-primary ms-2">En cours</span>
-                {% else %}
-                    <span class="badge bg-warning ms-2">Brouillon</span>
-                {% endif %}
             </h1>
-            <p class="text-muted mb-2">
-                <i class="bi bi-folder"></i> Projet : <a href="{{ path('app_project_show', {id: campaign.project.id}) }}">{{ campaign.project.name }}</a>
-            </p>
+            <div class="mb-3">
+                {% if campaign.isArchived %}
+                    <span class="badge bg-secondary fs-6">Archivé</span>
+                {% elseif campaign.status == 'completed' %}
+                    <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> Terminé</span>
+                {% elseif campaign.status == 'in_progress' %}
+                    <span class="badge bg-primary fs-6"><i class="bi bi-hourglass-split"></i> En cours</span>
+                {% else %}
+                    <span class="badge bg-warning fs-6"><i class="bi bi-pencil"></i> Brouillon</span>
+                {% endif %}
+
+                <span class="badge bg-light text-dark fs-6 ms-2">
+                    <i class="bi bi-calendar"></i> {{ campaign.startDate|date('d/m/Y') }}
+                    {% if campaign.endDate %}
+                        → {{ campaign.endDate|date('d/m/Y') }}
+                    {% endif %}
+                </span>
+
+                <span class="badge bg-light text-dark fs-6 ms-2">
+                    <i class="bi bi-tag"></i>
+                    {% if campaign.sampleType == 'representative' %}
+                        Représentatif
+                    {% elseif campaign.sampleType == 'exhaustive' %}
+                        Exhaustif
+                    {% else %}
+                        Personnalisé
+                    {% endif %}
+                </span>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-            {% if campaign.status != 'completed' and campaign.areAllPagesAudited() %}
-                <form method="post" action="{{ path('app_campaign_complete', {id: campaign.id}) }}" class="d-inline">
-                    <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ campaign.id) }}">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Marquer comme terminé
-                    </button>
-                </form>
-            {% endif %}
+
+        <div class="action-buttons">
             <a href="{{ path('app_campaign_edit', {id: campaign.id}) }}" class="btn btn-outline-primary">
                 <i class="bi bi-pencil"></i> Modifier
             </a>
-            <form method="post" action="{{ path('app_campaign_archive', {id: campaign.id}) }}" class="d-inline" onsubmit="return confirm('{% if campaign.isArchived %}Êtes-vous sûr de vouloir désarchiver cette campagne ?{% else %}Êtes-vous sûr de vouloir archiver cette campagne ?{% endif %}');">
+            <form method="post" action="{{ path('app_campaign_archive', {id: campaign.id}) }}" class="d-inline" onsubmit="return confirm('{% if campaign.isArchived %}Désarchiver cette campagne ?{% else %}Archiver cette campagne ?{% endif %}');">
                 <input type="hidden" name="_token" value="{{ csrf_token('archive' ~ campaign.id) }}">
                 <button type="submit" class="btn btn-outline-secondary">
                     <i class="bi bi-{% if campaign.isArchived %}arrow-counterclockwise{% else %}archive{% endif %}"></i>
-                    {% if campaign.isArchived %}Désarchiver{% else %}Archiver{% endif %}
                 </button>
             </form>
-            <form method="post" action="{{ path('app_campaign_delete', {id: campaign.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette campagne ? Cette action est irréversible et supprimera tous les audits associés.');">
+            <form method="post" action="{{ path('app_campaign_delete', {id: campaign.id}) }}" class="d-inline" onsubmit="return confirm('Supprimer définitivement cette campagne et tous ses audits ?');">
                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ campaign.id) }}">
                 <button type="submit" class="btn btn-outline-danger">
-                    <i class="bi bi-trash"></i> Supprimer
+                    <i class="bi bi-trash"></i>
                 </button>
             </form>
         </div>
     </div>
 
     {% if campaign.description %}
-        <div class="mt-3">
-            <h5 class="text-muted mb-2">Description</h5>
-            <p class="mb-0">{{ campaign.description }}</p>
+        <div class="alert alert-light border-0 mb-0">
+            <i class="bi bi-info-circle"></i> {{ campaign.description }}
         </div>
     {% endif %}
-
-    <div class="row mt-3">
-        <div class="col-md-4">
-            <small class="text-muted">
-                <i class="bi bi-calendar"></i> Début : {{ campaign.startDate|date('d/m/Y') }}
-            </small>
-        </div>
-        <div class="col-md-4">
-            <small class="text-muted">
-                <i class="bi bi-calendar-check"></i> Fin prévue :
-                {% if campaign.endDate %}
-                    {{ campaign.endDate|date('d/m/Y') }}
-                {% else %}
-                    Non définie
-                {% endif %}
-            </small>
-        </div>
-        <div class="col-md-4">
-            <small class="text-muted">
-                <i class="bi bi-list-ul"></i> Type :
-                {% if campaign.sampleType == 'representative' %}
-                    Représentatif
-                {% elseif campaign.sampleType == 'exhaustive' %}
-                    Exhaustif
-                {% else %}
-                    Personnalisé
-                {% endif %}
-            </small>
-        </div>
-    </div>
 </div>
 
-{# Statistics #}
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-value">{{ campaign.totalPages ?? 0 }}</div>
-            <div class="stat-label">Page{% if campaign.totalPages > 1 %}s{% endif %} auditée{% if campaign.totalPages > 1 %}s{% endif %}</div>
-            <div class="progress-bar-custom mt-2">
-                {% set progress = campaign.totalPages > 0 ? (campaign.completedPageAuditsCount / campaign.totalPages * 100) : 0 %}
-                <div class="progress-bar-fill" style="width: {{ progress }}%"></div>
-            </div>
-            <small class="text-muted">{{ campaign.completedPageAuditsCount }} / {{ campaign.totalPages }} terminées</small>
+{# Statistics Cards #}
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-modern">
+            <div class="stat-value-modern text-primary">{{ campaign.totalPages ?? 0 }}</div>
+            <div class="stat-label-modern">Pages auditées</div>
+            {% if campaign.totalPages > 0 %}
+                {% set progress = (campaign.completedPageAuditsCount / campaign.totalPages * 100)|round %}
+                <div class="progress-modern">
+                    <div class="progress-fill-modern" style="width: {{ progress }}%"></div>
+                </div>
+                <small class="text-muted mt-2 d-block">{{ campaign.completedPageAuditsCount }} terminées</small>
+            {% endif %}
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-value">
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-modern">
+            <div class="stat-value-modern {% if campaign.avgConformityRate %}
+                {% if campaign.avgConformityRate >= 90 %}text-success
+                {% elseif campaign.avgConformityRate >= 70 %}text-info
+                {% elseif campaign.avgConformityRate >= 50 %}text-warning
+                {% else %}text-danger{% endif %}
+            {% endif %}">
                 {% if campaign.avgConformityRate %}
                     {{ campaign.avgConformityRate }}%
                 {% else %}
                     -
                 {% endif %}
             </div>
-            <div class="stat-label">Conformité moyenne</div>
+            <div class="stat-label-modern">Conformité moyenne</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-value">{{ campaign.totalIssues ?? 0 }}</div>
-            <div class="stat-label">Problèmes totaux</div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-modern">
+            <div class="stat-value-modern text-info">{{ campaign.totalIssues ?? 0 }}</div>
+            <div class="stat-label-modern">Problèmes totaux</div>
             {% if campaign.totalIssues > 0 %}
-                <div class="mt-2">
-                    <span class="badge bg-danger">{{ campaign.criticalCount ?? 0 }} critique{% if campaign.criticalCount > 1 %}s{% endif %}</span>
-                    <span class="badge bg-warning">{{ campaign.majorCount ?? 0 }} majeur{% if campaign.majorCount > 1 %}s{% endif %}</span>
-                    <span class="badge bg-info">{{ campaign.minorCount ?? 0 }} mineur{% if campaign.minorCount > 1 %}s{% endif %}</span>
+                <div class="mt-3 d-flex gap-2 justify-content-center">
+                    <span class="badge bg-danger">{{ campaign.criticalCount ?? 0 }}</span>
+                    <span class="badge bg-warning">{{ campaign.majorCount ?? 0 }}</span>
+                    <span class="badge bg-info">{{ campaign.minorCount ?? 0 }}</span>
                 </div>
             {% endif %}
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <a href="{{ path('app_audit_new', {campaign_id: campaign.id}) }}" class="btn btn-primary btn-lg">
-                <i class="bi bi-plus-circle"></i> Auditer une page
-            </a>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-modern d-flex flex-column justify-content-center align-items-center">
+            {% if campaign.actionPlans|length > 0 %}
+                <a href="{{ path('app_action_plan_show', {id: campaign.actionPlans|last.id}) }}" class="btn btn-outline-success btn-lg w-100 mb-2">
+                    <i class="bi bi-eye"></i> Voir le plan
+                </a>
+                {% if campaign.hasCompletedAudits() %}
+                    <button type="button" class="btn btn-outline-warning btn-lg w-100 mb-2" data-bs-toggle="modal" data-bs-target="#generatePlanModal">
+                        <i class="bi bi-arrow-clockwise"></i> Régénérer
+                    </button>
+                {% endif %}
+            {% elseif campaign.hasCompletedAudits() %}
+                <button type="button" class="btn btn-success btn-lg w-100 mb-2" data-bs-toggle="modal" data-bs-target="#generatePlanModal">
+                    <i class="bi bi-magic"></i> Plan d'action
+                </button>
+            {% endif %}
+
+            {% if campaign.status != 'completed' and campaign.areAllPagesAudited() %}
+                <form method="post" action="{{ path('app_campaign_complete', {id: campaign.id}) }}" class="w-100">
+                    <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ campaign.id) }}">
+                    <button type="submit" class="btn btn-outline-primary btn-lg w-100">
+                        <i class="bi bi-check-circle"></i> Terminer campagne
+                    </button>
+                </form>
+            {% endif %}
         </div>
     </div>
 </div>
 
-{# Action Plan Section #}
-{% if campaign.hasCompletedAudits %}
-<div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <i class="bi bi-calendar-check-fill"></i> <strong>Générer un plan d'action pluriannuel</strong>
-        <p class="mb-0 mt-1">Vous avez {{ campaign.pageAudits|length }} audit(s) complété(s). Générez un plan d'action sur 2-3 ans pour améliorer progressivement votre conformité RGAA.</p>
-    </div>
-    <div>
-        {% if campaign.actionPlans|length > 0 %}
-            <a href="{{ path('app_action_plan_show', {id: campaign.actionPlans|first.id}) }}" class="btn btn-outline-success">
-                <i class="bi bi-eye"></i> Voir le plan
-            </a>
-        {% endif %}
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generatePlanModal">
-            <i class="bi bi-magic"></i> Générer le plan
-        </button>
-    </div>
-</div>
-
 {# Modal for plan generation #}
+{% if campaign.hasCompletedAudits() %}
 <div class="modal fade" id="generatePlanModal" tabindex="-1" aria-labelledby="generatePlanModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="generatePlanModalLabel">
-                    <i class="bi bi-calendar-check"></i> Générer un plan d'action pluriannuel
+                    <i class="bi bi-calendar-check"></i> {% if campaign.actionPlans|length > 0 %}Régénérer le plan d'action{% else %}Générer un plan d'action pluriannuel{% endif %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -237,9 +292,15 @@
                 <div class="modal-body">
                     <input type="hidden" name="_token" value="{{ csrf_token('generate_action_plan_' ~ campaign.id) }}">
 
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Le plan d'action sera généré automatiquement en analysant les {{ campaign.pageAudits|length }} page(s) auditée(s) de votre campagne.
-                    </div>
+                    {% if campaign.actionPlans|length > 0 %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> <strong>Attention :</strong> Un nouveau plan sera créé en analysant toutes les {{ campaign.pageAudits|length }} page(s) auditée(s). L'ancien plan restera accessible mais ne sera plus affiché par défaut.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Le plan sera généré en analysant les {{ campaign.pageAudits|length }} page(s) auditée(s).
+                        </div>
+                    {% endif %}
 
                     <div class="mb-3">
                         <label for="duration_years" class="form-label">Durée du plan</label>
@@ -250,26 +311,12 @@
                             <option value="4">4 ans</option>
                             <option value="5">5 ans</option>
                         </select>
-                        <small class="text-muted">Plus la durée est longue, plus les actions seront étalées dans le temps.</small>
-                    </div>
-
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <h6>Ce qui sera généré :</h6>
-                            <ul class="mb-0">
-                                <li>📊 État des lieux et objectifs</li>
-                                <li>🎯 Liste d'actions priorisées par trimestre</li>
-                                <li>⚡ Quick wins (actions à fort impact rapide)</li>
-                                <li>📅 Planning détaillé sur {{ campaign.pageAudits|length > 1 ? 'plusieurs' : 'toute la' }} années</li>
-                                <li>📈 Prévisions de progression</li>
-                            </ul>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="btn btn-success">
-                        <i class="bi bi-magic"></i> Générer maintenant
+                        <i class="bi bi-magic"></i> Générer
                     </button>
                 </div>
             </form>
@@ -279,100 +326,89 @@
 {% endif %}
 
 {# Pages List #}
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 pt-4 px-4">
         <h5 class="mb-0">
-            <i class="bi bi-file-earmark-text"></i> Pages de la campagne
+            <i class="bi bi-file-earmark-text"></i> Pages de la campagne ({{ campaign.pageAudits|length }})
         </h5>
     </div>
-    <div class="card-body">
+    <div class="card-body p-4">
         {% if campaign.pageAudits|length > 0 %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>URL</th>
-                            <th>Type</th>
-                            <th>Statut</th>
-                            <th>Conformité</th>
-                            <th class="text-center">Problèmes</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for audit in campaign.pageAudits %}
-                            <tr class="page-audit-row">
-                                <td>
-                                    <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="text-decoration-none">
-                                        {{ audit.url|length > 60 ? audit.url|slice(0, 60) ~ '...' : audit.url }}
+            {% for audit in campaign.pageAudits %}
+                <div class="audit-card">
+                    <div class="row align-items-center">
+                        <div class="col-lg-5">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 me-3">
+                                    {% if audit.pageType == 'homepage' %}
+                                        <i class="bi bi-house-door fs-3 text-primary"></i>
+                                    {% elseif audit.pageType == 'form' %}
+                                        <i class="bi bi-ui-checks fs-3 text-warning"></i>
+                                    {% elseif audit.pageType == 'article' %}
+                                        <i class="bi bi-file-text fs-3 text-info"></i>
+                                    {% else %}
+                                        <i class="bi bi-file-earmark fs-3 text-secondary"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="text-decoration-none fw-semibold">
+                                        {{ audit.url|length > 50 ? audit.url|slice(0, 50) ~ '...' : audit.url }}
                                     </a>
                                     {% if audit.pageTitle %}
-                                        <br><small class="text-muted">{{ audit.pageTitle }}</small>
+                                        <br><small class="text-muted">{{ audit.pageTitle|slice(0, 60) }}{% if audit.pageTitle|length > 60 %}...{% endif %}</small>
                                     {% endif %}
-                                </td>
-                                <td>
-                                    {% if audit.pageType == 'homepage' %}
-                                        <span class="badge bg-info">Accueil</span>
-                                    {% elseif audit.pageType == 'form' %}
-                                        <span class="badge bg-warning">Formulaire</span>
-                                    {% elseif audit.pageType == 'listing' %}
-                                        <span class="badge bg-secondary">Liste</span>
-                                    {% elseif audit.pageType == 'article' %}
-                                        <span class="badge bg-primary">Article</span>
-                                    {% else %}
-                                        <span class="badge bg-light text-dark">Autre</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-2 text-center">
+                            {% if audit.conformityRate %}
+                                {% set rate = audit.conformityRate %}
+                                <span class="conformity-badge
+                                    {% if rate >= 90 %}badge-excellent
+                                    {% elseif rate >= 70 %}badge-good
+                                    {% elseif rate >= 50 %}badge-average
+                                    {% else %}badge-poor{% endif %}">
+                                    {{ rate }}%
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-lg-3 text-center">
+                            {% if audit.totalIssues %}
+                                <div class="d-flex justify-content-center gap-2">
+                                    {% if audit.criticalCount %}
+                                        <span class="badge bg-danger">{{ audit.criticalCount }} critique{% if audit.criticalCount > 1 %}s{% endif %}</span>
                                     {% endif %}
-                                </td>
-                                <td>
-                                    {% if audit.status == constant('App\\Enum\\AuditStatus::COMPLETED') %}
-                                        <span class="badge bg-success">Terminé</span>
-                                    {% elseif audit.status == constant('App\\Enum\\AuditStatus::RUNNING') %}
-                                        <span class="badge bg-warning">En cours</span>
-                                    {% elseif audit.status == constant('App\\Enum\\AuditStatus::FAILED') %}
-                                        <span class="badge bg-danger">Échoué</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">En attente</span>
+                                    {% if audit.majorCount %}
+                                        <span class="badge bg-warning">{{ audit.majorCount }} majeur{% if audit.majorCount > 1 %}s{% endif %}</span>
                                     {% endif %}
-                                </td>
-                                <td>
-                                    {% if audit.conformityRate %}
-                                        <strong>{{ audit.conformityRate }}%</strong>
-                                    {% else %}
-                                        -
+                                    {% if audit.minorCount %}
+                                        <span class="badge bg-info">{{ audit.minorCount }} mineur{% if audit.minorCount > 1 %}s{% endif %}</span>
                                     {% endif %}
-                                </td>
-                                <td class="text-center">
-                                    {% if audit.totalIssues %}
-                                        <span class="badge bg-secondary">{{ audit.totalIssues }}</span>
-                                        {% if audit.criticalCount %}
-                                            <span class="badge bg-danger" title="Critiques">{{ audit.criticalCount }}</span>
-                                        {% endif %}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <small class="text-muted">{{ audit.createdAt|date('d/m/Y H:i') }}</small>
-                                </td>
-                                <td>
-                                    <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i> Voir
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">Aucun problème</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-lg-2 text-end">
+                            <a href="{{ path('app_audit_show', {id: audit.id}) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye"></i> Détails
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
         {% else %}
-            <div class="text-center py-5">
-                <i class="bi bi-inbox" style="font-size: 3rem; color: var(--text-light);"></i>
-                <h4 class="mt-3 mb-2">Aucune page auditée</h4>
-                <p class="text-muted mb-4">Commencez par auditer des pages pour cette campagne.</p>
-                <a href="{{ path('app_audit_new', {campaign_id: campaign.id}) }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle"></i> Auditer une page
-                </a>
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="bi bi-inbox"></i>
+                </div>
+                <h4 class="mb-2">Aucune page auditée</h4>
+                <p class="text-muted mb-0">Cette campagne ne contient pas encore d'audits.</p>
             </div>
         {% endif %}
     </div>
