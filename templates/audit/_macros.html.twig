@@ -42,6 +42,9 @@
                     data-bs-target="#theme{{ themeNumber }}_crit{{ safe_criterion_key }}_{{ severity }}{{ loop.index }}"
                     aria-expanded="false"
                     aria-controls="theme{{ themeNumber }}_crit{{ safe_criterion_key }}_{{ severity }}{{ loop.index }}">
+                {# Severity badge - visible and prominent #}
+                <span class="me-2">{{ macros.severityBadge(severity) }}</span>
+
                 <strong>{{ group.errorType }}</strong>
                 <span class="badge bg-dark ms-2">{{ group.occurrences|length }} occurrence(s)</span>
 
