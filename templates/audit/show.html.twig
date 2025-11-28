@@ -410,6 +410,32 @@
         color: var(--info-color) !important;
     }
 
+    .rgaa-tests-details details summary {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .rgaa-tests-details details summary:hover {
+        text-decoration: underline;
+    }
+
+    .rgaa-tests-details .bg-light {
+        background-color: #f8f9fa !important;
+    }
+
+    [data-theme="dark"] .rgaa-tests-details .bg-light {
+        background-color: var(--bg-light) !important;
+    }
+
+    [data-theme="dark"] .rgaa-tests-details .text-dark {
+        color: var(--text-dark) !important;
+    }
+
+    .rgaa-tests-details pre {
+        white-space: pre-wrap;
+        font-family: inherit;
+    }
+
     /* Responsive improvements */
     @media (max-width: 767.98px) {
         /* Page header - stack title and buttons */
@@ -883,9 +909,23 @@
                                                     <div class="mt-2 ps-3">
                                                         <ul class="list-unstyled small">
                                                             {% for test in rgaa_tests[criteria.number] %}
-                                                                <li class="mb-1">
-                                                                    <span class="badge bg-primary me-1">{{ test.number }}</span>
-                                                                    {{ test.title }}
+                                                                <li class="mb-3">
+                                                                    <div class="d-flex align-items-start">
+                                                                        <span class="badge bg-primary me-2 flex-shrink-0">{{ test.number }}</span>
+                                                                        <div class="flex-grow-1">
+                                                                            <div class="fw-bold text-dark">{{ test.title }}</div>
+                                                                            {% if test.methodology is defined %}
+                                                                                <details class="mt-2">
+                                                                                    <summary class="text-muted small">
+                                                                                        <i class="bi bi-clipboard-check"></i> Méthodologie
+                                                                                    </summary>
+                                                                                    <div class="mt-2 p-2 bg-light rounded small">
+                                                                                        <pre class="mb-0">{{ test.methodology }}</pre>
+                                                                                    </div>
+                                                                                </details>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                    </div>
                                                                 </li>
                                                             {% endfor %}
                                                         </ul>

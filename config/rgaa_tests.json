@@ -3,41 +3,50 @@
   "1.1": [
     {
       "number": "1.1.1",
-      "title": "Chaque image (balise <img> ou balise possédant l'attribut WAI-ARIA role=\"img\") porteuse d'information a-t-elle une alternative textuelle ?"
+      "title": "Chaque image (balise <img> ou balise possédant l'attribut WAI-ARIA role=\"img\") porteuse d'information a-t-elle une alternative textuelle ?",
+      "methodology": "1. Identifier les images (balises <img> ou éléments avec role=\"img\")\n2. Déterminer si l'image est porteuse d'information\n3. Vérifier la présence d'une alternative textuelle via :\n   - aria-labelledby\n   - aria-label\n   - attribut alt\n   - attribut title\n4. Le test est validé si au moins une alternative existe"
     },
     {
       "number": "1.1.2",
-      "title": "Chaque zone d'une image réactive (balise <area>) porteuse d'information a-t-elle une alternative textuelle ?"
+      "title": "Chaque zone d'une image réactive (balise <area>) porteuse d'information a-t-elle une alternative textuelle ?",
+      "methodology": "1. Identifier les zones cliquables (<area>)\n2. Déterminer si la zone est porteuse d'information\n3. Vérifier la présence d'une alternative via alt, aria-label, aria-labelledby ou title\n4. Le test est validé si au moins une alternative existe"
     },
     {
       "number": "1.1.3",
-      "title": "Chaque bouton de type image (balise <input> avec l'attribut type=\"image\") a-t-il une alternative textuelle ?"
+      "title": "Chaque bouton de type image (balise <input> avec l'attribut type=\"image\") a-t-il une alternative textuelle ?",
+      "methodology": "1. Identifier les boutons image (<input type=\"image\">)\n2. Vérifier la présence d'une alternative via alt, aria-label, aria-labelledby ou title\n3. Le test est validé si au moins une alternative existe"
     },
     {
       "number": "1.1.4",
-      "title": "Chaque zone cliquable d'une image réactive côté serveur est-elle doublée d'un mécanisme utilisable quel que soit le dispositif de pointage ?"
+      "title": "Chaque zone cliquable d'une image réactive côté serveur est-elle doublée d'un mécanisme utilisable quel que soit le dispositif de pointage ?",
+      "methodology": "1. Identifier les images réactives côté serveur\n2. Vérifier qu'un mécanisme alternatif existe (liste de liens, etc.)\n3. S'assurer que ce mécanisme est utilisable au clavier"
     },
     {
       "number": "1.1.5",
-      "title": "Chaque image vectorielle (balise <svg>) porteuse d'information possède-t-elle un attribut role=\"img\" et une alternative textuelle ?"
+      "title": "Chaque image vectorielle (balise <svg>) porteuse d'information possède-t-elle un attribut role=\"img\" et une alternative textuelle ?",
+      "methodology": "1. Identifier les éléments <svg> porteurs d'information\n2. Vérifier la présence de role=\"img\"\n3. Vérifier la présence d'une alternative via aria-label, aria-labelledby, <title> ou title\n4. Le test est validé si les deux conditions sont remplies"
     },
     {
       "number": "1.1.6",
-      "title": "Chaque image objet (balise <object> avec type=\"image/...\") porteuse d'information possède-t-elle une alternative textuelle ?"
+      "title": "Chaque image objet (balise <object> avec type=\"image/...\") porteuse d'information possède-t-elle une alternative textuelle ?",
+      "methodology": "1. Identifier les éléments <object type=\"image/...\">\n2. Vérifier une de ces conditions :\n   - Alternative textuelle + role=\"img\"\n   - Lien/bouton adjacent vers contenu alternatif\n   - Mécanisme de remplacement disponible"
     },
     {
       "number": "1.1.7",
-      "title": "Chaque image embarquée (balise <embed> avec type=\"image/...\") porteuse d'information possède-t-elle une alternative textuelle ?"
+      "title": "Chaque image embarquée (balise <embed> avec type=\"image/...\") porteuse d'information possède-t-elle une alternative textuelle ?",
+      "methodology": "1. Identifier les éléments <embed type=\"image/...\">\n2. Vérifier une de ces conditions :\n   - Alternative textuelle + role=\"img\"\n   - Lien/bouton adjacent vers contenu alternatif\n   - Mécanisme de remplacement disponible"
     },
     {
       "number": "1.1.8",
-      "title": "Chaque image bitmap (balise <canvas>) porteuse d'information possède-t-elle une alternative textuelle ?"
+      "title": "Chaque image bitmap (balise <canvas>) porteuse d'information possède-t-elle une alternative textuelle ?",
+      "methodology": "1. Identifier les éléments <canvas>\n2. Vérifier une de ces conditions :\n   - Alternative textuelle + role=\"img\"\n   - Contenu alternatif entre <canvas> et </canvas>\n   - Lien/bouton adjacent vers contenu alternatif\n   - Mécanisme de remplacement disponible"
     }
   ],
   "1.2": [
     {
       "number": "1.2.1",
-      "title": "Chaque image de décoration (balise <img>) est-elle correctement ignorée par les technologies d'assistance ?"
+      "title": "Chaque image de décoration (balise <img>) est-elle correctement ignorée par les technologies d'assistance ?",
+      "methodology": "1. Identifier les images de décoration\n2. Vérifier une de ces conditions :\n   - alt=\"\" (alt vide)\n   - role=\"presentation\"\n   - aria-hidden=\"true\"\n3. Le test est validé si l'image est correctement masquée"
     },
     {
       "number": "1.2.2",
@@ -93,13 +102,15 @@
   "2.1": [
     {
       "number": "2.1.1",
-      "title": "Chaque cadre (balise <iframe> ou <frame>) a-t-il un attribut title ?"
+      "title": "Chaque cadre (balise <iframe> ou <frame>) a-t-il un attribut title ?",
+      "methodology": "1. Identifier tous les cadres (<iframe> et <frame>)\n2. Vérifier la présence de l'attribut title\n3. Le test est validé si tous les cadres ont un title"
     }
   ],
   "2.2": [
     {
       "number": "2.2.1",
-      "title": "Pour chaque cadre ayant un attribut title, ce titre de cadre est-il pertinent ?"
+      "title": "Pour chaque cadre ayant un attribut title, ce titre de cadre est-il pertinent ?",
+      "methodology": "1. Identifier tous les cadres ayant un title\n2. Vérifier que le title décrit clairement le contenu du cadre\n3. S'assurer que le title n'est pas générique (\"cadre\", \"iframe\"...)"
     }
   ],
   "3.1": [
@@ -252,4 +263,3 @@
       "title": "Dans chaque page web, chaque document bureautique en téléchargement possède-t-il, si nécessaire, une version accessible ?"
     }
   ]
-}
