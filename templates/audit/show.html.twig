@@ -124,6 +124,14 @@
         margin-top: 0.25rem;
     }
 
+    .stat-card-modern .stat-value-minor {
+        color: #667eea;
+    }
+
+    .stat-card-modern .stat-label-minor {
+        color: #667eea;
+    }
+
     /* Modern tabs */
     .nav-tabs {
         border-bottom: 2px solid #e9ecef;
@@ -158,9 +166,10 @@
     /* Modern cards */
     .card {
         border-radius: 12px;
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        border: 1px solid #dee2e6;
         box-shadow: var(--card-shadow);
         transition: all 0.3s ease;
+        background: white;
     }
 
     .card:hover {
@@ -168,8 +177,8 @@
     }
 
     .card-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-bottom: none;
         border-radius: 12px 12px 0 0 !important;
         padding: 1.25rem 1.5rem;
     }
@@ -177,7 +186,71 @@
     .card-header h5 {
         margin: 0;
         font-weight: 700;
-        color: #495057;
+        color: white;
+    }
+
+    .card-header i {
+        color: white;
+    }
+
+    /* Hero card specific styles */
+    .audit-hero-card .hero-icon {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+    }
+
+    .audit-hero-card .hero-title {
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+
+    .audit-hero-card .hero-url {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .audit-hero-card .hero-url a {
+        color: white;
+        text-decoration: none;
+    }
+
+    .audit-hero-card .hero-url a:hover {
+        text-decoration: underline;
+    }
+
+    .audit-hero-card .hero-date {
+        opacity: 0.9;
+        font-size: 0.95rem;
+        margin-bottom: 0;
+    }
+
+    .conformity-badge-large .conformity-icon {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .conformity-badge-large .conformity-percentage {
+        font-size: 3rem;
+        line-height: 1;
+    }
+
+    .conformity-badge-large .conformity-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+
+    .issues-total-badge .issues-number {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .issues-total-badge .issues-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
     }
 
     /* Modern accordions */
@@ -431,15 +504,15 @@
         <div class="d-flex justify-content-between align-items-center audit-url-info flex-wrap">
             <div class="flex-grow-1 mb-3 mb-md-0">
                 <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-globe2" style="font-size: 1.5rem; margin-right: 0.75rem;"></i>
-                    <h4 class="mb-0" style="font-weight: 700;">URL auditée</h4>
+                    <i class="bi bi-globe2 hero-icon"></i>
+                    <h4 class="hero-title">URL auditée</h4>
                 </div>
-                <p class="mb-2" style="font-size: 1.1rem;">
-                    <a href="{{ audit.url }}" target="_blank" class="text-white text-decoration-none text-break">
+                <p class="hero-url mb-2">
+                    <a href="{{ audit.url }}" target="_blank" class="text-break">
                         <i class="bi bi-box-arrow-up-right me-1"></i>{{ audit.url }}
                     </a>
                 </p>
-                <p class="mb-0" style="opacity: 0.9; font-size: 0.95rem;">
+                <p class="hero-date">
                     <i class="bi bi-calendar3"></i> Audit réalisé le {{ audit.createdAt|date('d/m/Y à H:i') }}
                 </p>
             </div>
@@ -448,33 +521,33 @@
                     {% set rate = audit.conformityRate|number_format(1) %}
                     {% if rate >= 90 %}
                         <div class="conformity-badge-large success text-center">
-                            <i class="bi bi-check-circle-fill d-block mb-2" style="font-size: 2.5rem;"></i>
-                            <div style="font-size: 3rem; line-height: 1;">{{ rate }}%</div>
-                            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.5rem;">CONFORME</div>
+                            <i class="bi bi-check-circle-fill conformity-icon"></i>
+                            <div class="conformity-percentage">{{ rate }}%</div>
+                            <div class="conformity-label">CONFORME</div>
                         </div>
                     {% elseif rate >= 70 %}
                         <div class="conformity-badge-large text-center">
-                            <i class="bi bi-info-circle-fill d-block mb-2" style="font-size: 2.5rem;"></i>
-                            <div style="font-size: 3rem; line-height: 1;">{{ rate }}%</div>
-                            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.5rem;">PARTIELLEMENT CONFORME</div>
+                            <i class="bi bi-info-circle-fill conformity-icon"></i>
+                            <div class="conformity-percentage">{{ rate }}%</div>
+                            <div class="conformity-label">PARTIELLEMENT CONFORME</div>
                         </div>
                     {% elseif rate >= 50 %}
                         <div class="conformity-badge-large warning text-center">
-                            <i class="bi bi-exclamation-triangle-fill d-block mb-2" style="font-size: 2.5rem;"></i>
-                            <div style="font-size: 3rem; line-height: 1;">{{ rate }}%</div>
-                            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.5rem;">À AMÉLIORER</div>
+                            <i class="bi bi-exclamation-triangle-fill conformity-icon"></i>
+                            <div class="conformity-percentage">{{ rate }}%</div>
+                            <div class="conformity-label">À AMÉLIORER</div>
                         </div>
                     {% else %}
                         <div class="conformity-badge-large danger text-center">
-                            <i class="bi bi-x-circle-fill d-block mb-2" style="font-size: 2.5rem;"></i>
-                            <div style="font-size: 3rem; line-height: 1;">{{ rate }}%</div>
-                            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.5rem;">NON CONFORME</div>
+                            <i class="bi bi-x-circle-fill conformity-icon"></i>
+                            <div class="conformity-percentage">{{ rate }}%</div>
+                            <div class="conformity-label">NON CONFORME</div>
                         </div>
                     {% endif %}
                 {% endif %}
-                <div class="text-center">
-                    <div style="font-size: 3rem; font-weight: 700; line-height: 1;">{{ audit.totalIssues }}</div>
-                    <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.5rem;">
+                <div class="issues-total-badge text-center">
+                    <div class="issues-number">{{ audit.totalIssues }}</div>
+                    <div class="issues-label">
                         PROBLÈME{% if audit.totalIssues > 1 %}S{% endif %}<br>DÉTECTÉ{% if audit.totalIssues > 1 %}S{% endif %}
                     </div>
                 </div>
@@ -557,8 +630,8 @@
             <div class="stat-icon">
                 <i class="bi bi-info-circle-fill"></i>
             </div>
-            <h2 style="color: #667eea;">{{ audit.minorCount }}</h2>
-            <div class="stat-label" style="color: #667eea;">Mineurs</div>
+            <h2 class="stat-value-minor">{{ audit.minorCount }}</h2>
+            <div class="stat-label stat-label-minor">Mineurs</div>
             <div class="stat-sublabel">Améliorations recommandées</div>
         </div>
     </div>
