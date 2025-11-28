@@ -198,27 +198,27 @@
     }
 
     /* Dark mode support */
-    [data-bs-theme="dark"] .card {
-        background: #1a1d29;
-        border-color: #2d3142;
+    [data-theme="dark"] .card {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
     }
 
-    [data-bs-theme="dark"] .card-body {
-        background: #1a1d29;
-        color: #e9ecef;
+    [data-theme="dark"] .card-body {
+        background: var(--card-bg) !important;
+        color: var(--text-medium) !important;
     }
 
-    [data-bs-theme="dark"] .stat-card-modern {
-        background: #1a1d29;
-        border-color: #2d3142;
+    [data-theme="dark"] .stat-card-modern {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
     }
 
-    [data-bs-theme="dark"] .stat-sublabel {
-        color: #adb5bd;
+    [data-theme="dark"] .stat-card-modern h2 {
+        color: inherit !important;
     }
 
-    [data-bs-theme="dark"] .text-muted {
-        color: #adb5bd !important;
+    [data-theme="dark"] .stat-sublabel {
+        color: var(--text-light) !important;
     }
 
     /* Hero card specific styles */
@@ -322,39 +322,24 @@
     }
 
     /* Dark mode for accordions */
-    [data-bs-theme="dark"] .accordion-item {
-        background: #1a1d29;
-        border-color: #2d3142;
+    [data-theme="dark"] .accordion-item {
+        background: var(--bg-light) !important;
+        border-color: var(--border-color) !important;
     }
 
-    [data-bs-theme="dark"] .accordion-button {
-        background: #1a1d29;
-        color: #e9ecef;
+    [data-theme="dark"] .accordion-button {
+        background: var(--bg-light) !important;
+        color: var(--text-dark) !important;
     }
 
-    [data-bs-theme="dark"] .accordion-button:not(.collapsed) {
-        background: linear-gradient(135deg, #2d3142 0%, #3a3f54 100%);
-        color: #8b9cff;
+    [data-theme="dark"] .accordion-button:not(.collapsed) {
+        background: var(--bg-white) !important;
+        color: var(--info-color) !important;
     }
 
-    [data-bs-theme="dark"] .accordion-button::after {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238b9cff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-    }
-
-    [data-bs-theme="dark"] .accordion-body {
-        background: #13151f;
-        color: #e9ecef;
-    }
-
-    [data-bs-theme="dark"] .alert-info {
-        background: #1a2332;
-        border-color: #2d3f57;
-        color: #9db4d4;
-    }
-
-    [data-bs-theme="dark"] .theme-card-header {
-        background: #1a1d29 !important;
-        border-color: #2d3142 !important;
+    [data-theme="dark"] .accordion-body {
+        background: var(--card-bg) !important;
+        color: var(--text-medium) !important;
     }
 
     /* Severity badges enhanced */
