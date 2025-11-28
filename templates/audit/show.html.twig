@@ -391,6 +391,25 @@
     .priority-3 { border-left-color: #0dcaf0; }
     .priority-4 { border-left-color: #6c757d; }
 
+    /* RGAA tests details */
+    .rgaa-tests-details summary {
+        cursor: pointer;
+        font-size: 0.9rem;
+        user-select: none;
+    }
+
+    .rgaa-tests-details summary:hover {
+        color: var(--info-color) !important;
+    }
+
+    .rgaa-tests-details ul li {
+        line-height: 1.6;
+    }
+
+    [data-theme="dark"] .rgaa-tests-details summary {
+        color: var(--info-color) !important;
+    }
+
     /* Responsive improvements */
     @media (max-width: 767.98px) {
         /* Page header - stack title and buttons */
@@ -853,50 +872,30 @@
                                     <td><span class="badge bg-info">{{ criteria.level }}</span></td>
                                     <td>
                                         {{ criteria.description }}
-                                        {% if criteria.autoTestable %}
-                                            <div class="mt-2">
-                                                <small class="text-muted">
-                                                    <i class="bi bi-robot"></i> <strong>Tests automatiques :</strong>
-                                                    {% set testsList = [] %}
-                                                    {% if criteria.number starts with '1.1' %}
-                                                        {% set testsList = ['Axe-core (image-alt)', 'Playwright (Images sans alt)'] %}
-                                                    {% elseif criteria.number starts with '1.2' %}
-                                                        {% set testsList = ['Playwright (Images décoratives)'] %}
-                                                    {% elseif criteria.number starts with '2.1' %}
-                                                        {% set testsList = ['Axe-core (frame-title, iframe-title)'] %}
-                                                    {% elseif criteria.number starts with '3.2' %}
-                                                        {% set testsList = ['Axe-core (color-contrast)'] %}
-                                                    {% elseif criteria.number starts with '6.2' %}
-                                                        {% set testsList = ['Axe-core (link-name)'] %}
-                                                    {% elseif criteria.number starts with '7.' %}
-                                                        {% set testsList = ['Playwright (Focus, Keyboard)', 'Axe-core (ARIA)'] %}
-                                                    {% elseif criteria.number starts with '8.1' %}
-                                                        {% set testsList = ['A11yLint (Doctype)'] %}
-                                                    {% elseif criteria.number starts with '8.3' %}
-                                                        {% set testsList = ['Axe-core (html-has-lang)', 'A11yLint'] %}
-                                                    {% elseif criteria.number starts with '8.5' %}
-                                                        {% set testsList = ['Axe-core (document-title)', 'A11yLint'] %}
-                                                    {% elseif criteria.number starts with '9.1' %}
-                                                        {% set testsList = ['Axe-core (heading-order)'] %}
-                                                    {% elseif criteria.number starts with '9.2' %}
-                                                        {% set testsList = ['Axe-core (region, bypass)', 'Playwright (Skip links)'] %}
-                                                    {% elseif criteria.number starts with '9.3' %}
-                                                        {% set testsList = ['Axe-core (list, listitem)'] %}
-                                                    {% elseif criteria.number starts with '11.9' %}
-                                                        {% set testsList = ['Axe-core (button-name)', 'Playwright (Boutons)'] %}
-                                                    {% elseif criteria.number starts with '11.1' %}
-                                                        {% set testsList = ['Axe-core (label)', 'Playwright (Form labels)'] %}
-                                                    {% endif %}
-                                                    {% if testsList|length > 0 %}
-                                                        {% for test in testsList %}
-                                                            <span class="badge bg-info me-1" style="font-size: 0.7rem;">{{ test }}</span>
-                                                        {% endfor %}
-                                                    {% else %}
-                                                        <span class="badge bg-secondary" style="font-size: 0.7rem;">Tests automatiques divers</span>
-                                                    {% endif %}
-                                                </small>
+
+                                        {# Display RGAA official tests #}
+                                        {% if rgaa_tests[criteria.number] is defined and rgaa_tests[criteria.number]|length > 0 %}
+                                            <div class="mt-3">
+                                                <details class="rgaa-tests-details">
+                                                    <summary class="text-primary">
+                                                        <i class="bi bi-list-check"></i> <strong>{{ rgaa_tests[criteria.number]|length }} test(s) RGAA</strong>
+                                                    </summary>
+                                                    <div class="mt-2 ps-3">
+                                                        <ul class="list-unstyled small">
+                                                            {% for test in rgaa_tests[criteria.number] %}
+                                                                <li class="mb-1">
+                                                                    <span class="badge bg-primary me-1">{{ test.number }}</span>
+                                                                    {{ test.title }}
+                                                                </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </div>
+                                                </details>
                                             </div>
-                                        {% else %}
+                                        {% endif %}
+
+                                        {# Manual check notes for non-testable criteria #}
+                                        {% if not criteria.autoTestable %}
                                             <div class="mt-2">
                                                 <textarea class="form-control form-control-sm manual-check-notes" placeholder="💡 Notes de vérification (optionnel)" rows="2" data-criteria="{{ criteria.number }}"></textarea>
                                             </div>

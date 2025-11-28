@@ -442,6 +442,14 @@ class AuditController extends AbstractController
             }
         }
 
+        // Load RGAA tests from JSON file
+        $rgaaTestsPath = $this->getParameter('kernel.project_dir') . '/config/rgaa_tests.json';
+        $rgaaTests = [];
+        if (file_exists($rgaaTestsPath)) {
+            $rgaaTestsContent = file_get_contents($rgaaTestsPath);
+            $rgaaTests = json_decode($rgaaTestsContent, true) ?? [];
+        }
+
         // Build criteria status by topic for the summary table
         $criteriaStatusByTopic = [];
         $totalConform = 0;
@@ -513,6 +521,7 @@ class AuditController extends AbstractController
             'priority_statistics' => $priorityStatistics,
             'summary_text' => $summaryText,
             'non_conform_details' => $nonConformDetails,
+            'rgaa_tests' => $rgaaTests,
         ]);
     }
 

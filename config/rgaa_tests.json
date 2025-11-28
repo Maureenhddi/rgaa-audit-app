@@ -1,0 +1,255 @@
+{
+  "_comment": "Tests RGAA 4.1.2 officiels - Source: https://accessibilite.numerique.gouv.fr/methode/criteres-et-tests/",
+  "1.1": [
+    {
+      "number": "1.1.1",
+      "title": "Chaque image (balise <img> ou balise possédant l'attribut WAI-ARIA role=\"img\") porteuse d'information a-t-elle une alternative textuelle ?"
+    },
+    {
+      "number": "1.1.2",
+      "title": "Chaque zone d'une image réactive (balise <area>) porteuse d'information a-t-elle une alternative textuelle ?"
+    },
+    {
+      "number": "1.1.3",
+      "title": "Chaque bouton de type image (balise <input> avec l'attribut type=\"image\") a-t-il une alternative textuelle ?"
+    },
+    {
+      "number": "1.1.4",
+      "title": "Chaque zone cliquable d'une image réactive côté serveur est-elle doublée d'un mécanisme utilisable quel que soit le dispositif de pointage ?"
+    },
+    {
+      "number": "1.1.5",
+      "title": "Chaque image vectorielle (balise <svg>) porteuse d'information possède-t-elle un attribut role=\"img\" et une alternative textuelle ?"
+    },
+    {
+      "number": "1.1.6",
+      "title": "Chaque image objet (balise <object> avec type=\"image/...\") porteuse d'information possède-t-elle une alternative textuelle ?"
+    },
+    {
+      "number": "1.1.7",
+      "title": "Chaque image embarquée (balise <embed> avec type=\"image/...\") porteuse d'information possède-t-elle une alternative textuelle ?"
+    },
+    {
+      "number": "1.1.8",
+      "title": "Chaque image bitmap (balise <canvas>) porteuse d'information possède-t-elle une alternative textuelle ?"
+    }
+  ],
+  "1.2": [
+    {
+      "number": "1.2.1",
+      "title": "Chaque image de décoration (balise <img>) est-elle correctement ignorée par les technologies d'assistance ?"
+    },
+    {
+      "number": "1.2.2",
+      "title": "Chaque zone d'image réactive de décoration (balise <area>) est-elle correctement ignorée par les technologies d'assistance ?"
+    },
+    {
+      "number": "1.2.3",
+      "title": "Chaque image objet de décoration (balise <object> avec type=\"image/...\") est-elle correctement ignorée par les technologies d'assistance ?"
+    },
+    {
+      "number": "1.2.4",
+      "title": "Chaque image vectorielle de décoration (balise <svg>) est-elle correctement ignorée par les technologies d'assistance ?"
+    },
+    {
+      "number": "1.2.5",
+      "title": "Chaque image bitmap de décoration (balise <canvas>) est-elle correctement ignorée par les technologies d'assistance ?"
+    },
+    {
+      "number": "1.2.6",
+      "title": "Chaque image embarquée de décoration (balise <embed> avec type=\"image/...\") est-elle correctement ignorée par les technologies d'assistance ?"
+    }
+  ],
+  "1.3": [
+    {
+      "number": "1.3.1",
+      "title": "Pour chaque image (balise <img> ou possédant role=\"img\") porteuse d'information ayant une alternative textuelle, cette alternative est-elle pertinente ?"
+    },
+    {
+      "number": "1.3.2",
+      "title": "Pour chaque zone d'image réactive (balise <area>) porteuse d'information ayant une alternative textuelle, cette alternative est-elle pertinente ?"
+    },
+    {
+      "number": "1.3.3",
+      "title": "Pour chaque bouton de type image (balise <input> avec type=\"image\") ayant une alternative textuelle, cette alternative est-elle pertinente ?"
+    },
+    {
+      "number": "1.3.4",
+      "title": "Pour chaque image objet (balise <object> avec type=\"image/...\") porteuse d'information ayant une alternative textuelle, cette alternative est-elle pertinente ?"
+    },
+    {
+      "number": "1.3.5",
+      "title": "Pour chaque image embarquée (balise <embed> avec type=\"image/...\") porteuse d'information ayant une alternative textuelle, cette alternative est-elle pertinente ?"
+    },
+    {
+      "number": "1.3.6",
+      "title": "Pour chaque image vectorielle (balise <svg>) porteuse d'information ayant une alternative textuelle, cette alternative est-elle pertinente ?"
+    },
+    {
+      "number": "1.3.7",
+      "title": "Pour chaque image bitmap (balise <canvas>) porteuse d'information ayant une alternative textuelle, cette alternative est-elle pertinente ?"
+    }
+  ],
+  "2.1": [
+    {
+      "number": "2.1.1",
+      "title": "Chaque cadre (balise <iframe> ou <frame>) a-t-il un attribut title ?"
+    }
+  ],
+  "2.2": [
+    {
+      "number": "2.2.1",
+      "title": "Pour chaque cadre ayant un attribut title, ce titre de cadre est-il pertinent ?"
+    }
+  ],
+  "3.1": [
+    {
+      "number": "3.1.1",
+      "title": "Dans chaque page web, l'information ne doit pas être donnée uniquement par la couleur. Cette règle est-elle respectée ?"
+    }
+  ],
+  "3.2": [
+    {
+      "number": "3.2.1",
+      "title": "Dans chaque page web, le contraste entre la couleur du texte et la couleur de son arrière-plan est-il suffisamment élevé ?"
+    }
+  ],
+  "6.1": [
+    {
+      "number": "6.1.1",
+      "title": "Chaque lien est-il explicite ?"
+    }
+  ],
+  "6.2": [
+    {
+      "number": "6.2.1",
+      "title": "Dans chaque page web, chaque lien a-t-il un intitulé ?"
+    }
+  ],
+  "7.1": [
+    {
+      "number": "7.1.1",
+      "title": "Chaque script est-il, si nécessaire, compatible avec les technologies d'assistance ?"
+    }
+  ],
+  "7.3": [
+    {
+      "number": "7.3.1",
+      "title": "Chaque script est-il contrôlable par le clavier et tout dispositif de pointage ?"
+    }
+  ],
+  "8.1": [
+    {
+      "number": "8.1.1",
+      "title": "Chaque page web est-elle définie par un type de document ?"
+    }
+  ],
+  "8.2": [
+    {
+      "number": "8.2.1",
+      "title": "Pour chaque page web, le code source généré est-il valide selon le type de document spécifié ?"
+    }
+  ],
+  "8.3": [
+    {
+      "number": "8.3.1",
+      "title": "Dans chaque page web, la langue par défaut est-elle présente ?"
+    }
+  ],
+  "8.4": [
+    {
+      "number": "8.4.1",
+      "title": "Pour chaque page web ayant une langue par défaut, le code de langue est-il pertinent ?"
+    }
+  ],
+  "8.5": [
+    {
+      "number": "8.5.1",
+      "title": "Chaque page web a-t-elle un titre de page ?"
+    }
+  ],
+  "8.6": [
+    {
+      "number": "8.6.1",
+      "title": "Pour chaque page web ayant un titre de page, ce titre est-il pertinent ?"
+    }
+  ],
+  "9.1": [
+    {
+      "number": "9.1.1",
+      "title": "Dans chaque page web, l'information est-elle structurée par l'utilisation appropriée de titres ?"
+    }
+  ],
+  "9.2": [
+    {
+      "number": "9.2.1",
+      "title": "Dans chaque page web, la structure du document est-elle cohérente ?"
+    }
+  ],
+  "9.3": [
+    {
+      "number": "9.3.1",
+      "title": "Dans chaque page web, chaque liste est-elle correctement structurée ?"
+    }
+  ],
+  "10.1": [
+    {
+      "number": "10.1.1",
+      "title": "Dans le site web, des feuilles de styles sont-elles utilisées pour contrôler la présentation de l'information ?"
+    }
+  ],
+  "10.2": [
+    {
+      "number": "10.2.1",
+      "title": "Dans chaque page web, le contenu visible reste-t-il présent lorsque les feuilles de styles sont désactivées ?"
+    }
+  ],
+  "11.1": [
+    {
+      "number": "11.1.1",
+      "title": "Chaque champ de formulaire a-t-il une étiquette ?"
+    }
+  ],
+  "11.2": [
+    {
+      "number": "11.2.1",
+      "title": "Chaque étiquette associée à un champ de formulaire est-elle pertinente ?"
+    }
+  ],
+  "11.9": [
+    {
+      "number": "11.9.1",
+      "title": "Dans chaque formulaire, l'intitulé de chaque bouton est-il pertinent ?"
+    }
+  ],
+  "11.10": [
+    {
+      "number": "11.10.1",
+      "title": "Dans chaque formulaire, le contrôle de saisie est-il utilisé de manière pertinente ?"
+    }
+  ],
+  "12.1": [
+    {
+      "number": "12.1.1",
+      "title": "Chaque ensemble de pages dispose-t-il de deux systèmes de navigation différents au moins ?"
+    }
+  ],
+  "12.6": [
+    {
+      "number": "12.6.1",
+      "title": "Les zones de regroupement de contenus présentes dans plusieurs pages web sont-elles toujours situées au même endroit ?"
+    }
+  ],
+  "13.1": [
+    {
+      "number": "13.1.1",
+      "title": "Pour chaque page web, l'utilisateur a-t-il le contrôle de chaque limite de temps modifiant le contenu ?"
+    }
+  ],
+  "13.3": [
+    {
+      "number": "13.3.1",
+      "title": "Dans chaque page web, chaque document bureautique en téléchargement possède-t-il, si nécessaire, une version accessible ?"
+    }
+  ]
+}
