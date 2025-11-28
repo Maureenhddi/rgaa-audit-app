@@ -853,7 +853,50 @@
                                     <td><span class="badge bg-info">{{ criteria.level }}</span></td>
                                     <td>
                                         {{ criteria.description }}
-                                        {% if not criteria.autoTestable %}
+                                        {% if criteria.autoTestable %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-robot"></i> <strong>Tests automatiques :</strong>
+                                                    {% set testsList = [] %}
+                                                    {% if criteria.number starts with '1.1' %}
+                                                        {% set testsList = ['Axe-core (image-alt)', 'Playwright (Images sans alt)'] %}
+                                                    {% elseif criteria.number starts with '1.2' %}
+                                                        {% set testsList = ['Playwright (Images décoratives)'] %}
+                                                    {% elseif criteria.number starts with '2.1' %}
+                                                        {% set testsList = ['Axe-core (frame-title, iframe-title)'] %}
+                                                    {% elseif criteria.number starts with '3.2' %}
+                                                        {% set testsList = ['Axe-core (color-contrast)'] %}
+                                                    {% elseif criteria.number starts with '6.2' %}
+                                                        {% set testsList = ['Axe-core (link-name)'] %}
+                                                    {% elseif criteria.number starts with '7.' %}
+                                                        {% set testsList = ['Playwright (Focus, Keyboard)', 'Axe-core (ARIA)'] %}
+                                                    {% elseif criteria.number starts with '8.1' %}
+                                                        {% set testsList = ['A11yLint (Doctype)'] %}
+                                                    {% elseif criteria.number starts with '8.3' %}
+                                                        {% set testsList = ['Axe-core (html-has-lang)', 'A11yLint'] %}
+                                                    {% elseif criteria.number starts with '8.5' %}
+                                                        {% set testsList = ['Axe-core (document-title)', 'A11yLint'] %}
+                                                    {% elseif criteria.number starts with '9.1' %}
+                                                        {% set testsList = ['Axe-core (heading-order)'] %}
+                                                    {% elseif criteria.number starts with '9.2' %}
+                                                        {% set testsList = ['Axe-core (region, bypass)', 'Playwright (Skip links)'] %}
+                                                    {% elseif criteria.number starts with '9.3' %}
+                                                        {% set testsList = ['Axe-core (list, listitem)'] %}
+                                                    {% elseif criteria.number starts with '11.9' %}
+                                                        {% set testsList = ['Axe-core (button-name)', 'Playwright (Boutons)'] %}
+                                                    {% elseif criteria.number starts with '11.1' %}
+                                                        {% set testsList = ['Axe-core (label)', 'Playwright (Form labels)'] %}
+                                                    {% endif %}
+                                                    {% if testsList|length > 0 %}
+                                                        {% for test in testsList %}
+                                                            <span class="badge bg-info me-1" style="font-size: 0.7rem;">{{ test }}</span>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <span class="badge bg-secondary" style="font-size: 0.7rem;">Tests automatiques divers</span>
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                        {% else %}
                                             <div class="mt-2">
                                                 <textarea class="form-control form-control-sm manual-check-notes" placeholder="💡 Notes de vérification (optionnel)" rows="2" data-criteria="{{ criteria.number }}"></textarea>
                                             </div>
