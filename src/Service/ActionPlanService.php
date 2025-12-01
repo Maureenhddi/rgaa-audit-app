@@ -581,6 +581,103 @@ class ActionPlanService
     }
 
     /**
+     * Get detailed RGAA thematic breakdown
+     */
+    private function getRgaaThematicBreakdown(array $issues): string
+    {
+        $thematicMap = [
+            'Images' => ['1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7', '1.8', '1.9'],
+            'Cadres' => ['2.1', '2.2'],
+            'Couleurs' => ['3.1', '3.2', '3.3'],
+            'Multimedia' => ['4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '4.10', '4.11', '4.12', '4.13'],
+            'Tableaux' => ['5.1', '5.2', '5.3', '5.4', '5.5', '5.6', '5.7', '5.8'],
+            'Liens' => ['6.1', '6.2'],
+            'Scripts' => ['7.1', '7.2', '7.3', '7.4', '7.5'],
+            'Elements obligatoires' => ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9', '8.10'],
+            'Structuration' => ['9.1', '9.2', '9.3', '9.4'],
+            'Presentation' => ['10.1', '10.2', '10.3', '10.4', '10.5', '10.6', '10.7', '10.8', '10.9', '10.10', '10.11', '10.12', '10.13', '10.14'],
+            'Formulaires' => ['11.1', '11.2', '11.3', '11.4', '11.5', '11.6', '11.7', '11.8', '11.9', '11.10', '11.11', '11.12', '11.13'],
+            'Navigation' => ['12.1', '12.2', '12.3', '12.4', '12.5', '12.6', '12.7', '12.8', '12.9', '12.10', '12.11'],
+            'Consultation' => ['13.1', '13.2', '13.3', '13.4', '13.5', '13.6', '13.7', '13.8', '13.9', '13.10', '13.11', '13.12']
+        ];
+
+        $thematicCounts = [];
+        foreach ($thematicMap as $theme => $criteria) {
+            $thematicCounts[$theme] = 0;
+        }
+
+        // Count issues by thematic
+        foreach ($issues as $severityLevel => $issueList) {
+            foreach ($issueList as $issue) {
+                $rgaaCriteria = $issue['rgaaCriteria'] ?? '';
+
+                foreach ($thematicMap as $theme => $criteria) {
+                    foreach ($criteria as $criterion) {
+                        if (str_contains($rgaaCriteria, $criterion)) {
+                            $thematicCounts[$theme]++;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Filter and sort
+        $thematicCounts = array_filter($thematicCounts, fn($count) => $count > 0);
+        arsort($thematicCounts);
+
+        $parts = [];
+        foreach ($thematicCounts as $theme => $count) {
+            $parts[] = "- **{$theme}** : {$count} probleme(s)";
+        }
+
+        return implode("\n", $parts);
+    }
+
+    /**
+     * Get concrete examples of errors with HTML code
+     */
+    private function getConcreteExamples(array $issues, int $limit = 5): string
+    {
+        $examples = [];
+        $count = 0;
+
+        foreach (['critical', 'major', 'minor'] as $severity) {
+            if (!isset($issues[$severity])) continue;
+
+            foreach ($issues[$severity] as $issue) {
+                if ($count >= $limit) break 2;
+
+                $errorType = $issue['errorType'] ?? 'Erreur inconnue';
+                $rgaaCriteria = $issue['rgaaCriteria'] ?? 'N/A';
+                $htmlExample = $issue['htmlExample'] ?? $issue['selector'] ?? 'N/A';
+                $occurrences = $issue['occurrences'] ?? 1;
+
+                $severityLabel = match($severity) {
+                    'critical' => 'CRITIQUE',
+                    'major' => 'MAJEUR',
+                    'minor' => 'MINEUR',
+                    default => 'INCONNU'
+                };
+
+                $examples[] = "\n**Exemple " . ($count + 1) . " [{$severityLabel}]**";
+                $examples[] = "- Type: {$errorType}";
+                $examples[] = "- Critere RGAA: {$rgaaCriteria}";
+                $examples[] = "- Occurrences: {$occurrences} fois";
+
+                // Nettoyer et limiter l'exemple HTML
+                $cleanHtml = strip_tags($htmlExample, '<button><input><a><img><label><select><textarea><div><span><form>');
+                $cleanHtml = substr($cleanHtml, 0, 200);
+                $examples[] = "- Exemple HTML: `{$cleanHtml}`";
+
+                $count++;
+            }
+        }
+
+        return implode("\n", $examples);
+    }
+
+    /**
      * Generate STRATEGIC content for the PPA (orientations, axes, moyens, indicateurs)
      */
     private function generateStrategicContent(ActionPlan $ppa, AuditCampaign $campaign, array $issues, int $durationYears): void
@@ -793,8 +890,10 @@ class ActionPlanService
         $currentRate = (float) ($campaign->getAvgConformityRate() ?? 0);
         $targetRate = min(100, $currentRate + (50 * $durationYears));
 
-        // Analyze main issue categories
+        // Get enriched context
         $categoryBreakdown = $this->analyzeCategoryBreakdown($issues);
+        $rgaaBreakdown = $this->getRgaaThematicBreakdown($issues);
+        $concreteExamples = $this->getConcreteExamples($issues, 5);
 
         $prompt = <<<PROMPT
 Tu es un expert en accessibilite web RGAA 4.1. IMPORTANT : Tu generes un resume STRATEGIQUE pour un Plan Pluriannuel d'Accessibilite (PPA).
@@ -814,7 +913,12 @@ Tu es un expert en accessibilite web RGAA 4.1. IMPORTANT : Tu generes un resume 
   - {$criticalCount} erreurs critiques (bloquants accessibilite)
   - {$majorCount} erreurs majeures (impact significatif)
   - {$minorCount} erreurs mineures (ameliorations recommandees)
-- Domaines concernes : {$categoryBreakdown}
+
+**Repartition par thematique RGAA :**
+{$rgaaBreakdown}
+
+**Exemples concrets d'erreurs trouvees (pour contexte - ne PAS les citer dans le resume) :**
+{$concreteExamples}
 
 **Genere un resume strategique structure :**
 
@@ -822,15 +926,15 @@ Tu es un expert en accessibilite web RGAA 4.1. IMPORTANT : Tu generes un resume 
 (2-3 phrases sur l'importance de l'accessibilite pour l'organisation et les enjeux strategiques)
 
 ## Etat des lieux
-(2 phrases decrivant la situation globale SANS details techniques)
+(2-3 phrases decrivant la situation globale. Mentionne les thematiques RGAA les plus impactees de maniere GENERALE, sans numero de critere)
 
 ## Grandes orientations strategiques
-(3-4 orientations strategiques majeures sur {$durationYears} ans)
+(4-5 orientations strategiques majeures sur {$durationYears} ans, en tenant compte des thematiques les plus problematiques)
 
 ## Approche pluriannuelle
-(Decrire l'approche generale en 3 phases sur {$durationYears} ans, SANS mentionner de criteres RGAA ou erreurs techniques :
-- Phase 1 : Corrections prioritaires et formation
-- Phase 2 : Ameliorations structurelles
+(Decrire l'approche generale en 3 phases sur {$durationYears} ans :
+- Phase 1 : Corrections prioritaires et formation (focus sur les erreurs critiques)
+- Phase 2 : Ameliorations structurelles (focus sur les thematiques principales)
 - Phase 3 : Conformite complete et maintien)
 
 ## Benefices attendus
@@ -838,8 +942,9 @@ Tu es un expert en accessibilite web RGAA 4.1. IMPORTANT : Tu generes un resume 
 
 **Ton :** Strategique, inspire, oriente vision et objectifs.
 **Format :** Markdown avec titres niveau 2 (##).
-**Longueur :** 250-300 mots maximum.
-**EVITER ABSOLUMENT :** Criteres RGAA precis, erreurs A11yLint, composants techniques, estimations d'heures.
+**Longueur :** 300-350 mots maximum.
+**EVITER ABSOLUMENT :** Numeros de criteres RGAA precis (1.1.1, 4.2.3), erreurs A11yLint, code HTML, composants techniques, estimations d'heures.
+**AUTORISE :** Mentionner les THEMATIQUES RGAA (Images, Formulaires, Navigation, Couleurs, etc.) de maniere generale.
 PROMPT;
 
         try {

@@ -143,18 +143,23 @@ class GeminiContextualAnalysisService
             ];
         }
 
-        // Add response format
+        // Add response format with correction examples
         $parts[] = [
             'text' => "\nRéponds UNIQUEMENT avec un JSON valide :\n" .
                      "[\n" .
                      "  {\n" .
                      "    \"elementIndex\": 0,\n" .
                      "    \"hasIssue\": true|false,\n" .
-                     "    \"issue\": \"description du problème\" | null,\n" .
-                     "    \"suggestion\": \"suggestion d'amélioration\" | null,\n" .
+                     "    \"issue\": \"description du problème\",\n" .
+                     "    \"suggestion\": \"suggestion d'amélioration détaillée\",\n" .
+                     "    \"codeExample\": {\n" .
+                     "      \"before\": \"<div style='color:#777;background:#fff'>Texte</div>\",\n" .
+                     "      \"after\": \"<div style='color:#595959;background:#fff'>Texte</div> /* Contraste 4.54:1 */\"\n" .
+                     "    },\n" .
                      "    \"confidence\": 0.0-1.0\n" .
                      "  }\n" .
-                     "]\n"
+                     "]\n" .
+                     "Note: Fournis des exemples de code AVANT/APRES pour CHAQUE problème détecté.\n"
         ];
 
         // Call API
@@ -198,18 +203,23 @@ class GeminiContextualAnalysisService
             ];
         }
 
-        // Add response format
+        // Add response format with correction examples
         $parts[] = [
             'text' => "\nRéponds UNIQUEMENT avec un JSON valide :\n" .
                      "[\n" .
                      "  {\n" .
                      "    \"headingIndex\": 0,\n" .
                      "    \"hasIssue\": true|false,\n" .
-                     "    \"issue\": \"description du problème\" | null,\n" .
-                     "    \"suggestion\": \"suggestion d'amélioration\" | null,\n" .
+                     "    \"issue\": \"description du problème\",\n" .
+                     "    \"suggestion\": \"suggestion d'amélioration détaillée\",\n" .
+                     "    \"codeExample\": {\n" .
+                     "      \"before\": \"<h2>Introduction</h2>\",\n" .
+                     "      \"after\": \"<h2>Introduction aux services de notre plateforme</h2>\"\n" .
+                     "    },\n" .
                      "    \"confidence\": 0.0-1.0\n" .
                      "  }\n" .
-                     "]\n"
+                     "]\n" .
+                     "Note: Fournis des exemples de titres AVANT/APRES plus descriptifs.\n"
             ];
 
         // Call API
@@ -256,18 +266,23 @@ class GeminiContextualAnalysisService
             ];
         }
 
-        // Add response format
+        // Add response format with correction examples
         $parts[] = [
             'text' => "\nRéponds UNIQUEMENT avec un JSON valide :\n" .
                      "[\n" .
                      "  {\n" .
                      "    \"linkIndex\": 0,\n" .
                      "    \"hasIssue\": true|false,\n" .
-                     "    \"issue\": \"description du problème\" | null,\n" .
-                     "    \"suggestion\": \"suggestion d'amélioration\" | null,\n" .
+                     "    \"issue\": \"description du problème\",\n" .
+                     "    \"suggestion\": \"suggestion d'amélioration détaillée\",\n" .
+                     "    \"codeExample\": {\n" .
+                     "      \"before\": \"<a href='/product/123'>En savoir plus</a>\",\n" .
+                     "      \"after\": \"<a href='/product/123' aria-label='En savoir plus sur le produit iPhone 15 Pro'>En savoir plus</a>\"\n" .
+                     "    },\n" .
                      "    \"confidence\": 0.0-1.0\n" .
                      "  }\n" .
-                     "]\n"
+                     "]\n" .
+                     "Note: Fournis des exemples de liens AVANT/APRES avec aria-label explicite.\n"
         ];
 
         // Call API
@@ -432,6 +447,7 @@ class GeminiContextualAnalysisService
                 'hasIssue' => $analysis['hasIssue'] ?? null,
                 'issue' => $analysis['issue'] ?? null,
                 'suggestion' => $analysis['suggestion'] ?? null,
+                'codeExample' => $analysis['codeExample'] ?? null,
                 'confidence' => $analysis['confidence'] ?? 0.5
             ];
         }
