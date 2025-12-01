@@ -1,12 +1,12 @@
-twig:
-    extensions:
-        - Twig\Extra\Markdown\MarkdownExtension
-
 services:
-    Twig\Extra\Markdown\MarkdownExtension: ~
+    Twig\Extra\Markdown\MarkdownExtension:
+        tags: ['twig.extension']
+
     Twig\Extra\Markdown\MarkdownRuntime:
         arguments:
             $converter: '@Twig\Extra\Markdown\LeagueMarkdownConverter'
+        tags:
+            - { name: twig.runtime }
 
     Twig\Extra\Markdown\LeagueMarkdownConverter:
         class: Twig\Extra\Markdown\LeagueMarkdownConverter
