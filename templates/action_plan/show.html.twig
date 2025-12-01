@@ -486,14 +486,9 @@
                 <label class="form-label" style="color: #d1d5db; margin-bottom: 0;">
                     <i class="bi bi-clipboard-check"></i> Code HTML
                 </label>
-                <div class="d-flex gap-2">
-                    <a href="{{ path('app_action_plan_export_word', {id: action_plan.id}) }}" class="btn btn-sm btn-primary">
-                        <i class="bi bi-file-word"></i> Télécharger Word
-                    </a>
-                    <button class="btn btn-sm btn-success" onclick="copyHtmlCode()" id="copyBtn">
-                        <i class="bi bi-clipboard"></i> Copier le code
-                    </button>
-                </div>
+                <button class="btn btn-sm btn-success" onclick="copyHtmlCode()" id="copyBtn">
+                    <i class="bi bi-clipboard"></i> Copier le code
+                </button>
             </div>
             <textarea id="htmlCode" class="form-control" rows="20" readonly style="background: #1a1d29; color: #60a5fa; border: 2px solid #3d4356; font-family: 'Courier New', monospace; font-size: 0.85rem;">{% set totalActions = action_plan.items|length %}
 {% set completedActions = action_plan.items.filter(i => i.status.value == 'completed').count %}
@@ -752,6 +747,9 @@
         <i class="bi bi-arrow-left"></i> Retour à la campagne
     </a>
     <div class="d-flex gap-2">
+        <a href="{{ path('app_action_plan_export_word', {id: action_plan.id}) }}" class="btn btn-success">
+            <i class="bi bi-file-word"></i> Exporter en Word
+        </a>
         <button class="btn btn-primary" onclick="window.print()">
             <i class="bi bi-printer"></i> Imprimer
         </button>
