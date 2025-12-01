@@ -878,6 +878,7 @@ PROMPT;
     {
         $currentRate = $campaign->getAvgConformityRate() ?? 0;
         $targetRate = min(100, $currentRate + (50 * $years));
+        $remainingMonths = ($years - 1) * 12;
 
         return <<<SUMMARY
 ## Vision et enjeux
@@ -903,7 +904,7 @@ Traitement des problemes bloquants, formation des equipes, mise en place des pro
 **Phase 2 : Ameliorations structurelles** (12-18 mois)
 Refonte des composants, amelioration de la structure, optimisation de l'experience utilisateur.
 
-**Phase 3 : Conformite complete et maintien** (derniers {$years - 1} mois)
+**Phase 3 : Conformite complete et maintien** (derniers {$remainingMonths} mois)
 Finalisation des corrections, audit de conformite, mise en place du maintien en condition operationnelle.
 
 ## Benefices attendus
