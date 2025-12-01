@@ -239,6 +239,7 @@ class GeminiService
                         'severity' => $test['issues'][0]['severity'] ?? 'minor',
                         'selector' => $test['issues'][0]['selector'] ?? '',
                         'message' => $test['issues'][0]['message'] ?? '',
+                        'html' => $test['issues'][0]['html'] ?? '',
                     ];
 
                     // Check cache first
@@ -261,11 +262,15 @@ class GeminiService
                         ];
                     }
                     $issuesByType[$testName]['count'] += count($test['issues']);
-                    // Prendre 2 exemples maximum par type
-                    $issuesByType[$testName]['examples'] = array_merge(
-                        $issuesByType[$testName]['examples'],
-                        array_slice($test['issues'], 0, 2)
-                    );
+                    // Prendre 2 exemples maximum par type avec HTML complet
+                    foreach (array_slice($test['issues'], 0, 2) as $issue) {
+                        $issuesByType[$testName]['examples'][] = [
+                            'selector' => $issue['selector'] ?? '',
+                            'message' => $issue['message'] ?? '',
+                            'html' => $issue['html'] ?? $issue['context'] ?? '',
+                            'attributes' => $issue['attributes'] ?? []
+                        ];
+                    }
                 }
             }
         }
@@ -295,45 +300,108 @@ class GeminiService
         }
 
         // Technical errors enrichment only (no vision analysis)
-        $prompt = "Expert RGAA analyse {$url}\n\n";
-        $prompt .= "Erreurs:\n" . json_encode(array_values($issuesByType)) . "\n\n";
-        $prompt .= "Génère: errorType, source, severity, description, impactUser, recommendation, codeFix, wcagCriteria, rgaaCriteria\n\n";
+        $prompt = "Tu es un expert en accessibilité web RGAA 4.1 / WCAG 2.1 AA.\n\n";
+        $prompt .= "🎯 OBJECTIF : Analyser les erreurs d'accessibilité détectées et fournir des recommandations ACTIONNABLES.\n\n";
+
+        $prompt .= "📄 PAGE AUDITÉE : {$url}\n\n";
+
+        $prompt .= "🔍 ERREURS DÉTECTÉES :\n";
+        $prompt .= json_encode(array_values($issuesByType), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n";
+
+        $prompt .= "📋 STRUCTURE DE RÉPONSE ATTENDUE :\n";
+        $prompt .= "Pour CHAQUE type d'erreur, génère un objet JSON avec :\n\n";
+        $prompt .= "{\n";
+        $prompt .= "  \"errorType\": \"string\",\n";
+        $prompt .= "  \"source\": \"playwright|axe-core|a11ylint|pa11y\",\n";
+        $prompt .= "  \"severity\": \"critical|major|minor\",\n";
+        $prompt .= "  \"description\": \"Description claire du problème (2-3 phrases)\",\n";
+        $prompt .= "  \"impactUser\": \"Impact concret pour les utilisateurs en situation de handicap\",\n";
+        $prompt .= "  \"recommendation\": \"Recommandation CONCRÈTE et ACTIONNABLE (voir règles ci-dessous)\",\n";
+        $prompt .= "  \"codeFix\": {\n";
+        $prompt .= "    \"before\": \"<code HTML actuel problématique>\",\n";
+        $prompt .= "    \"after\": \"<code HTML corrigé avec commentaires>\",\n";
+        $prompt .= "    \"explanation\": \"Explication de la correction appliquée\"\n";
+        $prompt .= "  },\n";
+        $prompt .= "  \"effort\": \"facile|moyen|complexe\",\n";
+        $prompt .= "  \"impact\": \"bloquant|genant|mineur\",\n";
+        $prompt .= "  \"quickWin\": true|false (true si effort=facile ET impact=bloquant ou genant),\n";
+        $prompt .= "  \"manualTest\": \"Comment tester manuellement cette correction\",\n";
+        $prompt .= "  \"wcagCriteria\": \"ex: 1.4.3, 4.1.2\",\n";
+        $prompt .= "  \"rgaaCriteria\": \"ex: 3.2, 11.9\",\n";
+        $prompt .= "  \"waiAriaPattern\": \"Pattern WAI-ARIA applicable si pertinent (ex: Dialog, Menu)\"\n";
+        $prompt .= "}\n\n";
 
         // CRITICAL: Recommendations quality guidelines
-        $prompt .= "RÈGLES IMPÉRATIVES pour 'recommendation':\n";
-        $prompt .= "1. JAMAIS de recommandations génériques comme:\n";
+        $prompt .= "⚠️ RÈGLES IMPÉRATIVES pour 'recommendation' :\n";
+        $prompt .= "1. JAMAIS de recommandations génériques comme :\n";
         $prompt .= "   ❌ 'Vérifier le code HTML/CSS/JS'\n";
         $prompt .= "   ❌ 'Appliquer les corrections RGAA/WCAG'\n";
         $prompt .= "   ❌ 'Corriger l'accessibilité'\n";
         $prompt .= "   ❌ 'Mettre à jour le code'\n\n";
-        $prompt .= "2. TOUJOURS donner des recommandations CONCRÈTES et ACTIONNABLES:\n";
+        $prompt .= "2. TOUJOURS donner des recommandations CONCRÈTES et ACTIONNABLES :\n";
         $prompt .= "   ✅ Inclure le sélecteur CSS ou l'élément HTML exact à modifier\n";
         $prompt .= "   ✅ Donner l'action précise à effectuer\n";
-        $prompt .= "   ✅ Mentionner les attributs ARIA spécifiques si nécessaire\n\n";
-        $prompt .= "Exemples de BONNES recommandations:\n";
-        $prompt .= "- 'Ajouter un attribut alt=\"Description de l'image\" sur chaque balise <img>'\n";
-        $prompt .= "- 'Remplacer <div class=\"button\"> par <button type=\"button\">'\n";
-        $prompt .= "- 'Augmenter le contraste de #999 vers #555 pour atteindre un ratio de 4.5:1'\n";
-        $prompt .= "- 'Ajouter aria-label=\"Menu principal\" sur la balise <nav>'\n";
-        $prompt .= "- 'Remplacer le texte du lien \"Cliquez ici\" par \"Télécharger le rapport PDF\"'\n\n";
+        $prompt .= "   ✅ Mentionner les attributs ARIA spécifiques si nécessaire\n";
+        $prompt .= "   ✅ Utiliser le HTML fourni dans 'examples' pour être précis\n\n";
+        $prompt .= "Exemples de BONNES recommandations :\n";
+        $prompt .= "- 'Ajouter un attribut alt=\"Description de l'image\" sur chaque balise <img class=\"product-thumbnail\">'\n";
+        $prompt .= "- 'Remplacer <div class=\"button\"> par <button type=\"button\" aria-label=\"Fermer\">'\n";
+        $prompt .= "- 'Augmenter le contraste de #999 vers #555 pour atteindre un ratio de 4.5:1 sur .text-muted'\n";
+        $prompt .= "- 'Ajouter aria-label=\"Menu principal\" sur la balise <nav class=\"navbar\">'\n";
+        $prompt .= "- 'Remplacer le texte du lien \"Cliquez ici\" par \"Télécharger le rapport annuel PDF (2.3 Mo)\"'\n\n";
+
+        // CodeFix guidelines
+        $prompt .= "⚠️ RÈGLES IMPÉRATIVES pour 'codeFix' :\n";
+        $prompt .= "1. 'before' : Code HTML RÉEL extrait de 'examples' (pas d'exemple générique)\n";
+        $prompt .= "2. 'after' : Code HTML corrigé COMPLET et FONCTIONNEL\n";
+        $prompt .= "3. 'after' : Ajouter des commentaires /* */ pour expliquer les changements\n";
+        $prompt .= "4. Conserver les classes CSS et IDs existants\n";
+        $prompt .= "5. Ne corriger QUE le problème d'accessibilité, pas le style\n\n";
+
+        // Effort/Impact guidelines
+        $prompt .= "⚠️ RÈGLES pour 'effort' et 'impact' :\n";
+        $prompt .= "**effort** :\n";
+        $prompt .= "- 'facile' : < 1h (ajouter un attribut, changer un texte, ajuster une couleur)\n";
+        $prompt .= "- 'moyen' : 1-4h (refactoring HTML, ajout de ARIA, restructuration)\n";
+        $prompt .= "- 'complexe' : > 4h (refonte composant, JavaScript complexe, architecture)\n\n";
+        $prompt .= "**impact** :\n";
+        $prompt .= "- 'bloquant' : Empêche l'accès à une fonctionnalité essentielle\n";
+        $prompt .= "- 'genant' : Rend difficile l'utilisation mais pas impossible\n";
+        $prompt .= "- 'mineur' : Inconfort ou non-conformité sans impact majeur\n\n";
+        $prompt .= "**quickWin** : true si (effort='facile' ET impact IN ['bloquant','genant'])\n\n";
+
+        // Manual test guidelines
+        $prompt .= "⚠️ RÈGLES pour 'manualTest' :\n";
+        $prompt .= "Donner des instructions CONCRÈTES pour tester :\n";
+        $prompt .= "- Outil à utiliser (NVDA, JAWS, VoiceOver, inspecteur navigateur)\n";
+        $prompt .= "- Actions clavier à effectuer (Tab, Entrée, Espace, Échap)\n";
+        $prompt .= "- Résultat attendu\n";
+        $prompt .= "Exemples :\n";
+        $prompt .= "- 'Avec NVDA : Tab jusqu'au bouton, vérifier que \"Fermer\" est annoncé'\n";
+        $prompt .= "- 'Inspecter l'élément : vérifier que le contraste affiché est ≥ 4.5:1'\n";
+        $prompt .= "- 'Naviguer au clavier uniquement : Tab doit afficher un outline visible'\n\n";
 
         // CRITICAL: Summary format guidelines
-        $prompt .= "RÈGLES IMPÉRATIVES pour 'summary':\n";
-        $prompt .= "Le summary doit être un texte NARRATIF et LISIBLE (pas du JSON!), structuré ainsi:\n\n";
-        $prompt .= "🔍 Résumé de l'audit\n\n";
-        $prompt .= "**Problèmes critiques détectés:**\n";
+        $prompt .= "⚠️ RÈGLES IMPÉRATIVES pour 'summary' :\n";
+        $prompt .= "Le summary doit être un texte NARRATIF et LISIBLE (pas du JSON!), structuré ainsi :\n\n";
+        $prompt .= "🔍 Résumé de l'audit d'accessibilité\n\n";
+        $prompt .= "**Problèmes critiques détectés :**\n";
         $prompt .= "• [Description courte du problème 1] (X occurrences)\n";
         $prompt .= "• [Description courte du problème 2] (X occurrences)\n\n";
-        $prompt .= "**Problèmes majeurs:**\n";
+        $prompt .= "**Problèmes majeurs :**\n";
         $prompt .= "• [Description courte] (X occurrences)\n\n";
-        $prompt .= "**Problèmes mineurs:**\n";
+        $prompt .= "**Problèmes mineurs :**\n";
         $prompt .= "• [Description courte] (X occurrences)\n\n";
-        $prompt .= "**Priorités d'action:**\n";
-        $prompt .= "1. Corriger en premier: [problème le plus critique]\n";
-        $prompt .= "2. Ensuite: [deuxième priorité]\n";
-        $prompt .= "3. Amélioration: [troisième priorité]\n\n";
+        $prompt .= "**🎯 Quick Wins (effort facile + impact élevé) :**\n";
+        $prompt .= "1. [Premier quick win]\n";
+        $prompt .= "2. [Deuxième quick win]\n\n";
+        $prompt .= "**📋 Priorités d'action :**\n";
+        $prompt .= "1. Corriger en premier : [problème le plus bloquant]\n";
+        $prompt .= "2. Ensuite : [deuxième priorité]\n";
+        $prompt .= "3. Amélioration : [troisième priorité]\n\n";
 
-        $prompt .= "JSON: {results,summary}";
+        $prompt .= "📤 FORMAT DE RÉPONSE FINAL :\n";
+        $prompt .= "JSON avec structure : {\"results\": [...], \"summary\": \"texte markdown\"}\n";
 
         return $prompt;
     }
