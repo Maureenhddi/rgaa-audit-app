@@ -506,6 +506,47 @@ class AuditController extends AbstractController
         $audit->setNotTestedCriteria($totalNotTested);
         $entityManager->flush();
 
+        // Create mapping of errors by RGAA criteria number for easy access in grid
+        $errorsByCriteria = [];
+        foreach ($groupedByTheme as $theme) {
+            foreach ($theme['criteria'] as $criterionKey => $criterionData) {
+                // Skip non-categorized
+                if ($criterionKey === 'non-categorise' || empty($criterionData['criterion'])) {
+                    continue;
+                }
+
+                $criterionNumber = $criterionData['criterion'];
+
+                // Initialize if not exists
+                if (!isset($errorsByCriteria[$criterionNumber])) {
+                    $errorsByCriteria[$criterionNumber] = [
+                        'total_count' => 0,
+                        'by_severity' => [
+                            'critical' => [],
+                            'major' => [],
+                            'minor' => []
+                        ]
+                    ];
+                }
+
+                // Add all errors grouped by severity
+                foreach (['critical', 'major', 'minor'] as $severity) {
+                    if (!empty($criterionData['results'][$severity])) {
+                        foreach ($criterionData['results'][$severity] as $errorGroup) {
+                            $errorsByCriteria[$criterionNumber]['by_severity'][$severity][] = [
+                                'errorType' => $errorGroup['errorType'],
+                                'description' => $errorGroup['description'],
+                                'occurrenceCount' => count($errorGroup['occurrences']),
+                                'recommendation' => $errorGroup['recommendation'],
+                                'impactUser' => $errorGroup['impactUser'],
+                            ];
+                            $errorsByCriteria[$criterionNumber]['total_count'] += count($errorGroup['occurrences']);
+                        }
+                    }
+                }
+            }
+        }
+
         return $this->render('audit/show.html.twig', [
             'audit' => $audit,
             'grouped_by_theme' => $groupedByTheme,
@@ -522,6 +563,7 @@ class AuditController extends AbstractController
             'summary_text' => $summaryText,
             'non_conform_details' => $nonConformDetails,
             'rgaa_tests' => $rgaaTests,
+            'errors_by_criteria' => $errorsByCriteria,
         ]);
     }
 

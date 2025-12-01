@@ -19,8 +19,12 @@ class ActionPlanItem
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'items')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?ActionPlan $actionPlan = null;
+
+    #[ORM\ManyToOne(inversedBy: 'items')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?AnnualActionPlan $annualPlan = null;
 
     #[ORM\Column(length: 255)]
     private ?string $title = null;
@@ -36,6 +40,9 @@ class ActionPlanItem
 
     #[ORM\Column]
     private ?int $priority = null; // 1-100
+
+    #[ORM\Column(nullable: true)]
+    private ?int $displayOrder = null; // Custom order for drag & drop
 
     #[ORM\Column]
     private ?int $year = null;
@@ -109,6 +116,18 @@ class ActionPlanItem
         return $this;
     }
 
+    public function getAnnualPlan(): ?AnnualActionPlan
+    {
+        return $this->annualPlan;
+    }
+
+    public function setAnnualPlan(?AnnualActionPlan $annualPlan): static
+    {
+        $this->annualPlan = $annualPlan;
+
+        return $this;
+    }
+
     public function getTitle(): ?string
     {
         return $this->title;
@@ -165,6 +184,18 @@ class ActionPlanItem
     public function setPriority(int $priority): static
     {
         $this->priority = $priority;
+
+        return $this;
+    }
+
+    public function getDisplayOrder(): ?int
+    {
+        return $this->displayOrder;
+    }
+
+    public function setDisplayOrder(?int $displayOrder): static
+    {
+        $this->displayOrder = $displayOrder;
 
         return $this;
     }

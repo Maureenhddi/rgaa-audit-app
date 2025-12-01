@@ -436,6 +436,590 @@
         font-family: inherit;
     }
 
+    /* Auto-test result indicator styling */
+    .auto-test-result {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.05) 100%);
+        border-left: 3px solid #667eea;
+        padding: 0.625rem 0.875rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }
+
+    [data-theme="dark"] .auto-test-result {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.08) 100%);
+        border-left-color: #8fa3ff;
+    }
+
+    .auto-test-result .bi-robot {
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+
+    [data-theme="dark"] .auto-test-result .bi-robot {
+        color: #8fa3ff;
+    }
+
+    /* Modern RGAA Grid - Card-based design */
+    .rgaa-grid-modern {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .criteria-card {
+        background: white;
+        border-radius: 16px;
+        border: 2px solid #f0f0f0;
+        padding: 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .criteria-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+    }
+
+    .criteria-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .criteria-card:hover::before {
+        width: 6px;
+    }
+
+    [data-theme="dark"] .criteria-card {
+        background: var(--card-bg);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .criteria-card:hover {
+        border-color: #8fa3ff;
+        box-shadow: 0 8px 24px rgba(143, 163, 255, 0.15);
+    }
+
+    /* Criteria card header */
+    .criteria-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+    }
+
+    /* Criteria number styling - Modern */
+    .criteria-number-modern {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .criteria-number-modern::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .criteria-card:hover .criteria-number-modern::after {
+        opacity: 1;
+    }
+
+    /* Level badge - Modern pill design */
+    .level-badge-modern {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .level-badge-modern.level-a {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .level-badge-modern.level-aa {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+    }
+
+    .level-badge-modern.level-aaa {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+    }
+
+    .level-badge-modern i {
+        font-size: 1rem;
+    }
+
+    /* Criteria description modern */
+    .criteria-description-modern {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .criteria-description-modern p {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #374151;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    [data-theme="dark"] .criteria-description-modern p {
+        color: var(--text-medium);
+    }
+
+    /* Criteria card body - Content section */
+    .criteria-card-body {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+        .criteria-card-body {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
+
+    .criteria-content-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .criteria-status-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 2px solid #e9ecef;
+    }
+
+    [data-theme="dark"] .criteria-status-section {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: var(--border-color);
+    }
+
+    /* Modern status buttons */
+    .status-btn-group-modern {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .status-btn-modern {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.875rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border: 2px solid #e5e7eb;
+        background: white;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    [data-theme="dark"] .status-btn-modern {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--border-color);
+        color: var(--text-medium);
+    }
+
+    .status-btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-color: #667eea;
+    }
+
+    .status-btn-modern i {
+        font-size: 1.1rem;
+    }
+
+    /* Active states */
+    .status-btn-modern.active-conform {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        color: white;
+        transform: scale(1.02);
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+    }
+
+    .status-btn-modern.active-non-conform {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-color: #ef4444;
+        color: white;
+        transform: scale(1.02);
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+    }
+
+    .status-btn-modern.active-na {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-color: #f59e0b;
+        color: white;
+        transform: scale(1.02);
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+    }
+
+    .status-btn-modern.active-not-checked {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        border-color: #6b7280;
+        color: white;
+        transform: scale(1.02);
+        box-shadow: 0 4px 16px rgba(107, 114, 128, 0.3);
+    }
+
+    /* Notes textarea improvements */
+    .criteria-notes {
+        border: 2px solid rgba(102, 126, 234, 0.15);
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+        padding: 0.625rem;
+        background: rgba(102, 126, 234, 0.02);
+    }
+
+    .criteria-notes:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        background: white;
+    }
+
+    [data-theme="dark"] .criteria-notes {
+        background: rgba(102, 126, 234, 0.05);
+        border-color: rgba(102, 126, 234, 0.2);
+        color: var(--text-medium);
+    }
+
+    [data-theme="dark"] .criteria-notes:focus {
+        background: var(--card-bg);
+        border-color: #8fa3ff;
+    }
+
+    /* Accordion improvements for RGAA grid */
+    #rgaaFullGridAccordion .accordion-item {
+        border: none;
+        margin-bottom: 1rem;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    #rgaaFullGridAccordion .accordion-button {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        font-weight: 600;
+        padding: 1.25rem 1.5rem;
+        font-size: 1.05rem;
+        border: none;
+    }
+
+    #rgaaFullGridAccordion .accordion-button:not(.collapsed) {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: none;
+    }
+
+    #rgaaFullGridAccordion .accordion-button:focus {
+        box-shadow: none;
+        border: none;
+    }
+
+    #rgaaFullGridAccordion .accordion-body {
+        padding: 0;
+        background: white;
+    }
+
+    [data-theme="dark"] #rgaaFullGridAccordion .accordion-body {
+        background: var(--card-bg);
+    }
+
+    [data-theme="dark"] #rgaaFullGridAccordion .accordion-button {
+        background: rgba(102, 126, 234, 0.08);
+        color: var(--text-medium);
+    }
+
+    /* Description text improvements */
+    .criteria-description-text {
+        line-height: 1.6;
+        color: #495057;
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
+    }
+
+    [data-theme="dark"] .criteria-description-text {
+        color: var(--text-medium);
+    }
+
+    /* Errors explanation in grid */
+    .errors-explanation {
+        background: rgba(220, 53, 69, 0.03);
+        border: 2px solid rgba(220, 53, 69, 0.15);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .errors-explanation summary {
+        cursor: pointer;
+        user-select: none;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .errors-explanation summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .errors-explanation summary::before {
+        content: '▶';
+        display: inline-block;
+        transition: transform 0.2s ease;
+        font-size: 0.75rem;
+        color: #dc3545;
+    }
+
+    .errors-explanation[open] summary::before {
+        transform: rotate(90deg);
+    }
+
+    .errors-explanation summary:hover {
+        color: #dc3545;
+    }
+
+    [data-theme="dark"] .errors-explanation {
+        background: rgba(220, 53, 69, 0.08);
+        border-color: rgba(220, 53, 69, 0.25);
+    }
+
+    .errors-list {
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .error-item {
+        background: white;
+        border-radius: 0.375rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .error-item {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .error-item .text-dark {
+        color: #212529 !important;
+    }
+
+    [data-theme="dark"] .error-item .text-dark {
+        color: var(--text-medium) !important;
+    }
+
+    /* Severity badges in error items */
+    .severity-critical {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 0.25rem;
+    }
+
+    .severity-major {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #000;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 0.25rem;
+    }
+
+    .severity-minor {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 0.25rem;
+    }
+
+    /* Manual issues section */
+    #manual-issues-section .card {
+        transition: all 0.3s ease;
+    }
+
+    #manual-issues-section .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="dark"] #manual-issues-section .card {
+        background: var(--card-bg);
+        border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] #manual-issues-section .card-body {
+        color: var(--text-medium);
+    }
+
+    [data-theme="dark"] #manual-issues-section .alert-secondary {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--border-color);
+        color: var(--text-medium);
+    }
+
+    /* Scroll to top button */
+    #scroll-to-top-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        cursor: pointer;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    #scroll-to-top-btn.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    #scroll-to-top-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    [data-theme="dark"] #scroll-to-top-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Filter panels */
+    #filter-panel,
+    #filter-panel-details {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+    }
+
+    /* Amélioration du contraste pour les inputs et selects */
+    #filter-panel .form-control,
+    #filter-panel .form-select,
+    #filter-panel-details .form-control,
+    #filter-panel-details .form-select {
+        background: white !important;
+        border: 2px solid #495057 !important;
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
+    #filter-panel .form-select option,
+    #filter-panel-details .form-select option {
+        background: white !important;
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
+    #filter-panel .form-control:focus,
+    #filter-panel .form-select:focus,
+    #filter-panel-details .form-control:focus,
+    #filter-panel-details .form-select:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+        color: #000000 !important;
+    }
+
+    #filter-panel .form-control::placeholder,
+    #filter-panel-details .form-control::placeholder {
+        color: #495057 !important;
+        opacity: 1 !important;
+        font-weight: 500 !important;
+    }
+
+    [data-theme="dark"] #filter-panel,
+    [data-theme="dark"] #filter-panel-details {
+        background: var(--card-bg) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    [data-theme="dark"] #filter-panel .form-control,
+    [data-theme="dark"] #filter-panel .form-select,
+    [data-theme="dark"] #filter-panel-details .form-control,
+    [data-theme="dark"] #filter-panel-details .form-select {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--border-color);
+        color: #e9ecef;
+    }
+
+    [data-theme="dark"] #filter-panel .form-control::placeholder,
+    [data-theme="dark"] #filter-panel-details .form-control::placeholder {
+        color: #adb5bd;
+    }
+
     /* Responsive improvements */
     @media (max-width: 767.98px) {
         /* Page header - stack title and buttons */
@@ -615,31 +1199,33 @@
             <div class="d-flex gap-3 align-items-center flex-wrap">
                 {% if audit.conformityRate is not null %}
                     {% set rate = audit.conformityRate|number_format(1) %}
-                    {% if rate >= 90 %}
-                        <div class="conformity-badge-large success text-center">
-                            <i class="bi bi-check-circle-fill conformity-icon"></i>
-                            <div class="conformity-percentage">{{ rate }}%</div>
-                            <div class="conformity-label">CONFORME</div>
-                        </div>
-                    {% elseif rate >= 70 %}
-                        <div class="conformity-badge-large text-center">
-                            <i class="bi bi-info-circle-fill conformity-icon"></i>
-                            <div class="conformity-percentage">{{ rate }}%</div>
-                            <div class="conformity-label">PARTIELLEMENT CONFORME</div>
-                        </div>
-                    {% elseif rate >= 50 %}
-                        <div class="conformity-badge-large warning text-center">
-                            <i class="bi bi-exclamation-triangle-fill conformity-icon"></i>
-                            <div class="conformity-percentage">{{ rate }}%</div>
-                            <div class="conformity-label">À AMÉLIORER</div>
-                        </div>
-                    {% else %}
-                        <div class="conformity-badge-large danger text-center">
-                            <i class="bi bi-x-circle-fill conformity-icon"></i>
-                            <div class="conformity-percentage">{{ rate }}%</div>
-                            <div class="conformity-label">NON CONFORME</div>
-                        </div>
-                    {% endif %}
+                    <div id="conformity-badge-container">
+                        {% if rate >= 90 %}
+                            <div class="conformity-badge-large success text-center">
+                                <i class="bi bi-check-circle-fill conformity-icon"></i>
+                                <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
+                                <div class="conformity-label" id="conformity-label-display">CONFORME</div>
+                            </div>
+                        {% elseif rate >= 70 %}
+                            <div class="conformity-badge-large text-center">
+                                <i class="bi bi-info-circle-fill conformity-icon"></i>
+                                <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
+                                <div class="conformity-label" id="conformity-label-display">PARTIELLEMENT CONFORME</div>
+                            </div>
+                        {% elseif rate >= 50 %}
+                            <div class="conformity-badge-large warning text-center">
+                                <i class="bi bi-exclamation-triangle-fill conformity-icon"></i>
+                                <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
+                                <div class="conformity-label" id="conformity-label-display">À AMÉLIORER</div>
+                            </div>
+                        {% else %}
+                            <div class="conformity-badge-large danger text-center">
+                                <i class="bi bi-x-circle-fill conformity-icon"></i>
+                                <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
+                                <div class="conformity-label" id="conformity-label-display">NON CONFORME</div>
+                            </div>
+                        {% endif %}
+                    </div>
                 {% endif %}
                 <div class="issues-total-badge text-center">
                     <div class="issues-number">{{ audit.totalIssues }}</div>
@@ -707,7 +1293,7 @@
                 <i class="bi bi-exclamation-triangle-fill"></i>
             </div>
             <h2 class="text-danger">{{ audit.criticalCount }}</h2>
-            <div class="stat-label text-danger">Critiques</div>
+            <div class="stat-label text-danger">Bloquants</div>
             <div class="stat-sublabel">Bloquent l'accès au contenu</div>
         </div>
     </div>
@@ -871,6 +1457,51 @@
             </div>
         </div>
 
+        {# Filtres #}
+        <div class="card bg-light mb-4" id="filter-panel">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold"><i class="bi bi-search"></i> Recherche</label>
+                        <input type="text" class="form-control" id="filter-search" placeholder="Numéro, titre, description...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold"><i class="bi bi-shield-check"></i> Niveau</label>
+                        <select class="form-select" id="filter-level">
+                            <option value="">Tous</option>
+                            <option value="A">A</option>
+                            <option value="AA">AA</option>
+                            <option value="AAA">AAA</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold"><i class="bi bi-check2-square"></i> Statut</label>
+                        <select class="form-select" id="filter-status">
+                            <option value="">Tous</option>
+                            <option value="conform">Conforme</option>
+                            <option value="non_conform">Non conforme</option>
+                            <option value="not_applicable">N/A</option>
+                            <option value="not_checked">Non vérifié</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-success flex-fill" id="hide-conform-btn">
+                                <i class="bi bi-eye-slash"></i> Masquer conformes
+                            </button>
+                            <button class="btn btn-outline-secondary" id="reset-filters-btn" title="Réinitialiser">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-primary" id="filter-count">106 critères affichés</span>
+                </div>
+            </div>
+        </div>
+
         <div class="accordion" id="rgaaFullGridAccordion">
             {% for topic, criteria_list in criteria_by_topic %}
             <div class="accordion-item">
@@ -882,22 +1513,26 @@
                 </h2>
                 <div id="collapseTopic{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="headingTopic{{ loop.index }}" data-bs-parent="#rgaaFullGridAccordion">
                     <div class="accordion-body accordion-body-scroll">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th class="col-criteria-number">Critère</th>
-                                    <th class="col-criteria-level">Niveau</th>
-                                    <th class="col-criteria-description">Description</th>
-                                    <th class="col-criteria-status">Statut / Vérification</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for criteria in criteria_list %}
-                                <tr class="{% if not criteria.autoTestable %}manual-check-row{% endif %}" data-criteria="{{ criteria.number }}">
-                                    <td><strong>{{ criteria.number }}</strong></td>
-                                    <td><span class="badge bg-info">{{ criteria.level }}</span></td>
-                                    <td>
-                                        {{ criteria.description }}
+                        <div class="rgaa-grid-modern">
+                            {% for criteria in criteria_list %}
+                            <div class="criteria-card {% if not criteria.autoTestable %}manual-check-row{% endif %}" data-criteria="{{ criteria.number }}">
+
+                                {# Card Header #}
+                                <div class="criteria-card-header">
+                                    <div class="criteria-number-modern">{{ criteria.number }}</div>
+                                    <span class="level-badge-modern level-{{ criteria.level|lower|replace({' ': '-'}) }}">
+                                        <i class="bi bi-shield-check"></i>
+                                        {{ criteria.level }}
+                                    </span>
+                                </div>
+
+                                {# Card Body with 2 columns #}
+                                <div class="criteria-card-body">
+                                    {# Left column: Description and info #}
+                                    <div class="criteria-content-section">
+                                        <div class="criteria-description-modern">
+                                            <p>{{ criteria.description }}</p>
+                                        </div>
 
                                         {# Display RGAA official tests #}
                                         {% if rgaa_tests[criteria.number] is defined and rgaa_tests[criteria.number]|length > 0 %}
@@ -934,52 +1569,108 @@
                                             </div>
                                         {% endif %}
 
-                                        {# Manual check notes for non-testable criteria #}
-                                        {% if not criteria.autoTestable %}
-                                            <div class="mt-2">
-                                                <textarea class="form-control form-control-sm manual-check-notes" placeholder="💡 Notes de vérification (optionnel)" rows="2" data-criteria="{{ criteria.number }}"></textarea>
+                                        {# Display detected errors for this criteria #}
+                                        {% if errors_by_criteria[criteria.number] is defined and errors_by_criteria[criteria.number].total_count > 0 %}
+                                            <div class="mt-3">
+                                                <details class="errors-explanation">
+                                                    <summary class="text-danger fw-bold">
+                                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                                        {{ errors_by_criteria[criteria.number].total_count }} erreur(s) détectée(s)
+                                                    </summary>
+                                                    <div class="mt-3 errors-list">
+                                                        {% for severity in ['critical', 'major', 'minor'] %}
+                                                            {% if errors_by_criteria[criteria.number].by_severity[severity]|length > 0 %}
+                                                                {% for error in errors_by_criteria[criteria.number].by_severity[severity] %}
+                                                                    <div class="error-item mb-3 p-3 border-start border-{{ severity == 'critical' ? 'danger' : (severity == 'major' ? 'warning' : 'info') }} border-3">
+                                                                        <div class="d-flex align-items-start gap-2 mb-2">
+                                                                            {% if severity == 'critical' %}
+                                                                                <span class="badge severity-critical">Bloquant</span>
+                                                                            {% elseif severity == 'major' %}
+                                                                                <span class="badge severity-major">Majeur</span>
+                                                                            {% else %}
+                                                                                <span class="badge severity-minor">Mineur</span>
+                                                                            {% endif %}
+                                                                            <span class="badge bg-dark">{{ error.occurrenceCount }} occurrence(s)</span>
+                                                                        </div>
+                                                                        <div class="fw-bold text-dark mb-1">{{ error.errorType }}</div>
+                                                                        <div class="small text-muted mb-2">{{ error.description }}</div>
+                                                                        {% if error.impactUser %}
+                                                                            <div class="small">
+                                                                                <strong><i class="bi bi-person-x"></i> Impact :</strong> {{ error.impactUser }}
+                                                                            </div>
+                                                                        {% endif %}
+                                                                        {% if error.recommendation %}
+                                                                            <div class="small mt-1">
+                                                                                <strong><i class="bi bi-lightbulb"></i> Recommandation :</strong> {{ error.recommendation }}
+                                                                            </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                {% endfor %}
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                </details>
                                             </div>
                                         {% endif %}
-                                    </td>
-                                    <td>
+
+                                        {# Manual check notes for all criteria #}
+                                        <div class="mt-3">
+                                            <textarea class="form-control criteria-notes manual-check-notes" placeholder="💡 Notes de vérification (optionnel)" rows="3" data-criteria="{{ criteria.number }}"></textarea>
+                                        </div>
+                                    </div>
+
+                                    {# Right column: Status section #}
+                                    <div class="criteria-status-section">
+                                        {# Show automatic test result if available #}
                                         {% if criteria.autoTestable %}
-                                            {# Critères testés automatiquement - affichage en lecture seule #}
-                                            {% if criteria.number in criteria_status.conform %}
-                                                <span class="badge bg-success" title="Testé automatiquement et conforme">✓ Conforme (auto)</span>
-                                            {% elseif criteria.number in criteria_status.nonConform %}
-                                                <span class="badge bg-danger" title="Testé automatiquement et non conforme">✗ Non conforme (auto)</span>
-                                            {% else %}
-                                                <span class="badge bg-warning" title="Critère testable automatiquement mais non vérifié sur cette page">⚠ Non testé (auto)</span>
-                                            {% endif %}
-                                        {% else %}
-                                            {# Critères manuels - boutons radio interactifs #}
-                                            <div class="btn-group-vertical w-100" role="group">
-                                                <input type="radio" class="btn-check" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="conform_{{ criteria.number|replace({'.': '_'}) }}" value="conform" autocomplete="off">
-                                                <label class="btn btn-sm btn-outline-success" for="conform_{{ criteria.number|replace({'.': '_'}) }}">
-                                                    <i class="bi bi-check-circle"></i> Conforme
-                                                </label>
-
-                                                <input type="radio" class="btn-check" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="nonconform_{{ criteria.number|replace({'.': '_'}) }}" value="non_conform" autocomplete="off">
-                                                <label class="btn btn-sm btn-outline-danger" for="nonconform_{{ criteria.number|replace({'.': '_'}) }}">
-                                                    <i class="bi bi-x-circle"></i> Non conforme
-                                                </label>
-
-                                                <input type="radio" class="btn-check" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="notapplicable_{{ criteria.number|replace({'.': '_'}) }}" value="not_applicable" autocomplete="off">
-                                                <label class="btn btn-sm btn-outline-secondary" for="notapplicable_{{ criteria.number|replace({'.': '_'}) }}">
-                                                    <i class="bi bi-dash-circle"></i> Non applicable
-                                                </label>
-
-                                                <input type="radio" class="btn-check" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="notchecked_{{ criteria.number|replace({'.': '_'}) }}" value="not_checked" autocomplete="off" checked>
-                                                <label class="btn btn-sm btn-outline-secondary" for="notchecked_{{ criteria.number|replace({'.': '_'}) }}">
-                                                    <i class="bi bi-circle"></i> Non vérifié
-                                                </label>
+                                            <div class="auto-test-result mb-3">
+                                                <i class="bi bi-robot"></i>
+                                                <span><strong>Résultat auto :</strong></span>
+                                                {% if criteria.number in criteria_status.conform %}
+                                                    <span class="badge bg-success">✓ Conforme</span>
+                                                {% elseif criteria.number in criteria_status.nonConform %}
+                                                    <span class="badge bg-danger">✗ Non conforme</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">⚠ Non testé</span>
+                                                {% endif %}
                                             </div>
                                         {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+
+                                        <h6 class="text-muted text-uppercase small fw-bold mb-3" style="letter-spacing: 1px;">
+                                            <i class="bi bi-check2-square me-1"></i>Statut de vérification
+                                        </h6>
+
+                                        {# Modern button group - hidden inputs with visual labels #}
+                                        <div class="status-btn-group-modern">
+                                            <input type="radio" class="d-none" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="conform_{{ criteria.number|replace({'.': '_'}) }}" value="conform" autocomplete="off">
+                                            <label class="status-btn-modern" for="conform_{{ criteria.number|replace({'.': '_'}) }}">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                <span>Conforme</span>
+                                            </label>
+
+                                            <input type="radio" class="d-none" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="nonconform_{{ criteria.number|replace({'.': '_'}) }}" value="non_conform" autocomplete="off">
+                                            <label class="status-btn-modern" for="nonconform_{{ criteria.number|replace({'.': '_'}) }}">
+                                                <i class="bi bi-x-circle-fill"></i>
+                                                <span>Non conforme</span>
+                                            </label>
+
+                                            <input type="radio" class="d-none" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="notapplicable_{{ criteria.number|replace({'.': '_'}) }}" value="not_applicable" autocomplete="off">
+                                            <label class="status-btn-modern" for="notapplicable_{{ criteria.number|replace({'.': '_'}) }}">
+                                                <i class="bi bi-dash-circle-fill"></i>
+                                                <span>N/A</span>
+                                            </label>
+
+                                            <input type="radio" class="d-none" name="check_{{ criteria.number|replace({'.': '_'}) }}" id="notchecked_{{ criteria.number|replace({'.': '_'}) }}" value="not_checked" autocomplete="off" checked>
+                                            <label class="status-btn-modern" for="notchecked_{{ criteria.number|replace({'.': '_'}) }}">
+                                                <i class="bi bi-circle"></i>
+                                                <span>Non vérifié</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -989,9 +1680,10 @@
         <div class="mt-3 alert alert-info">
             <h6><i class="bi bi-lightbulb"></i> Comment utiliser cette grille :</h6>
             <ul class="mb-0">
-                <li><strong>Critères avec badge vert/rouge "auto"</strong> : Testés automatiquement par les outils. Aucune action requise.</li>
-                <li><strong>Critères avec boutons radio</strong> : Nécessitent une vérification manuelle. Sélectionnez "Conforme" ou "Non conforme" après avoir vérifié le site.</li>
-                <li><strong>Notes</strong> : Vous pouvez ajouter des observations pour chaque critère manuel. Elles sont sauvegardées automatiquement.</li>
+                <li><strong><i class="bi bi-robot"></i> Résultat auto</strong> : Indique le résultat du test automatique (si disponible). Vous pouvez confirmer ou modifier ce résultat.</li>
+                <li><strong>Tous les critères sont modifiables</strong> : Sélectionnez "Conforme", "Non conforme" ou "Non applicable" selon votre vérification manuelle.</li>
+                <li><strong>Notes</strong> : Ajoutez des observations pour chaque critère. Elles sont sauvegardées automatiquement.</li>
+                <li><strong>Tests RGAA</strong> : Cliquez sur "X test(s) RGAA" pour voir les tests officiels et leur méthodologie.</li>
             </ul>
         </div>
     </div>
@@ -1007,9 +1699,48 @@
         <h5 class="mb-0"><i class="bi bi-list-check"></i> Détail des problèmes détectés</h5>
     </div>
     <div class="card-body">
+        {# Filtres pour l'onglet Détail des problèmes #}
+        <div class="card bg-light mb-4" id="filter-panel-details">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label small fw-bold"><i class="bi bi-search"></i> Recherche</label>
+                        <input type="text" class="form-control" id="filter-details-search" placeholder="Critère, description...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold"><i class="bi bi-exclamation-triangle"></i> Sévérité</label>
+                        <select class="form-select" id="filter-details-severity">
+                            <option value="">Toutes</option>
+                            <option value="critical">Bloquant</option>
+                            <option value="major">Majeur</option>
+                            <option value="minor">Mineur</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold"><i class="bi bi-grid-3x3"></i> Thème</label>
+                        <select class="form-select" id="filter-details-theme">
+                            <option value="">Tous</option>
+                            {% for key, theme in grouped_by_theme %}
+                            <option value="{{ theme.theme_number }}">Thème {{ theme.theme_number }} - {{ theme.theme_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label small fw-bold">&nbsp;</label>
+                        <button class="btn btn-outline-secondary w-100" id="reset-details-filters-btn" title="Réinitialiser">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-primary" id="filter-details-count">Chargement...</span>
+                </div>
+            </div>
+        </div>
+
         {% if grouped_by_theme|length > 0 %}
         {% for key, theme in grouped_by_theme %}
-        <div class="card mb-3 border-0 shadow-sm">
+        <div class="card mb-3 border-0 shadow-sm theme-card" data-theme-number="{{ theme.theme_number }}" data-theme-name="{{ theme.theme_name }}">
             <div class="card-header theme-card-header" style="background-color: {{ theme.theme_color }}15; border-left-color: {{ theme.theme_color }};">
                 <h4 class="mb-0">
                     <i class="{{ theme.theme_icon }}" style="color: {{ theme.theme_color }};"></i>
@@ -1020,15 +1751,26 @@
             <div class="card-body">
                 {% for criterion_key, criterion_data in theme.criteria %}
                 {% set safe_criterion_key = criterion_key|replace({'.': '_', ',': '_', ' ': '_', ':': '_'}) %}
-                <div class="mb-4">
+                <div class="mb-4 criterion-detail"
+                     data-criterion="{{ criterion_data.criterion }}"
+                     data-criterion-desc="{{ criterion_data.criterion_description }}"
+                     data-has-critical="{{ criterion_data.results.critical|length > 0 ? '1' : '0' }}"
+                     data-has-major="{{ criterion_data.results.major|length > 0 ? '1' : '0' }}"
+                     data-has-minor="{{ criterion_data.results.minor|length > 0 ? '1' : '0' }}">
                     <h5 class="border-bottom pb-2 mb-3">
                         <i class="bi bi-bookmark-check" style="color: {{ theme.theme_color }};"></i>
                         Critère <strong>{{ criterion_data.criterion }}</strong>{% if criterion_data.criterion_description and criterion_data.criterion_description != '' %} - {{ criterion_data.criterion_description }}{% endif %}
                         <span class="badge bg-secondary ms-2">{{ criterion_data.total_count }}</span>
+                        <span class="badge bg-secondary ms-2 criteria-status-badge" data-criteria="{{ criterion_data.criterion }}" id="status-badge-{{ criterion_data.criterion|replace({'.': '_'}) }}">
+                            <i class="bi bi-circle"></i> Non vérifié
+                        </span>
+                        <a href="#grid" class="btn btn-sm btn-outline-primary ms-2 goto-criteria-btn" data-criteria="{{ criterion_data.criterion }}" title="Aller au critère dans la grille">
+                            <i class="bi bi-arrow-right-circle"></i> Voir dans la grille
+                        </a>
                     </h5>
 
                 {% if criterion_data.results.critical|length > 0 %}
-                <h6 class="mt-2"><span class="badge severity-critical">Problèmes critiques ({{ criterion_data.results.critical|length }} types)</span></h6>
+                <h6 class="mt-2"><span class="badge severity-critical">Problèmes bloquants ({{ criterion_data.results.critical|length }} types)</span></h6>
                 <div class="accordion mb-3" id="accordion_{{ theme.theme_number }}_{{ safe_criterion_key }}_critical">
                     {{ macros.issueAccordion(criterion_data.results.critical, 'critical', theme.theme_number, safe_criterion_key, 'accordion_' ~ theme.theme_number ~ '_' ~ safe_criterion_key ~ '_critical') }}
                 </div>
@@ -1053,10 +1795,29 @@
         </div>
         {% endfor %}
         {% else %}
-        <div class="alert alert-success">
-            <i class="bi bi-check-circle"></i> Aucun problème détecté !
+        <div class="alert alert-success" id="no-auto-issues">
+            <i class="bi bi-check-circle"></i> Aucun problème automatique détecté !
         </div>
         {% endif %}
+
+        {# Manual non-conform issues section #}
+        <div id="manual-issues-section" class="mt-4" style="display: none;">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-check-fill"></i>
+                        <strong>Problèmes identifiés lors de la vérification manuelle</strong>
+                        <span class="badge bg-white text-dark ms-2" id="manual-issues-count">0</span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle"></i> Ces critères ont été marqués comme <strong>non conformes</strong> lors de la vérification manuelle par l'auditeur.
+                    </div>
+                    <div id="manual-issues-list"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1065,6 +1826,11 @@
 
 </div>
 {# End tab-content #}
+
+{# Scroll to top button #}
+<button id="scroll-to-top-btn" class="btn btn-primary" title="Retour en haut">
+    <i class="bi bi-arrow-up"></i>
+</button>
 
 {% endif %}
 {% endblock %}
@@ -1097,15 +1863,99 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Initialize manual issues section on page load
+    updateManualIssuesSection();
+
+    // Function to update status badges in "Détail des problèmes" tab
+    function updateDetailsProblemsBadges() {
+        document.querySelectorAll('.criteria-status-badge').forEach(badge => {
+            const criteriaNumber = badge.dataset.criteria;
+
+            // Check if there's a manual check for this criteria
+            if (manualChecks[criteriaNumber]) {
+                const status = manualChecks[criteriaNumber].status;
+                updateStatusBadge(badge, status, true);
+            } else {
+                // If this criteria appears in "Détail des problèmes", it means it has errors
+                // So it's automatically marked as non-conform (unless manually overridden above)
+                updateStatusBadge(badge, 'non_conform', false);
+            }
+        });
+    }
+
+    // Helper function to update a single badge
+    function updateStatusBadge(badge, status, isManual) {
+        let badgeClass, icon, text;
+
+        if (status === 'conform') {
+            badgeClass = 'bg-success';
+            icon = 'bi-check-circle-fill';
+            text = isManual ? '✓ Conforme (manuel)' : '✓ Conforme (auto)';
+        } else if (status === 'non_conform') {
+            badgeClass = 'bg-danger';
+            icon = 'bi-x-circle-fill';
+            text = isManual ? '✗ Non conforme (manuel)' : '✗ Non conforme (auto)';
+        } else if (status === 'not_applicable') {
+            badgeClass = 'bg-warning text-dark';
+            icon = 'bi-dash-circle-fill';
+            text = 'N/A';
+        } else {
+            badgeClass = 'bg-secondary';
+            icon = 'bi-circle';
+            text = 'Non vérifié';
+        }
+
+        badge.className = `badge ${badgeClass} ms-2 criteria-status-badge`;
+        badge.innerHTML = `<i class="bi ${icon}"></i> ${text}`;
+        badge.dataset.criteria = badge.dataset.criteria; // Keep the criteria data
+    }
+
+    // Initialize status badges on page load
+    updateDetailsProblemsBadges();
+
+    // Handle modern button styling
+    function updateModernButtonState(criteriaNumber, status) {
+        const safeNumber = criteriaNumber.replace(/\./g, '_');
+        const buttonsContainer = document.querySelector(`input[name="check_${safeNumber}"]`)?.closest('.status-btn-group-modern');
+
+        if (buttonsContainer) {
+            // Remove all active classes
+            buttonsContainer.querySelectorAll('.status-btn-modern').forEach(btn => {
+                btn.classList.remove('active-conform', 'active-non-conform', 'active-na', 'active-not-checked');
+            });
+
+            // Add appropriate active class
+            const activeLabel = document.querySelector(`label[for="${status}_${safeNumber}"]`);
+            if (activeLabel) {
+                if (status === 'conform') {
+                    activeLabel.classList.add('active-conform');
+                } else if (status === 'nonconform') {
+                    activeLabel.classList.add('active-non-conform');
+                } else if (status === 'notapplicable') {
+                    activeLabel.classList.add('active-na');
+                } else if (status === 'notchecked') {
+                    activeLabel.classList.add('active-not-checked');
+                }
+            }
+        }
+    }
+
+    // Initialize button states for existing checks
+    Object.keys(manualChecks).forEach(criteriaNumber => {
+        const check = manualChecks[criteriaNumber];
+        updateModernButtonState(criteriaNumber, check.status);
+    });
+
     // Save function
     function saveManualCheck(criteriaNumber, status, notes) {
-        console.log('saveManualCheck called:', { criteriaNumber, status, notes });
-
         // Update local manualChecks object
         manualChecks[criteriaNumber] = { status: status, notes: notes };
 
         // Update table immediately (optimistic update)
         updateCriteriaStatusTable();
+
+        // Update status badges in "Détail des problèmes" tab
+        updateDetailsProblemsBadges();
 
         // Save to server
         fetch(`/manual-check/save/${auditId}`, {
@@ -1122,7 +1972,43 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log('Saved:', criteriaNumber, status);
+                // Force update with server values
+                if (data.conformityRate !== undefined) {
+                    const badgeContainer = document.getElementById('conformity-badge-container');
+                    const rateFormatted = parseFloat(data.conformityRate).toFixed(1);
+
+                    let badgeClass, badgeIcon, badgeLabel;
+                    const rate = parseFloat(data.conformityRate);
+
+                    if (rate >= 90) {
+                        badgeClass = 'success';
+                        badgeIcon = 'bi-check-circle-fill';
+                        badgeLabel = 'CONFORME';
+                    } else if (rate >= 70) {
+                        badgeClass = '';
+                        badgeIcon = 'bi-info-circle-fill';
+                        badgeLabel = 'PARTIELLEMENT CONFORME';
+                    } else if (rate >= 50) {
+                        badgeClass = 'warning';
+                        badgeIcon = 'bi-exclamation-triangle-fill';
+                        badgeLabel = 'À AMÉLIORER';
+                    } else {
+                        badgeClass = 'danger';
+                        badgeIcon = 'bi-x-circle-fill';
+                        badgeLabel = 'NON CONFORME';
+                    }
+
+                    if (badgeContainer) {
+                        badgeContainer.innerHTML = `
+                            <div class="conformity-badge-large ${badgeClass} text-center">
+                                <i class="bi ${badgeIcon} conformity-icon"></i>
+                                <div class="conformity-percentage" id="conformity-rate-display">${rateFormatted}%</div>
+                                <div class="conformity-label" id="conformity-label-display">${badgeLabel}</div>
+                            </div>
+                        `;
+                    }
+                }
+
                 showToast('✓ Vérification sauvegardée', 'success');
             } else {
                 showToast('✗ Erreur de sauvegarde', 'danger');
@@ -1165,17 +2051,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let totalNotApplicable = 0;
         let totalNotTested = 0;
 
-        // Get current table rows (excluding header and footer)
-        const table = document.getElementById('criteria-status-table');
-        if (!table) {
-            console.error('Table #criteria-status-table not found');
-            return;
-        }
-        const tableBody = table.querySelector('tbody');
-        const rows = tableBody.querySelectorAll('tr');
-
-        rows.forEach((row, index) => {
-            const topicName = Object.keys(criteriaByTopic)[index];
+        // Calculate totals directly from criteriaByTopic (all 106 criteria)
+        Object.keys(criteriaByTopic).forEach(topicName => {
             const topicCriteria = criteriaByTopic[topicName];
 
             let conformCount = 0;
@@ -1186,30 +2063,31 @@ document.addEventListener('DOMContentLoaded', function() {
             topicCriteria.forEach(criterion => {
                 const criterionNumber = criterion.number;
 
-                // Priority 1: Check if not applicable (from manual checks)
-                if (manualChecks[criterionNumber] && manualChecks[criterionNumber].status === 'not_applicable') {
-                    notApplicableCount++;
+                // Priority 1: Manual check overrides everything
+                if (manualChecks[criterionNumber]) {
+                    const manualStatus = manualChecks[criterionNumber].status;
+                    if (manualStatus === 'conform') {
+                        conformCount++;
+                    } else if (manualStatus === 'non_conform') {
+                        nonConformCount++;
+                    } else if (manualStatus === 'not_applicable') {
+                        notApplicableCount++;
+                    } else {
+                        notTestedCount++;
+                    }
                 }
-                // Priority 2: Check if non-conform (from automatic tests)
+                // Priority 2: Automatic test results
                 else if (criteriaStatus.nonConform && criteriaStatus.nonConform.includes(criterionNumber)) {
                     nonConformCount++;
                 }
-                // Priority 3: Check if conform (from automatic tests OR manual checks)
-                else if ((criteriaStatus.conform && criteriaStatus.conform.includes(criterionNumber)) ||
-                         (manualChecks[criterionNumber] && manualChecks[criterionNumber].status === 'conform')) {
+                else if (criteriaStatus.conform && criteriaStatus.conform.includes(criterionNumber)) {
                     conformCount++;
                 }
-                // Priority 4: Not tested yet
+                // Priority 3: Not tested yet
                 else {
                     notTestedCount++;
                 }
             });
-
-            // Update row badges
-            row.children[1].querySelector('.badge').textContent = conformCount;
-            row.children[2].querySelector('.badge').textContent = nonConformCount;
-            row.children[3].querySelector('.badge').textContent = notTestedCount;
-            row.children[4].querySelector('.badge').textContent = notApplicableCount;
 
             // Add to totals
             totalConform += conformCount;
@@ -1218,24 +2096,223 @@ document.addEventListener('DOMContentLoaded', function() {
             totalNotTested += notTestedCount;
         });
 
-        // Update footer totals
-        const footerRow = table.querySelector('tfoot tr');
-        footerRow.children[1].querySelector('.badge').textContent = totalConform;
-        footerRow.children[2].querySelector('.badge').textContent = totalNonConform;
-        footerRow.children[3].querySelector('.badge').textContent = totalNotTested;
-        footerRow.children[4].querySelector('.badge').textContent = totalNotApplicable;
+        // Update table if it exists (optional)
+        const table = document.getElementById('criteria-status-table');
+        if (table) {
+            const tableBody = table.querySelector('tbody');
+            const rows = tableBody.querySelectorAll('tr');
 
-        console.log('Table updated:', { totalConform, totalNonConform, totalNotTested, totalNotApplicable });
+            rows.forEach((row, index) => {
+                const topicName = Object.keys(criteriaByTopic)[index];
+                const topicCriteria = criteriaByTopic[topicName];
+
+                let conformCount = 0;
+                let nonConformCount = 0;
+                let notApplicableCount = 0;
+                let notTestedCount = 0;
+
+                topicCriteria.forEach(criterion => {
+                    const criterionNumber = criterion.number;
+
+                    if (manualChecks[criterionNumber]) {
+                        const manualStatus = manualChecks[criterionNumber].status;
+                        if (manualStatus === 'conform') {
+                            conformCount++;
+                        } else if (manualStatus === 'non_conform') {
+                            nonConformCount++;
+                        } else if (manualStatus === 'not_applicable') {
+                            notApplicableCount++;
+                        } else {
+                            notTestedCount++;
+                        }
+                    }
+                    else if (criteriaStatus.nonConform && criteriaStatus.nonConform.includes(criterionNumber)) {
+                        nonConformCount++;
+                    }
+                    else if (criteriaStatus.conform && criteriaStatus.conform.includes(criterionNumber)) {
+                        conformCount++;
+                    }
+                    else {
+                        notTestedCount++;
+                    }
+                });
+
+                // Update row badges
+                if (row.children[1] && row.children[1].querySelector('.badge')) {
+                    row.children[1].querySelector('.badge').textContent = conformCount;
+                }
+                if (row.children[2] && row.children[2].querySelector('.badge')) {
+                    row.children[2].querySelector('.badge').textContent = nonConformCount;
+                }
+                if (row.children[3] && row.children[3].querySelector('.badge')) {
+                    row.children[3].querySelector('.badge').textContent = notTestedCount;
+                }
+                if (row.children[4] && row.children[4].querySelector('.badge')) {
+                    row.children[4].querySelector('.badge').textContent = notApplicableCount;
+                }
+            });
+
+            // Update footer totals
+            const footerRow = table.querySelector('tfoot tr');
+            if (footerRow) {
+                if (footerRow.children[1] && footerRow.children[1].querySelector('.badge')) {
+                    footerRow.children[1].querySelector('.badge').textContent = totalConform;
+                }
+                if (footerRow.children[2] && footerRow.children[2].querySelector('.badge')) {
+                    footerRow.children[2].querySelector('.badge').textContent = totalNonConform;
+                }
+                if (footerRow.children[3] && footerRow.children[3].querySelector('.badge')) {
+                    footerRow.children[3].querySelector('.badge').textContent = totalNotTested;
+                }
+                if (footerRow.children[4] && footerRow.children[4].querySelector('.badge')) {
+                    footerRow.children[4].querySelector('.badge').textContent = totalNotApplicable;
+                }
+            }
+        }
+
+        // Update global conformity rate
+        updateConformityRate(totalConform, totalNonConform, totalNotApplicable, totalNotTested);
+
+        // Update manual issues in "Détail des problèmes" tab
+        updateManualIssuesSection();
     }
 
-    // Listen to radio buttons
+    // Update manual issues section in "Détail des problèmes" tab
+    function updateManualIssuesSection() {
+        const manualIssuesSection = document.getElementById('manual-issues-section');
+        const manualIssuesList = document.getElementById('manual-issues-list');
+        const manualIssuesCount = document.getElementById('manual-issues-count');
+
+        if (!manualIssuesSection || !manualIssuesList || !manualIssuesCount) {
+            return;
+        }
+
+        // Collect all manually marked non-conform criteria
+        const manualNonConformIssues = [];
+
+        Object.keys(criteriaByTopic).forEach(topicName => {
+            const topicCriteria = criteriaByTopic[topicName];
+
+            topicCriteria.forEach(criterion => {
+                const criterionNumber = criterion.number;
+
+                // Check if manually marked as non-conform
+                if (manualChecks[criterionNumber] && manualChecks[criterionNumber].status === 'non_conform') {
+                    manualNonConformIssues.push({
+                        number: criterionNumber,
+                        description: criterion.description,
+                        level: criterion.level,
+                        topic: topicName,
+                        notes: manualChecks[criterionNumber].notes || ''
+                    });
+                }
+            });
+        });
+
+        // Update count
+        manualIssuesCount.textContent = manualNonConformIssues.length;
+
+        // Show/hide section
+        if (manualNonConformIssues.length > 0) {
+            manualIssuesSection.style.display = 'block';
+
+            // Build HTML for issues list
+            let html = '';
+            manualNonConformIssues.forEach((issue, index) => {
+                html += `
+                    <div class="card mb-3 border-start border-danger border-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="mb-0">
+                                    <span class="badge bg-danger me-2">${issue.number}</span>
+                                    <span class="badge bg-info">${issue.level}</span>
+                                </h5>
+                                <span class="badge bg-light text-dark">${issue.topic}</span>
+                            </div>
+                            <p class="mb-2"><strong>${issue.description}</strong></p>
+                            ${issue.notes ? `
+                                <div class="alert alert-secondary mb-0 small">
+                                    <i class="bi bi-sticky-fill"></i> <strong>Notes de l'auditeur :</strong><br>
+                                    ${issue.notes}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            manualIssuesList.innerHTML = html;
+        } else {
+            manualIssuesSection.style.display = 'none';
+        }
+    }
+
+    // Update conformity rate badge
+    function updateConformityRate(totalConform, totalNonConform, totalNotApplicable, totalNotTested) {
+        // Calculate total tested criteria (excluding not applicable and not tested)
+        const totalTested = totalConform + totalNonConform;
+
+        if (totalTested === 0) {
+            return; // No criteria tested yet
+        }
+
+        // Calculate conformity rate
+        const conformityRate = (totalConform / totalTested) * 100;
+        const rateFormatted = conformityRate.toFixed(1);
+
+        // Update the display
+        const rateDisplay = document.getElementById('conformity-rate-display');
+        const labelDisplay = document.getElementById('conformity-label-display');
+        const badgeContainer = document.getElementById('conformity-badge-container');
+
+        if (rateDisplay && labelDisplay && badgeContainer) {
+            rateDisplay.textContent = rateFormatted + '%';
+
+            // Determine badge type and label based on rate
+            let badgeClass, badgeIcon, badgeLabel;
+
+            if (conformityRate >= 90) {
+                badgeClass = 'success';
+                badgeIcon = 'bi-check-circle-fill';
+                badgeLabel = 'CONFORME';
+            } else if (conformityRate >= 70) {
+                badgeClass = '';
+                badgeIcon = 'bi-info-circle-fill';
+                badgeLabel = 'PARTIELLEMENT CONFORME';
+            } else if (conformityRate >= 50) {
+                badgeClass = 'warning';
+                badgeIcon = 'bi-exclamation-triangle-fill';
+                badgeLabel = 'À AMÉLIORER';
+            } else {
+                badgeClass = 'danger';
+                badgeIcon = 'bi-x-circle-fill';
+                badgeLabel = 'NON CONFORME';
+            }
+
+            labelDisplay.textContent = badgeLabel;
+
+            // Update badge container HTML
+            badgeContainer.innerHTML = `
+                <div class="conformity-badge-large ${badgeClass} text-center">
+                    <i class="bi ${badgeIcon} conformity-icon"></i>
+                    <div class="conformity-percentage" id="conformity-rate-display">${rateFormatted}%</div>
+                    <div class="conformity-label" id="conformity-label-display">${badgeLabel}</div>
+                </div>
+            `;
+        }
+    }
+
+    // Listen to radio buttons (ALL criteria, not just manual)
     document.querySelectorAll('input[type="radio"][name^="check_"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            const row = this.closest('tr.manual-check-row');
-            const criteriaNumber = row.dataset.criteria;
+            const card = this.closest('.criteria-card');
+            const criteriaNumber = card.dataset.criteria;
             const status = this.value;
             const notesElement = document.querySelector(`.manual-check-notes[data-criteria="${criteriaNumber}"]`);
             const notes = notesElement ? notesElement.value : '';
+
+            // Update modern button visual state
+            updateModernButtonState(criteriaNumber, this.id.split('_')[0]);
 
             saveManualCheck(criteriaNumber, status, notes);
         });
@@ -1255,6 +2332,289 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 saveManualCheck(criteriaNumber, status, notes);
             }, 1000); // Wait 1s after user stops typing
+        });
+    });
+
+    // ========== FILTERS FUNCTIONALITY ==========
+    const filterSearch = document.getElementById('filter-search');
+    const filterLevel = document.getElementById('filter-level');
+    const filterStatus = document.getElementById('filter-status');
+    const hideConformBtn = document.getElementById('hide-conform-btn');
+    const resetFiltersBtn = document.getElementById('reset-filters-btn');
+    const filterCount = document.getElementById('filter-count');
+
+    let hideConform = false;
+
+    function applyFilters() {
+        const searchTerm = filterSearch.value.toLowerCase();
+        const levelFilter = filterLevel.value;
+        const statusFilter = filterStatus.value;
+
+        let visibleCount = 0;
+        let totalCount = 0;
+
+        // Loop through all criteria cards
+        document.querySelectorAll('.criteria-card').forEach(card => {
+            totalCount++;
+            const criteriaNumber = card.dataset.criteria;
+            const criteriaText = card.textContent.toLowerCase();
+
+            // Get level from badge
+            const levelBadge = card.querySelector('.level-badge-modern');
+            const criteriaLevel = levelBadge ? levelBadge.textContent.trim() : '';
+
+            // Get status
+            let criteriaStatus = 'not_checked';
+            if (manualChecks[criteriaNumber]) {
+                criteriaStatus = manualChecks[criteriaNumber].status;
+            } else {
+                // Check auto test results
+                if (criteriaStatus.conform && criteriaStatus.conform.includes(criteriaNumber)) {
+                    criteriaStatus = 'conform';
+                } else if (criteriaStatus.nonConform && criteriaStatus.nonConform.includes(criteriaNumber)) {
+                    criteriaStatus = 'non_conform';
+                }
+            }
+
+            // Apply filters
+            let show = true;
+
+            // Search filter
+            if (searchTerm && !criteriaText.includes(searchTerm)) {
+                show = false;
+            }
+
+            // Level filter
+            if (levelFilter && criteriaLevel !== levelFilter) {
+                show = false;
+            }
+
+            // Status filter
+            if (statusFilter && criteriaStatus !== statusFilter) {
+                show = false;
+            }
+
+            // Hide conform filter
+            if (hideConform && criteriaStatus === 'conform') {
+                show = false;
+            }
+
+            // Show/hide card
+            card.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+
+        // Update count
+        filterCount.textContent = `${visibleCount} critère${visibleCount > 1 ? 's' : ''} affiché${visibleCount > 1 ? 's' : ''}`;
+
+        // Auto-expand accordion sections that have visible cards
+        document.querySelectorAll('#rgaaFullGridAccordion .accordion-item').forEach(item => {
+            const visibleCards = item.querySelectorAll('.criteria-card:not([style*="display: none"])');
+            const collapse = item.querySelector('.accordion-collapse');
+            if (visibleCards.length > 0 && (searchTerm || levelFilter || statusFilter || hideConform)) {
+                if (collapse) {
+                    collapse.classList.add('show');
+                }
+            }
+        });
+    }
+
+    // Event listeners for filters
+    if (filterSearch) filterSearch.addEventListener('input', applyFilters);
+    if (filterLevel) filterLevel.addEventListener('change', applyFilters);
+    if (filterStatus) filterStatus.addEventListener('change', applyFilters);
+
+    if (hideConformBtn) {
+        hideConformBtn.addEventListener('click', function() {
+            hideConform = !hideConform;
+            if (hideConform) {
+                this.innerHTML = '<i class="bi bi-eye"></i> Afficher conformes';
+                this.classList.remove('btn-outline-success');
+                this.classList.add('btn-success');
+            } else {
+                this.innerHTML = '<i class="bi bi-eye-slash"></i> Masquer conformes';
+                this.classList.remove('btn-success');
+                this.classList.add('btn-outline-success');
+            }
+            applyFilters();
+        });
+    }
+
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', function() {
+            filterSearch.value = '';
+            filterLevel.value = '';
+            filterStatus.value = '';
+            hideConform = false;
+            if (hideConformBtn) {
+                hideConformBtn.innerHTML = '<i class="bi bi-eye-slash"></i> Masquer conformes';
+                hideConformBtn.classList.remove('btn-success');
+                hideConformBtn.classList.add('btn-outline-success');
+            }
+            applyFilters();
+        });
+    }
+
+    // ========== FILTERS FOR "DÉTAIL DES PROBLÈMES" TAB ==========
+    const filterDetailsSearch = document.getElementById('filter-details-search');
+    const filterDetailsSeverity = document.getElementById('filter-details-severity');
+    const filterDetailsTheme = document.getElementById('filter-details-theme');
+    const resetDetailsFiltersBtn = document.getElementById('reset-details-filters-btn');
+    const filterDetailsCount = document.getElementById('filter-details-count');
+
+    function applyDetailsFilters() {
+        const searchTerm = filterDetailsSearch ? filterDetailsSearch.value.toLowerCase() : '';
+        const severityFilter = filterDetailsSeverity ? filterDetailsSeverity.value : '';
+        const themeFilter = filterDetailsTheme ? filterDetailsTheme.value : '';
+
+        let visibleCriteriaCount = 0;
+        let visibleThemeCount = 0;
+
+        // Filter theme cards
+        document.querySelectorAll('.theme-card').forEach(themeCard => {
+            const themeNumber = themeCard.dataset.themeNumber;
+            let themeVisible = true;
+
+            // Theme filter
+            if (themeFilter && themeNumber !== themeFilter) {
+                themeVisible = false;
+            }
+
+            if (!themeVisible) {
+                themeCard.style.display = 'none';
+                return;
+            }
+
+            // Filter criteria within this theme
+            let criteriaVisibleInTheme = 0;
+            themeCard.querySelectorAll('.criterion-detail').forEach(criterion => {
+                const criterionNumber = criterion.dataset.criterion;
+                const criterionDesc = (criterion.dataset.criterionDesc || '').toLowerCase();
+                const criterionText = criterion.textContent.toLowerCase();
+                const hasCritical = criterion.dataset.hasCritical === '1';
+                const hasMajor = criterion.dataset.hasMajor === '1';
+                const hasMinor = criterion.dataset.hasMinor === '1';
+
+                let show = true;
+
+                // Search filter
+                if (searchTerm && !criterionText.includes(searchTerm)) {
+                    show = false;
+                }
+
+                // Severity filter
+                if (severityFilter) {
+                    if (severityFilter === 'critical' && !hasCritical) {
+                        show = false;
+                    } else if (severityFilter === 'major' && !hasMajor) {
+                        show = false;
+                    } else if (severityFilter === 'minor' && !hasMinor) {
+                        show = false;
+                    }
+                }
+
+                criterion.style.display = show ? '' : 'none';
+                if (show) {
+                    criteriaVisibleInTheme++;
+                    visibleCriteriaCount++;
+                }
+            });
+
+            // Hide theme if no visible criteria
+            if (criteriaVisibleInTheme === 0) {
+                themeCard.style.display = 'none';
+            } else {
+                themeCard.style.display = '';
+                visibleThemeCount++;
+            }
+        });
+
+        // Update count
+        if (filterDetailsCount) {
+            filterDetailsCount.textContent = `${visibleCriteriaCount} critère${visibleCriteriaCount > 1 ? 's' : ''} dans ${visibleThemeCount} thème${visibleThemeCount > 1 ? 's' : ''}`;
+        }
+    }
+
+    // Event listeners for details filters
+    if (filterDetailsSearch) filterDetailsSearch.addEventListener('input', applyDetailsFilters);
+    if (filterDetailsSeverity) filterDetailsSeverity.addEventListener('change', applyDetailsFilters);
+    if (filterDetailsTheme) filterDetailsTheme.addEventListener('change', applyDetailsFilters);
+
+    if (resetDetailsFiltersBtn) {
+        resetDetailsFiltersBtn.addEventListener('click', function() {
+            if (filterDetailsSearch) filterDetailsSearch.value = '';
+            if (filterDetailsSeverity) filterDetailsSeverity.value = '';
+            if (filterDetailsTheme) filterDetailsTheme.value = '';
+            applyDetailsFilters();
+        });
+    }
+
+    // Initialize details filters count
+    if (filterDetailsCount) {
+        setTimeout(applyDetailsFilters, 100);
+    }
+
+    // ========== SCROLL TO TOP BUTTON ==========
+    const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
+
+    if (scrollToTopBtn) {
+        // Show/hide on scroll
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.add('visible');
+            } else {
+                scrollToTopBtn.classList.remove('visible');
+            }
+        });
+
+        // Scroll to top on click
+        scrollToTopBtn.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+
+    // ========== GOTO CRITERIA BUTTONS ==========
+    document.querySelectorAll('.goto-criteria-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const criteriaNumber = this.dataset.criteria;
+
+            // Switch to grid tab
+            const gridTab = document.getElementById('grid-tab');
+            if (gridTab) {
+                gridTab.click();
+            }
+
+            // Wait for tab transition
+            setTimeout(() => {
+                // Find the criteria card
+                const criteriaCard = document.querySelector(`.criteria-card[data-criteria="${criteriaNumber}"]`);
+                if (criteriaCard) {
+                    // Open the accordion containing this card
+                    const accordionItem = criteriaCard.closest('.accordion-item');
+                    if (accordionItem) {
+                        const collapseElement = accordionItem.querySelector('.accordion-collapse');
+                        if (collapseElement && !collapseElement.classList.contains('show')) {
+                            const button = accordionItem.querySelector('.accordion-button');
+                            if (button) button.click();
+                        }
+                    }
+
+                    // Scroll to card
+                    setTimeout(() => {
+                        criteriaCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // Highlight effect
+                        criteriaCard.style.boxShadow = '0 0 0 4px rgba(13, 110, 253, 0.25)';
+                        setTimeout(() => {
+                            criteriaCard.style.boxShadow = '';
+                        }, 2000);
+                    }, 300);
+                }
+            }, 100);
         });
     });
 });

@@ -1,0 +1,565 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Plan Pluriannuel d'Accessibilité - {{ parent() }}{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(135deg, #1a1d29 0%, #0f1117 100%) !important;
+        color: #e9ecef !important;
+    }
+
+    .ppa-hero {
+        background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+        border-radius: 16px;
+        color: white;
+        padding: 3rem 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(124, 58, 237, 0.5);
+    }
+
+    .strategic-card {
+        background: linear-gradient(135deg, #1e2330 0%, #252836 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 2px solid #3d4356;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    .strategic-card h3 {
+        color: #a78bfa;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #7c3aed;
+    }
+
+    .orientation-item {
+        background: rgba(124, 58, 237, 0.1);
+        border-left: 4px solid #7c3aed;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+    }
+
+    .annual-plan-card {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 2px solid #3b82f6;
+        color: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .annual-plan-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
+        background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #252836 0%, #2d3142 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        border: 2px solid #3d4356;
+        height: 100%;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: #a78bfa;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+    }
+
+    .markdown-content {
+        line-height: 1.8;
+        color: #d1d5db;
+    }
+
+    .markdown-content h2 {
+        color: #a78bfa;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #7c3aed;
+    }
+
+    .markdown-content h3 {
+        color: #c4b5fd;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .markdown-content ul, .markdown-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content strong {
+        color: #f3f4f6;
+        font-weight: 600;
+    }
+
+    .indicator-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        background: rgba(167, 139, 250, 0.1);
+        border-radius: 8px;
+        border-left: 3px solid #a78bfa;
+    }
+
+    .axis-item {
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        background: rgba(30, 58, 138, 0.1);
+        border-left: 4px solid #3b82f6;
+        border-radius: 8px;
+    }
+
+    .axis-title {
+        color: #60a5fa;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .axis-description {
+        color: #9ca3af;
+    }
+</style>
+
+{# Breadcrumb #}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('app_project_list') }}">Projets</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_project_show', {id: action_plan.campaign.project.id}) }}">{{ action_plan.campaign.project.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_campaign_show', {id: action_plan.campaign.id}) }}">{{ action_plan.campaign.name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Plan Pluriannuel</li>
+    </ol>
+</nav>
+
+{# Hero Section #}
+<div class="ppa-hero">
+    <div class="row align-items-center">
+        <div class="col-lg-12 text-center">
+            <h1 class="mb-3" style="font-size: 2.5rem;">
+                <i class="bi bi-diagram-3"></i> {{ action_plan.name }}
+            </h1>
+            <p class="mb-3 opacity-90" style="font-size: 1.2rem;">{{ action_plan.description }}</p>
+            <div class="d-flex flex-wrap gap-4 justify-content-center">
+                <span style="font-size: 1.1rem;"><i class="bi bi-calendar-range"></i> {{ action_plan.startDate|date('Y') }} - {{ action_plan.endDate|date('Y') }}</span>
+                <span style="font-size: 1.1rem;"><i class="bi bi-clock-history"></i> {{ action_plan.durationYears }} années</span>
+                <span style="font-size: 1.1rem;"><i class="bi bi-bullseye"></i> Objectif : {{ action_plan.targetConformityRate }}%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Alert Info #}
+<div class="alert border-0 mb-4" style="background: linear-gradient(135deg, #3d2873 0%, #2d1f5c 100%); color: #ddd6fe; border-left: 4px solid #7c3aed !important;">
+    <i class="bi bi-info-circle"></i> <strong>Document stratégique</strong><br>
+    Ce Plan Pluriannuel d'Accessibilité (PPA) présente les grandes orientations stratégiques sur {{ action_plan.durationYears }} ans.
+    Les détails techniques et opérationnels se trouvent dans les plans d'action annuels ci-dessous.
+</div>
+
+{# Statistics Cards #}
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-value">{{ action_plan.currentConformityRate }}%</div>
+            <div class="stat-label">Conformité actuelle</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-value">{{ action_plan.targetConformityRate }}%</div>
+            <div class="stat-label">Objectif cible</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-value">{{ action_plan.durationYears }}</div>
+            <div class="stat-label">Années du plan</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-value">{{ action_plan.annualPlans|length }}</div>
+            <div class="stat-label">Plans annuels</div>
+        </div>
+    </div>
+</div>
+
+{# Executive Summary #}
+{% if action_plan.executiveSummary %}
+<div class="strategic-card">
+    <h3><i class="bi bi-file-text"></i> Résumé stratégique</h3>
+    <div class="markdown-content">
+        {{ action_plan.executiveSummary|raw }}
+    </div>
+</div>
+{% endif %}
+
+{# Strategic Orientations #}
+{% if action_plan.strategicOrientations %}
+<div class="strategic-card">
+    <h3><i class="bi bi-compass"></i> Grandes orientations stratégiques</h3>
+    {% for orientation in action_plan.strategicOrientations %}
+        <div class="orientation-item">
+            <strong>{{ loop.index }}.</strong> {{ orientation }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# Progress Axes #}
+{% if action_plan.progressAxes %}
+<div class="strategic-card">
+    <h3><i class="bi bi-bar-chart-steps"></i> Axes de progrès</h3>
+    {% for title, description in action_plan.progressAxes %}
+        <div class="axis-item">
+            <div class="axis-title"><i class="bi bi-arrow-right-circle"></i> {{ title }}</div>
+            <div class="axis-description">{{ description }}</div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# Annual Objectives #}
+{% if action_plan.annualObjectives %}
+<div class="strategic-card">
+    <h3><i class="bi bi-flag"></i> Objectifs annuels</h3>
+    {% for year, objectives in action_plan.annualObjectives %}
+        <h5 style="color: #60a5fa; margin-top: 1.5rem; margin-bottom: 1rem;">
+            <i class="bi bi-calendar-check"></i> Année {{ year }}
+        </h5>
+        <ul style="color: #d1d5db;">
+            {% for objective in objectives %}
+                <li style="margin-bottom: 0.5rem;">{{ objective }}</li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# Resources #}
+{% if action_plan.resources %}
+<div class="strategic-card">
+    <h3><i class="bi bi-tools"></i> Moyens mis en œuvre</h3>
+    <ul style="color: #d1d5db;">
+        {% for resource in action_plan.resources %}
+            <li style="margin-bottom: 0.75rem;">{{ resource }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{# Indicators #}
+{% if action_plan.indicators %}
+<div class="strategic-card">
+    <h3><i class="bi bi-graph-up-arrow"></i> Indicateurs de suivi</h3>
+    {% for indicator, target in action_plan.indicators %}
+        <div class="indicator-item">
+            <span style="font-weight: 600;">{{ indicator }}</span>
+            <span style="color: #a78bfa;">{{ target }}</span>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# Annual Plans Links #}
+<div class="strategic-card">
+    <h3><i class="bi bi-calendar2-range"></i> Plans d'action annuels (détails opérationnels)</h3>
+    <p style="color: #9ca3af; margin-bottom: 1.5rem;">
+        Cliquez sur une année pour accéder aux détails techniques : critères RGAA, erreurs A11yLint, composants défaillants, estimations d'effort.
+    </p>
+
+    <div class="row g-3">
+        {% if action_plan.annualPlans|length > 0 %}
+            {% for annualPlan in action_plan.annualPlans %}
+                <div class="col-lg-6">
+                    <a href="{{ path('app_annual_action_plan_show', {id: annualPlan.id}) }}" style="text-decoration: none;">
+                        <div class="annual-plan-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4 class="mb-0" style="color: white;">
+                                    <i class="bi bi-calendar-event"></i> Année {{ annualPlan.year }}
+                                </h4>
+                                <span class="badge" style="background: rgba(255,255,255,0.2);">
+                                    {{ annualPlan.items|length }} actions
+                                </span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 small">
+                                <span><i class="bi bi-exclamation-triangle"></i> {{ annualPlan.criticalCount }} critiques</span>
+                                <span><i class="bi bi-clock"></i> {{ annualPlan.totalEstimatedEffort }}h</span>
+                                <span><i class="bi bi-lightning-charge"></i> {{ annualPlan.quickWinsCount }} quick wins</span>
+                            </div>
+                            <div class="mt-2 small opacity-75">
+                                <i class="bi bi-arrow-right-circle"></i> {{ annualPlan.completionPercentage|number_format(0) }}% complété
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Aucun plan d'action annuel n'a encore été généré.
+                    Les plans annuels seront créés automatiquement lors de la prochaine génération.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{# HTML Export for Website (PPA only - strategic) #}
+<div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #1e2330 0%, #252836 100%); border: 2px solid #3d4356 !important;">
+    <div class="card-header" style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); border-bottom: 2px solid #a78bfa;">
+        <h4 class="mb-0" style="color: #ffffff;">
+            <i class="bi bi-file-earmark-text"></i> Schéma pluriannuel pour votre site web
+        </h4>
+        <small style="color: #ddd6fe; opacity: 0.9;">Document officiel prêt à publier - Conforme à l'article 47 de la loi n° 2005-102</small>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label" style="color: #d1d5db; margin-bottom: 0;">
+                    <i class="bi bi-clipboard-check"></i> Code HTML (Document stratégique uniquement)
+                </label>
+                <button class="btn btn-sm btn-success" onclick="copyHtmlCode()" id="copyBtn">
+                    <i class="bi bi-clipboard"></i> Copier le code
+                </button>
+            </div>
+            <textarea id="htmlCode" class="form-control" rows="20" readonly style="background: #1a1d29; color: #60a5fa; border: 2px solid #3d4356; font-family: 'Courier New', monospace; font-size: 0.85rem;">{% set totalActions = action_plan.items|length %}
+{% set completedActions = action_plan.items.filter(i => i.status.value == 'completed').count %}
+<div class="plan-pluriannuel-accessibilite">
+    <h1>Schéma pluriannuel de mise en accessibilité</h1>
+
+    <p class="intro">
+        <strong>[Nom de votre organisation]</strong> s'engage à rendre ses sites internet accessibles conformément à l'article 47 de la loi n° 2005-102 du 11 février 2005.
+    </p>
+
+    <p>
+        Ce schéma pluriannuel s'applique à <strong>{{ action_plan.campaign.project.name }}</strong> et couvre la période <strong>{{ action_plan.startDate|date('Y') }}-{{ action_plan.endDate|date('Y') }}</strong>.
+    </p>
+
+    <h2>Politique d'accessibilité</h2>
+    <p>
+        L'accessibilité numérique est au cœur de notre démarche d'inclusion. Nous nous engageons à garantir l'égalité d'accès à nos services numériques pour tous les utilisateurs, quelles que soient leurs capacités.
+    </p>
+
+    <h2>État de conformité actuel</h2>
+    <p>
+        L'audit de conformité révèle que <strong>{{ action_plan.currentConformityRate }}%</strong> des critères du RGAA version 4.1 sont respectés.
+    </p>
+
+    <h2>Grandes orientations stratégiques ({{ action_plan.startDate|date('Y') }}-{{ action_plan.endDate|date('Y') }})</h2>
+    <ul>
+{% if action_plan.strategicOrientations %}
+    {% for orientation in action_plan.strategicOrientations %}
+        <li>{{ orientation }}</li>
+    {% endfor %}
+{% endif %}
+    </ul>
+
+    <h2>Axes de progrès</h2>
+{% if action_plan.progressAxes %}
+    {% for title, description in action_plan.progressAxes %}
+    <h3>{{ title }}</h3>
+    <p>{{ description }}</p>
+    {% endfor %}
+{% endif %}
+
+    <h2>Objectifs annuels</h2>
+{% if action_plan.annualObjectives %}
+    {% for year, objectives in action_plan.annualObjectives %}
+    <h3>Année {{ year }}</h3>
+    <ul>
+        {% for objective in objectives %}
+        <li>{{ objective }}</li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+{% endif %}
+
+    <h2>Moyens mis en œuvre</h2>
+    <ul>
+{% if action_plan.resources %}
+    {% for resource in action_plan.resources %}
+        <li>{{ resource }}</li>
+    {% endfor %}
+{% endif %}
+    </ul>
+
+    <h2>Suivi et publication</h2>
+    <p>
+        Ce plan d'action fait l'objet d'un suivi régulier. Un bilan annuel sera publié pour rendre compte de l'avancement des travaux et des résultats obtenus.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+        Pour toute question relative à l'accessibilité de nos services numériques ou pour signaler un problème d'accessibilité, vous pouvez nous contacter :
+    </p>
+    <ul>
+        <li>Par email : <strong>[votre-email-accessibilite@domaine.fr]</strong></li>
+        <li>Via notre formulaire de contact : <strong>[URL de votre formulaire]</strong></li>
+    </ul>
+
+    <h2>Voies de recours</h2>
+    <p>
+        Si vous constatez un défaut d'accessibilité vous empêchant d'accéder à un contenu ou une fonctionnalité, que vous nous le signalez et que vous ne parvenez pas à obtenir une réponse de notre part, vous êtes en droit de faire parvenir vos doléances ou une demande de saisine au Défenseur des droits.
+    </p>
+
+    <p class="mentions">
+        <em>Document établi le {{ action_plan.createdAt|date('d/m/Y') }}.<br>
+        Dernière mise à jour : {{ "now"|date('d/m/Y') }}.</em>
+    </p>
+</div>
+
+<style>
+.plan-pluriannuel-accessibilite {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.7;
+    color: #212529;
+    background: #ffffff;
+}
+.plan-pluriannuel-accessibilite h1 {
+    color: #7c3aed;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 4px solid #7c3aed;
+}
+.plan-pluriannuel-accessibilite h2 {
+    color: #5b21b6;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+.plan-pluriannuel-accessibilite h3 {
+    color: #6d28d9;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+.plan-pluriannuel-accessibilite .intro {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+.plan-pluriannuel-accessibilite ul {
+    margin-left: 2rem;
+    margin-bottom: 1.5rem;
+}
+.plan-pluriannuel-accessibilite li {
+    margin-bottom: 0.7rem;
+}
+.plan-pluriannuel-accessibilite strong {
+    color: #7c3aed;
+    font-weight: 600;
+}
+.plan-pluriannuel-accessibilite .mentions {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+</style></textarea>
+        </div>
+        <div class="alert border-0" style="background: linear-gradient(135deg, #3d2873 0%, #2d1f5c 100%); color: #ddd6fe; border-left: 4px solid #7c3aed !important;">
+            <i class="bi bi-info-circle"></i> <strong>Comment utiliser ce schéma pluriannuel ?</strong><br>
+            1. Cliquez sur "Copier le code" pour copier tout le contenu HTML et CSS<br>
+            2. Remplacez les informations entre crochets par vos propres informations<br>
+            3. Collez le code dans une page HTML de votre site (ex: /accessibilite/schema-pluriannuel.html)
+        </div>
+    </div>
+</div>
+
+{# Actions #}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <a href="{{ path('app_campaign_show', {id: action_plan.campaign.id}) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour à la campagne
+    </a>
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="bi bi-printer"></i> Imprimer
+        </button>
+        <form method="post" action="{{ path('app_action_plan_delete', {id: action_plan.id}) }}" style="display: inline;"
+              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce plan pluriannuel et tous ses plans annuels ?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete_action_plan_' ~ action_plan.id) }}">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> Supprimer
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function copyHtmlCode() {
+    const htmlCode = document.getElementById('htmlCode');
+    const copyBtn = document.getElementById('copyBtn');
+
+    htmlCode.select();
+    htmlCode.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(htmlCode.value).then(function() {
+        const originalContent = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copié !';
+        copyBtn.classList.remove('btn-success');
+        copyBtn.classList.add('btn-primary');
+
+        setTimeout(function() {
+            copyBtn.innerHTML = originalContent;
+            copyBtn.classList.remove('btn-primary');
+            copyBtn.classList.add('btn-success');
+        }, 2000);
+    }).catch(function(err) {
+        try {
+            document.execCommand('copy');
+            const originalContent = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="bi bi-check-circle"></i> Copié !';
+            copyBtn.classList.remove('btn-success');
+            copyBtn.classList.add('btn-primary');
+
+            setTimeout(function() {
+                copyBtn.innerHTML = originalContent;
+                copyBtn.classList.remove('btn-primary');
+                copyBtn.classList.add('btn-success');
+            }, 2000);
+        } catch(err) {
+            alert('Erreur lors de la copie. Veuillez sélectionner le texte manuellement.');
+        }
+    });
+}
+</script>
+
+{% endblock %}

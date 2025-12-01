@@ -29,9 +29,9 @@ enum ActionSeverity: string
     public function getBaseEffort(): int
     {
         return match($this) {
-            self::CRITICAL => 8,
-            self::MAJOR => 4,
-            self::MINOR => 2,
+            self::CRITICAL => 4,  // Reduced from 8h - more realistic base
+            self::MAJOR => 2,     // Reduced from 4h
+            self::MINOR => 1,     // Reduced from 2h
         };
     }
 

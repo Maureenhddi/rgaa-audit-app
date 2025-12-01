@@ -56,13 +56,36 @@ class ActionPlan
 
     /**
      * @var Collection<int, ActionPlanItem>
+     * @deprecated Use annualPlans instead - kept for backward compatibility
      */
     #[ORM\OneToMany(targetEntity: ActionPlanItem::class, mappedBy: 'actionPlan', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['priority' => 'ASC', 'quarter' => 'ASC'])]
     private Collection $items;
 
+    /**
+     * @var Collection<int, AnnualActionPlan>
+     */
+    #[ORM\OneToMany(targetEntity: AnnualActionPlan::class, mappedBy: 'pluriAnnualPlan', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['year' => 'ASC'])]
+    private Collection $annualPlans;
+
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $executiveSummary = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $strategicOrientations = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $progressAxes = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $annualObjectives = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $resources = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $indicators = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -76,6 +99,7 @@ class ActionPlan
     public function __construct()
     {
         $this->items = new ArrayCollection();
+        $this->annualPlans = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
     }
@@ -348,5 +372,94 @@ class ActionPlan
         })->count();
 
         return round(($completed / $total) * 100, 2);
+    }
+
+    /**
+     * @return Collection<int, AnnualActionPlan>
+     */
+    public function getAnnualPlans(): Collection
+    {
+        return $this->annualPlans;
+    }
+
+    public function addAnnualPlan(AnnualActionPlan $annualPlan): static
+    {
+        if (!$this->annualPlans->contains($annualPlan)) {
+            $this->annualPlans->add($annualPlan);
+            $annualPlan->setPluriAnnualPlan($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAnnualPlan(AnnualActionPlan $annualPlan): static
+    {
+        if ($this->annualPlans->removeElement($annualPlan)) {
+            if ($annualPlan->getPluriAnnualPlan() === $this) {
+                $annualPlan->setPluriAnnualPlan(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getStrategicOrientations(): ?array
+    {
+        return $this->strategicOrientations;
+    }
+
+    public function setStrategicOrientations(?array $strategicOrientations): static
+    {
+        $this->strategicOrientations = $strategicOrientations;
+
+        return $this;
+    }
+
+    public function getProgressAxes(): ?array
+    {
+        return $this->progressAxes;
+    }
+
+    public function setProgressAxes(?array $progressAxes): static
+    {
+        $this->progressAxes = $progressAxes;
+
+        return $this;
+    }
+
+    public function getAnnualObjectives(): ?array
+    {
+        return $this->annualObjectives;
+    }
+
+    public function setAnnualObjectives(?array $annualObjectives): static
+    {
+        $this->annualObjectives = $annualObjectives;
+
+        return $this;
+    }
+
+    public function getResources(): ?array
+    {
+        return $this->resources;
+    }
+
+    public function setResources(?array $resources): static
+    {
+        $this->resources = $resources;
+
+        return $this;
+    }
+
+    public function getIndicators(): ?array
+    {
+        return $this->indicators;
+    }
+
+    public function setIndicators(?array $indicators): static
+    {
+        $this->indicators = $indicators;
+
+        return $this;
     }
 }

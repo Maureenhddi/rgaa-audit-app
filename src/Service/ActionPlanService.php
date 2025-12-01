@@ -23,51 +23,54 @@ class ActionPlanService
     }
 
     /**
-     * Generate a multi-year action plan from campaign audit results
+     * Generate a multi-year strategic action plan (PPA) and annual detailed plans from campaign audit results
      */
     public function generateActionPlan(AuditCampaign $campaign, int $durationYears = 2): ActionPlan
     {
-        $this->logger->info('Generating action plan for campaign', ['campaign_id' => $campaign->getId()]);
+        $this->logger->info('Generating PPA (Plan Pluriannuel) and annual action plans for campaign', ['campaign_id' => $campaign->getId()]);
 
         // Collect all issues from completed audits
         $allIssues = $this->collectIssuesFromCampaign($campaign);
 
-        // Create action plan entity
-        $actionPlan = new ActionPlan();
-        $actionPlan->setCampaign($campaign);
-        $actionPlan->setName($this->cleanText("Plan d'action {$campaign->getName()}"));
-        $actionPlan->setDescription($this->cleanText("Plan pluriannuel de mise en conformite RGAA sur {$durationYears} ans"));
-        $actionPlan->setStartDate(new \DateTime());
-        $actionPlan->setEndDate((new \DateTime())->modify("+{$durationYears} years"));
-        $actionPlan->setDurationYears($durationYears);
-        $actionPlan->setCurrentConformityRate($campaign->getAvgConformityRate());
-        $actionPlan->setTotalIssues($campaign->getTotalIssues());
-        $actionPlan->setCriticalIssues($campaign->getCriticalCount());
-        $actionPlan->setMajorIssues($campaign->getMajorCount());
-        $actionPlan->setMinorIssues($campaign->getMinorCount());
+        // Create PPA (Plan Pluriannuel d'Accessibilite) entity - STRATEGIC DOCUMENT
+        $ppa = new ActionPlan();
+        $ppa->setCampaign($campaign);
+        $ppa->setName($this->cleanText("Plan Pluriannuel d'Accessibilite {$campaign->getName()}"));
+        $ppa->setDescription($this->cleanText("Document strategique sur {$durationYears} ans"));
+        $ppa->setStartDate(new \DateTime());
+        $ppa->setEndDate((new \DateTime())->modify("+{$durationYears} years"));
+        $ppa->setDurationYears($durationYears);
+        $ppa->setCurrentConformityRate($campaign->getAvgConformityRate());
+        $ppa->setTotalIssues($campaign->getTotalIssues());
+        $ppa->setCriticalIssues($campaign->getCriticalCount());
+        $ppa->setMajorIssues($campaign->getMajorCount());
+        $ppa->setMinorIssues($campaign->getMinorCount());
 
         // Calculate target conformity rate
         $currentRate = (float) ($campaign->getAvgConformityRate() ?? 0);
         $targetRate = min(100, $currentRate + (50 * $durationYears)); // Aim for +50% per year
-        $actionPlan->setTargetConformityRate((string) $targetRate);
+        $ppa->setTargetConformityRate((string) $targetRate);
 
-        // Generate executive summary using Gemini AI
-        $executiveSummary = $this->generateExecutiveSummary($campaign, $allIssues, $durationYears);
-        $actionPlan->setExecutiveSummary($executiveSummary);
+        // Generate STRATEGIC executive summary using Gemini AI (NO technical details)
+        $executiveSummary = $this->generateStrategicSummary($campaign, $allIssues, $durationYears);
+        $ppa->setExecutiveSummary($executiveSummary);
 
-        // Generate action items from issues
-        $this->generateActionItems($actionPlan, $allIssues, $durationYears);
+        // Generate STRATEGIC content for PPA
+        $this->generateStrategicContent($ppa, $campaign, $allIssues, $durationYears);
 
-        // Persist action plan
-        $this->entityManager->persist($actionPlan);
+        // Persist PPA first
+        $this->entityManager->persist($ppa);
         $this->entityManager->flush();
 
-        $this->logger->info('Action plan generated successfully', [
-            'action_plan_id' => $actionPlan->getId(),
-            'items_count' => $actionPlan->getItems()->count()
+        // Generate annual action plans with DETAILED TECHNICAL content
+        $this->generateAnnualActionPlans($ppa, $allIssues, $durationYears);
+
+        $this->logger->info('PPA and annual plans generated successfully', [
+            'ppa_id' => $ppa->getId(),
+            'annual_plans_count' => $ppa->getAnnualPlans()->count()
         ]);
 
-        return $actionPlan;
+        return $ppa;
     }
 
     /**
@@ -324,7 +327,7 @@ class ActionPlanService
      * Create an action plan item from an issue with improved estimation
      */
     private function createActionItem(
-        ActionPlan $actionPlan,
+        ?ActionPlan $actionPlan,
         array $issue,
         ActionSeverity $severity,
         int $priority,
@@ -334,7 +337,9 @@ class ActionPlanService
         ActionCategory $category
     ): ActionPlanItem {
         $item = new ActionPlanItem();
-        $item->setActionPlan($actionPlan);
+        if ($actionPlan !== null) {
+            $item->setActionPlan($actionPlan);
+        }
 
         // Clean all text fields to avoid encoding issues
         $item->setTitle($this->cleanText($issue['errorType']));
@@ -380,36 +385,50 @@ class ActionPlanService
     }
 
     /**
-     * Calculate realistic effort in hours
+     * Calculate realistic effort in hours (IMPROVED - more realistic estimates)
      */
     private function calculateEffort(array $issue, ActionSeverity $severity): int
     {
-        $baseEffort = $severity->getBaseEffort();
+        // Start with base effort
+        $baseEffort = $severity->getBaseEffort(); // 8h (critical), 4h (major), 2h (minor)
+        $totalEffort = $baseEffort;
 
-        // Complexity multiplier
-        $complexityMultiplier = match($issue['complexity']) {
-            'low' => 1.0,
-            'medium' => 1.5,
-            'high' => 2.5,
+        // Complexity adjustment (ADDITIVE, not multiplicative)
+        $complexityAdjustment = match($issue['complexity']) {
+            'low' => 0,           // No additional time
+            'medium' => $baseEffort * 0.5,  // +50% of base
+            'high' => $baseEffort * 1.0,    // +100% of base (double)
         };
+        $totalEffort += $complexityAdjustment;
 
-        // Pages multiplier (diminishing returns)
+        // Pages adjustment (diminishing returns - templates help!)
         $pageCount = count($issue['affectedPages']);
-        if ($pageCount <= 1) {
-            $pageMultiplier = 1;
-        } elseif ($pageCount <= 5) {
-            $pageMultiplier = 1 + ($pageCount * 0.3); // +30% per page
-        } else {
-            $pageMultiplier = 2.5 + (($pageCount - 5) * 0.1); // Diminishing
+        if ($pageCount > 1) {
+            if ($pageCount <= 5) {
+                // First 5 pages: +15% of base per page
+                $pagesAdjustment = min(($pageCount - 1) * ($baseEffort * 0.15), $baseEffort * 0.75);
+            } else {
+                // More than 5 pages: +5% per additional page (templates/patterns)
+                $pagesAdjustment = ($baseEffort * 0.75) + (($pageCount - 5) * ($baseEffort * 0.05));
+            }
+            $totalEffort += $pagesAdjustment;
         }
 
-        // Occurrences factor (fixing one type of error across multiple instances)
-        $occurrenceFactor = 1 + min(5, $issue['occurrences'] * 0.2);
+        // Occurrences bonus (many occurrences = fix once, apply everywhere)
+        // More occurrences actually means LESS time per occurrence (economy of scale)
+        if ($issue['occurrences'] > 10) {
+            // Lots of same error = probably a pattern/template fix
+            $occurrencesAdjustment = $baseEffort * 0.2; // +20% only
+        } elseif ($issue['occurrences'] > 5) {
+            $occurrencesAdjustment = $baseEffort * 0.3; // +30%
+        } else {
+            $occurrencesAdjustment = $issue['occurrences'] * ($baseEffort * 0.1); // +10% per occurrence
+        }
+        $totalEffort += $occurrencesAdjustment;
 
-        $totalEffort = $baseEffort * $complexityMultiplier * $pageMultiplier * $occurrenceFactor;
-
-        // Round up and cap at reasonable maximum
-        return min(160, (int) ceil($totalEffort)); // Max 4 weeks per item
+        // Round to nearest hour and cap at reasonable maximum
+        $totalEffort = (int) round($totalEffort);
+        return min(40, $totalEffort); // Max 1 week (40h) per action - more realistic!
     }
 
     /**
@@ -562,7 +581,344 @@ class ActionPlanService
     }
 
     /**
+     * Generate STRATEGIC content for the PPA (orientations, axes, moyens, indicateurs)
+     */
+    private function generateStrategicContent(ActionPlan $ppa, AuditCampaign $campaign, array $issues, int $durationYears): void
+    {
+        $currentYear = (int) date('Y');
+
+        // Strategic Orientations (grandes orientations)
+        $ppa->setStrategicOrientations([
+            "Garantir l'egalite d'acces a nos services numeriques pour tous les utilisateurs",
+            "Integrer l'accessibilite dans le processus de conception et developpement",
+            "Former les equipes aux bonnes pratiques RGAA",
+            "Mettre en place un suivi continu de la conformite"
+        ]);
+
+        // Progress Axes (axes de progres)
+        $ppa->setProgressAxes([
+            "Accessibilite des contenus" => "Amelioration des alternatives textuelles, de la structure semantique et de la navigation",
+            "Accessibilite technique" => "Conformite des composants interactifs, du clavier et des contrastes",
+            "Organisation et gouvernance" => "Processus de validation, documentation et formation continue",
+            "Suivi et amelioration continue" => "Audits reguliers et correction systematique des non-conformites"
+        ]);
+
+        // Annual Objectives (objectifs annuels SANS details techniques)
+        $annualObjectives = [];
+        for ($i = 0; $i < $durationYears; $i++) {
+            $year = $currentYear + $i;
+            $objectiveYear = $i + 1;
+
+            if ($objectiveYear === 1) {
+                $annualObjectives[$year] = [
+                    "Corriger 100% des erreurs critiques bloquantes",
+                    "Traiter les quick wins a fort impact",
+                    "Former l'equipe de developpement",
+                    "Atteindre " . min(100, (int)$ppa->getCurrentConformityRate() + 30) . "% de conformite"
+                ];
+            } elseif ($objectiveYear === $durationYears) {
+                $annualObjectives[$year] = [
+                    "Finaliser les corrections restantes",
+                    "Audit de conformite final",
+                    "Atteindre " . $ppa->getTargetConformityRate() . "% de conformite",
+                    "Mettre en place un processus de maintien de la conformite"
+                ];
+            } else {
+                $annualObjectives[$year] = [
+                    "Poursuivre les corrections structurelles",
+                    "Optimiser les composants et templates",
+                    "Renforcer la formation des equipes",
+                    "Atteindre " . min(100, (int)$ppa->getCurrentConformityRate() + (30 * $objectiveYear)) . "% de conformite"
+                ];
+            }
+        }
+        $ppa->setAnnualObjectives($annualObjectives);
+
+        // Resources (moyens)
+        $ppa->setResources([
+            "Equipe de developpement formee aux bonnes pratiques RGAA",
+            "Outils d'audit automatise et manuel",
+            "Accompagnement par des experts en accessibilite",
+            "Integration de tests d'accessibilite dans le CI/CD",
+            "Documentation et guides internes"
+        ]);
+
+        // Indicators (indicateurs)
+        $ppa->setIndicators([
+            "Taux de conformite RGAA" => "Objectif : " . $ppa->getTargetConformityRate() . "%",
+            "Nombre d'erreurs critiques" => "Objectif : 0 en fin d'annee 1",
+            "Couverture des tests d'accessibilite" => "Objectif : 100% des composants",
+            "Taux de formation des equipes" => "Objectif : 100% de l'equipe formee",
+            "Delai moyen de correction" => "Objectif : < 1 mois pour critiques"
+        ]);
+    }
+
+    /**
+     * Generate annual action plans with DETAILED TECHNICAL items
+     */
+    private function generateAnnualActionPlans(ActionPlan $ppa, array $issues, int $durationYears): void
+    {
+        $currentYear = (int) date('Y');
+        $currentQuarter = (int) ceil(date('n') / 3);
+
+        // Prioritize all issues with smart scoring
+        $allPrioritizedIssues = $this->prioritizeIssues($issues);
+        $totalIssues = count($allPrioritizedIssues);
+
+        // Calculate total quarters for distribution
+        $totalQuarters = ($durationYears + 1) * 4;
+        $avgItemsPerQuarter = max(2, min(8, ceil($totalIssues / $totalQuarters)));
+
+        // Separate quick wins from regular actions
+        $quickWins = [];
+        $regularActions = [];
+
+        foreach ($allPrioritizedIssues as $issueData) {
+            $issue = $issueData['issue'];
+            $severity = $issueData['severity'];
+
+            $isQuickWin = ($severity === \App\Enum\ActionSeverity::CRITICAL) &&
+                         ($issue['complexity'] === 'low') &&
+                         ($issue['occurrences'] <= 5);
+
+            if ($isQuickWin) {
+                $quickWins[] = $issueData;
+            } else {
+                $regularActions[] = $issueData;
+            }
+        }
+
+        // Reorder: quick wins first, then regular actions
+        $orderedIssues = array_merge($quickWins, $regularActions);
+
+        // Create annual plans for each year
+        $annualPlansByYear = [];
+        for ($i = 0; $i < $durationYears; $i++) {
+            $year = $currentYear + $i;
+            $annualPlan = new \App\Entity\AnnualActionPlan();
+            $annualPlan->setPluriAnnualPlan($ppa);
+            $annualPlan->setYear($year);
+            $annualPlan->setTitle("Plan d'action annuel " . $year);
+            $annualPlan->setDescription("Plan d'action operationnel detaille pour l'annee " . $year . " - contient les corrections techniques specifiques a realiser");
+
+            $ppa->addAnnualPlan($annualPlan);
+            $this->entityManager->persist($annualPlan);
+
+            $annualPlansByYear[$year] = $annualPlan;
+        }
+
+        // Distribute action items across years/quarters
+        $quarterOffset = 0;
+        $itemsInCurrentQuarter = 0;
+        $priorityCounter = 1;
+
+        foreach ($orderedIssues as $issueData) {
+            $issue = $issueData['issue'];
+            $severity = $issueData['severity'];
+
+            // Calculate target quarter
+            $quarter = $currentQuarter + $quarterOffset;
+            $year = $currentYear;
+
+            // Handle year rollover
+            while ($quarter > 4) {
+                $quarter -= 4;
+                $year++;
+            }
+
+            // Don't plan beyond end year
+            $endYear = $currentYear + $durationYears;
+            if ($year > $endYear) {
+                break;
+            }
+
+            // Skip if year doesn't have an annual plan
+            if (!isset($annualPlansByYear[$year])) {
+                break;
+            }
+
+            // Determine if it's a quick win
+            $isQuickWin = ($severity === \App\Enum\ActionSeverity::CRITICAL) &&
+                         ($issue['complexity'] === 'low') &&
+                         ($issue['occurrences'] <= 5);
+
+            // Create DETAILED action item
+            $item = $this->createActionItem(
+                null, // No direct link to ActionPlan (deprecated)
+                $issue,
+                $severity,
+                $priorityCounter++,
+                $year,
+                $quarter,
+                $isQuickWin,
+                $this->categorizeIssue($issue)
+            );
+
+            // Link to annual plan instead
+            $annualPlansByYear[$year]->addItem($item);
+            $this->entityManager->persist($item);
+
+            $itemsInCurrentQuarter++;
+
+            // Move to next quarter when reaching target
+            if ($itemsInCurrentQuarter >= $avgItemsPerQuarter) {
+                $quarterOffset++;
+                $itemsInCurrentQuarter = 0;
+            }
+        }
+
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Generate STRATEGIC summary using Gemini AI (NO technical details, NO RGAA criteria)
+     */
+    private function generateStrategicSummary(AuditCampaign $campaign, array $issues, int $durationYears): string
+    {
+        $criticalCount = count($issues['critical']);
+        $majorCount = count($issues['major']);
+        $minorCount = count($issues['minor']);
+        $totalIssues = $criticalCount + $majorCount + $minorCount;
+
+        $currentRate = (float) ($campaign->getAvgConformityRate() ?? 0);
+        $targetRate = min(100, $currentRate + (50 * $durationYears));
+
+        // Analyze main issue categories
+        $categoryBreakdown = $this->analyzeCategoryBreakdown($issues);
+
+        $prompt = <<<PROMPT
+Tu es un expert en accessibilite web RGAA 4.1. IMPORTANT : Tu generes un resume STRATEGIQUE pour un Plan Pluriannuel d'Accessibilite (PPA).
+
+**IMPORTANT - Ce resume est pour le PPA (document strategique), PAS pour un plan d'action annuel :**
+- NE MENTIONNE PAS de criteres RGAA specifiques (ex: RGAA 1.1.1, RGAA 4.1.2)
+- NE MENTIONNE PAS d'erreurs A11yLint ou techniques detaillees
+- NE MENTIONNE PAS de composants precis ou de tickets
+- RESTE strategique : orientations, axes de progres, objectifs globaux
+
+**Contexte de l'audit :**
+- Campagne : {$campaign->getName()}
+- Pages auditees : {$campaign->getTotalPages()}
+- Conformite actuelle : **{$currentRate}%**
+- Objectif cible : **{$targetRate}%** d'ici {$durationYears} an(s)
+- Problemes identifies : **{$totalIssues}** types d'erreurs
+  - {$criticalCount} erreurs critiques (bloquants accessibilite)
+  - {$majorCount} erreurs majeures (impact significatif)
+  - {$minorCount} erreurs mineures (ameliorations recommandees)
+- Domaines concernes : {$categoryBreakdown}
+
+**Genere un resume strategique structure :**
+
+## Vision et enjeux
+(2-3 phrases sur l'importance de l'accessibilite pour l'organisation et les enjeux strategiques)
+
+## Etat des lieux
+(2 phrases decrivant la situation globale SANS details techniques)
+
+## Grandes orientations strategiques
+(3-4 orientations strategiques majeures sur {$durationYears} ans)
+
+## Approche pluriannuelle
+(Decrire l'approche generale en 3 phases sur {$durationYears} ans, SANS mentionner de criteres RGAA ou erreurs techniques :
+- Phase 1 : Corrections prioritaires et formation
+- Phase 2 : Ameliorations structurelles
+- Phase 3 : Conformite complete et maintien)
+
+## Benefices attendus
+(4-5 benefices strategiques : conformite legale, experience utilisateur, image de marque, etc.)
+
+**Ton :** Strategique, inspire, oriente vision et objectifs.
+**Format :** Markdown avec titres niveau 2 (##).
+**Longueur :** 250-300 mots maximum.
+**EVITER ABSOLUMENT :** Criteres RGAA precis, erreurs A11yLint, composants techniques, estimations d'heures.
+PROMPT;
+
+        try {
+            $response = $this->httpClient->request('POST', $this->geminiApiUrl, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'query' => [
+                    'key' => $this->geminiApiKey,
+                ],
+                'json' => [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt]
+                            ]
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'temperature' => 0.7,
+                        'maxOutputTokens' => 800,
+                    ]
+                ],
+            ]);
+
+            $data = $response->toArray();
+            $summary = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+            if (empty($summary)) {
+                return $this->getFallbackStrategicSummary($campaign, $criticalCount, $majorCount, $minorCount, $durationYears);
+            }
+
+            return $summary;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to generate strategic summary with Gemini', [
+                'error' => $e->getMessage()
+            ]);
+            return $this->getFallbackStrategicSummary($campaign, $criticalCount, $majorCount, $minorCount, $durationYears);
+        }
+    }
+
+    /**
+     * Fallback strategic summary if AI fails
+     */
+    private function getFallbackStrategicSummary(AuditCampaign $campaign, int $critical, int $major, int $minor, int $years): string
+    {
+        $currentRate = $campaign->getAvgConformityRate() ?? 0;
+        $targetRate = min(100, $currentRate + (50 * $years));
+
+        return <<<SUMMARY
+## Vision et enjeux
+
+L'accessibilite numerique est un pilier fondamental de notre engagement en faveur de l'inclusion. Notre organisation s'engage a garantir un acces egal a ses services numeriques pour tous les utilisateurs, quelles que soient leurs capacites.
+
+## Etat des lieux
+
+L'audit de conformite RGAA revele un taux de conformite actuel de **{$currentRate}%**. Des opportunites d'amelioration ont ete identifiees dans plusieurs domaines cles de l'accessibilite.
+
+## Grandes orientations strategiques
+
+1. **Conformite reglementaire** : Atteindre **{$targetRate}%** de conformite RGAA d'ici {$years} an(s)
+2. **Formation et montee en competences** : Former l'ensemble des equipes aux bonnes pratiques d'accessibilite
+3. **Integration dans les processus** : Integrer l'accessibilite des la phase de conception
+4. **Amelioration continue** : Mettre en place un processus de suivi et d'amelioration continue
+
+## Approche pluriannuelle
+
+**Phase 1 : Corrections prioritaires et formation** (6-12 premiers mois)
+Traitement des problemes bloquants, formation des equipes, mise en place des processus.
+
+**Phase 2 : Ameliorations structurelles** (12-18 mois)
+Refonte des composants, amelioration de la structure, optimisation de l'experience utilisateur.
+
+**Phase 3 : Conformite complete et maintien** (derniers {$years - 1} mois)
+Finalisation des corrections, audit de conformite, mise en place du maintien en condition operationnelle.
+
+## Benefices attendus
+
+- **Conformite legale** : Respect des obligations RGAA pour les services publics
+- **Inclusion universelle** : Acces garanti pour tous les utilisateurs, y compris en situation de handicap
+- **Amelioration de l'experience** : Navigation simplifiee beneficiant a l'ensemble des utilisateurs
+- **Image de marque** : Demonstration de l'engagement societal de l'organisation
+- **Performance SEO** : Amelioration du referencement naturel grace a une meilleure structure
+SUMMARY;
+    }
+
+    /**
      * Generate executive summary using Gemini AI with improved prompt
+     * @deprecated Use generateStrategicSummary instead
      */
     private function generateExecutiveSummary(AuditCampaign $campaign, array $issues, int $durationYears): string
     {
@@ -585,29 +941,41 @@ Tu es un expert en accessibilité web RGAA 4.1. Génère un résumé exécutif p
 - Pages auditées : {$campaign->getTotalPages()}
 - Conformité actuelle : **{$currentRate}%**
 - Objectif cible : **{$targetRate}%** d'ici {$durationYears} an(s)
-- Problèmes identifiés : **{$totalIssues}** au total
-  - {$criticalCount} critiques (bloquants)
-  - {$majorCount} majeurs (impact significatif)
-  - {$minorCount} mineurs (améliorations)
+- Problèmes identifiés : **{$totalIssues}** types d'erreurs différentes
+  - {$criticalCount} erreurs critiques (bloquants accessibilité)
+  - {$majorCount} erreurs majeures (impact significatif)
+  - {$minorCount} erreurs mineures (améliorations recommandées)
 - Catégories principales : {$categoryBreakdown}
+
+**IMPORTANT pour les estimations :**
+- Les estimations doivent être RÉALISTES et basées sur des heures de développement effectives
+- Beaucoup d'erreurs du même type = correction unique dans un composant/template réutilisable
+- Une erreur "critique" simple (ex: alt manquant) = 30 minutes à 2h, PAS des jours
+- Une erreur "structurelle" complexe = 1 à 3 jours maximum
+- Prioriser les "quick wins" : corrections rapides à fort impact
+- Regrouper les corrections par composant/page pour optimiser l'effort
 
 **Génère un résumé exécutif structuré :**
 
 ## État des lieux
-(2-3 phrases décrivant la situation actuelle et les principaux enjeux identifiés)
+(2-3 phrases décrivant la situation actuelle, en mettant l'accent sur les opportunités d'amélioration plutôt que sur une vision négative)
 
 ## Objectifs stratégiques
-(4-5 objectifs SMART basés sur les données ci-dessus, avec métriques précises)
+(3-4 objectifs SMART basés sur les données, SANS mentionner de chiffres d'heures ou de budget - rester stratégique)
 
 ## Approche par phases
-(Décrire 3-4 phases concrètes avec timing et priorités, en commençant par les quick wins critiques)
+(Décrire 3 phases concrètes avec timing :
+- Phase 1: Quick wins (1-3 mois) - corrections simples à fort impact
+- Phase 2: Corrections structurelles (3-8 mois) - composants et templates
+- Phase 3: Optimisation et conformité (derniers mois) - finitions et tests)
 
 ## Retour sur investissement attendu
-(4-5 bénéfices concrets : conformité légale, expérience utilisateur, SEO, image de marque, etc.)
+(4-5 bénéfices concrets : conformité légale, expérience utilisateur améliorée, SEO, réduction des risques juridiques, image de marque inclusive)
 
-**Ton :** Professionnel et factuel, orienté décideurs.
+**Ton :** Professionnel, factuel et OPTIMISTE. Orienté solutions, pas problèmes.
 **Format :** Markdown avec titres niveau 2 (##).
-**Longueur :** 350-400 mots maximum.
+**Longueur :** 300-350 mots maximum.
+**ÉVITER :** Estimations d'heures/budget, jargon technique excessif, ton alarmiste.
 PROMPT;
 
         try {

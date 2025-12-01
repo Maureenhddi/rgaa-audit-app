@@ -1,0 +1,309 @@
+{% extends 'base.html.twig' %}
+{% import 'action_plan/_macros.html.twig' as macros %}
+
+{% block title %}Plan d'action annuel {{ annual_plan.year }} - {{ parent() }}{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(135deg, #1a1d29 0%, #0f1117 100%) !important;
+        color: #e9ecef !important;
+    }
+
+    .plan-hero {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        border-radius: 16px;
+        color: white;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(30, 58, 138, 0.5);
+    }
+
+    .stat-card-plan {
+        background: linear-gradient(135deg, #252836 0%, #2d3142 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        border: 2px solid #3d4356;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+
+    .stat-card-plan:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.3);
+        border-color: #3b82f6;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: #60a5fa;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+    }
+
+    .action-item-card {
+        background: linear-gradient(135deg, #1e2330 0%, #252836 100%);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 2px solid #3d4356;
+        border-left: 5px solid #3d4356;
+        transition: all 0.2s ease;
+        color: #e9ecef;
+    }
+
+    .action-item-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        transform: translateX(4px);
+    }
+
+    .action-item-card.severity-critical {
+        border-left-color: #ef4444;
+        background: linear-gradient(135deg, #3d1f1f 0%, #4a1f1f 100%);
+    }
+
+    .action-item-card.severity-major {
+        border-left-color: #f59e0b;
+        background: linear-gradient(135deg, #3d2e1f 0%, #4a361f 100%);
+    }
+
+    .action-item-card.severity-minor {
+        border-left-color: #06b6d4;
+        background: linear-gradient(135deg, #1f2d3d 0%, #1f3a4a 100%);
+    }
+
+    .quarter-section {
+        background: linear-gradient(135deg, #1e2330 0%, #252836 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 2px solid #3d4356;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .technical-details {
+        background: rgba(30, 58, 138, 0.1);
+        border-left: 4px solid #3b82f6;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+    }
+
+    .rgaa-badge {
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+</style>
+
+{# Breadcrumb #}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('app_project_list') }}">Projets</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_project_show', {id: ppa.campaign.project.id}) }}">{{ ppa.campaign.project.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_campaign_show', {id: ppa.campaign.id}) }}">{{ ppa.campaign.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('app_action_plan_show', {id: ppa.id}) }}">Plan Pluriannuel</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Plan d'action {{ annual_plan.year }}</li>
+    </ol>
+</nav>
+
+{# Hero Section #}
+<div class="plan-hero">
+    <div class="row align-items-center">
+        <div class="col-lg-9">
+            <h1 class="mb-2">
+                <i class="bi bi-clipboard-check"></i> Plan d'Action Annuel {{ annual_plan.year }}
+            </h1>
+            <p class="mb-3 opacity-90">{{ annual_plan.description }}</p>
+            <div class="d-flex flex-wrap gap-3">
+                <span><i class="bi bi-list-task"></i> {{ annual_plan.items|length }} actions techniques détaillées</span>
+                <span><i class="bi bi-clock"></i> {{ annual_plan.totalEstimatedEffort }} heures estimées</span>
+                <span><i class="bi bi-link-45deg"></i> Lié au PPA {{ ppa.startDate|date('Y') }}-{{ ppa.endDate|date('Y') }}</span>
+            </div>
+        </div>
+        <div class="col-lg-3 text-center">
+            <div class="stat-value" style="font-size: 3rem;">{{ annual_plan.year }}</div>
+            <div class="stat-label">Année du plan</div>
+        </div>
+    </div>
+</div>
+
+{# Statistics Cards #}
+<div class="row g-4 mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-plan">
+            <div class="stat-value" style="color: #f87171;">{{ annual_plan.criticalCount }}</div>
+            <div class="stat-label">Actions critiques</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-plan">
+            <div class="stat-value" style="color: #fbbf24;">{{ annual_plan.majorCount }}</div>
+            <div class="stat-label">Actions majeures</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-plan">
+            <div class="stat-value" style="color: #22d3ee;">{{ annual_plan.minorCount }}</div>
+            <div class="stat-label">Actions mineures</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card-plan">
+            <div class="stat-value" style="color: #34d399;">{{ annual_plan.quickWinsCount }}</div>
+            <div class="stat-label">Quick wins</div>
+        </div>
+    </div>
+</div>
+
+{# Info Alert #}
+<div class="alert border-0 mb-4" style="background: linear-gradient(135deg, #1f3d2f 0%, #1a3526 100%); color: #6ee7b7; border-left: 4px solid #10b981 !important;">
+    <i class="bi bi-info-circle"></i> <strong>Plan d'action opérationnel</strong><br>
+    Ce document contient les corrections techniques détaillées à réaliser en {{ annual_plan.year }} :
+    critères RGAA précis, erreurs A11yLint, composants défaillants, estimations d'effort par action.
+</div>
+
+{# Actions by Quarter #}
+<div class="mb-4">
+    {% for quarter, items in items_by_quarter %}
+        {% if items|length > 0 %}
+        <div class="quarter-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">
+                    <i class="bi bi-calendar3"></i> {{ quarter }} {{ annual_plan.year }}
+                </h4>
+                <span class="badge bg-primary">{{ items|length }} action(s)</span>
+            </div>
+
+            {% for item in items %}
+            <div class="action-item-card severity-{{ item.severity.value }}" data-id="{{ item.id }}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="flex-grow-1">
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <span class="badge {{ item.severityBadgeClass }}">{{ item.severityLabel }}</span>
+                            <span class="badge bg-secondary">{{ item.categoryLabel }}</span>
+                            {% if item.quickWin %}
+                                <span class="badge bg-success"><i class="bi bi-lightning-charge-fill"></i> Quick Win</span>
+                            {% endif %}
+                            {% if item.rgaaCriteria %}
+                                {% for criteria in item.rgaaCriteria %}
+                                    <span class="rgaa-badge">{{ criteria }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <strong class="d-block mb-2" style="font-size: 1.1rem;">{{ item.title }}</strong>
+
+                        {% if item.description %}
+                            <p class="mb-2 text-muted">{{ item.description }}</p>
+                        {% endif %}
+
+                        <div class="d-flex flex-wrap gap-3 small mb-2">
+                            <span><i class="bi bi-clock"></i> {{ item.estimatedEffort }}h</span>
+                            <span><i class="bi bi-graph-up"></i> Impact: {{ item.impactScore }}/100</span>
+                            {% if item.affectedPages|length > 0 %}
+                                <span><i class="bi bi-file-earmark"></i> {{ item.affectedPages|length }} page(s)</span>
+                            {% endif %}
+                        </div>
+
+                        {% if item.technicalDetails %}
+                        <div class="technical-details">
+                            <strong><i class="bi bi-tools"></i> Détails techniques :</strong>
+                            <div class="mt-1">{{ item.technicalDetails }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if item.acceptanceCriteria %}
+                        <details class="mt-2">
+                            <summary style="cursor: pointer; color: #60a5fa;">
+                                <i class="bi bi-check2-square"></i> Critères d'acceptation
+                            </summary>
+                            <div class="mt-2" style="white-space: pre-line; color: #9ca3af; font-size: 0.9rem;">{{ item.acceptanceCriteria }}</div>
+                        </details>
+                        {% endif %}
+
+                        {% if item.affectedPages and item.affectedPages|length > 0 %}
+                        <details class="mt-2">
+                            <summary style="cursor: pointer; color: #60a5fa;">
+                                <i class="bi bi-link"></i> Pages affectées ({{ item.affectedPages|length }})
+                            </summary>
+                            <ul class="mt-2 small" style="color: #9ca3af;">
+                                {% for page in item.affectedPages|slice(0, 5) %}
+                                    <li>{{ page }}</li>
+                                {% endfor %}
+                                {% if item.affectedPages|length > 5 %}
+                                    <li><em>... et {{ item.affectedPages|length - 5 }} autres page(s)</em></li>
+                                {% endif %}
+                            </ul>
+                        </details>
+                        {% endif %}
+                    </div>
+                    <div class="ms-3">
+                        {{ macros.status_dropdown(item) }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+{# Export Section #}
+<div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #1e2330 0%, #252836 100%); border: 2px solid #3d4356 !important;">
+    <div class="card-header" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border-bottom: 2px solid #3b82f6;">
+        <h4 class="mb-0" style="color: #ffffff;">
+            <i class="bi bi-file-earmark-text"></i> Export du plan d'action {{ annual_plan.year }}
+        </h4>
+    </div>
+    <div class="card-body">
+        <p style="color: #d1d5db;">
+            Exportez ce plan d'action opérationnel avec tous les détails techniques pour le partager avec votre équipe de développement.
+        </p>
+        <a href="{{ path('app_annual_action_plan_export_word', {id: annual_plan.id}) }}" class="btn btn-primary">
+            <i class="bi bi-file-word"></i> Télécharger en Word (RTF)
+        </a>
+    </div>
+</div>
+
+{# Actions #}
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <a href="{{ path('app_action_plan_show', {id: ppa.id}) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour au Plan Pluriannuel
+    </a>
+    <button class="btn btn-primary" onclick="window.print()">
+        <i class="bi bi-printer"></i> Imprimer
+    </button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle status updates via AJAX
+    document.querySelectorAll('.dropdown-item[data-status]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = this.closest('form');
+            if (form) {
+                form.submit();
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}
