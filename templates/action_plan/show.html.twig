@@ -475,10 +475,17 @@
 {# HTML Export for Website #}
 <div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #1e2330 0%, #252836 100%); border: 2px solid #3d4356 !important;">
     <div class="card-header" style="background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); border-bottom: 2px solid #3b82f6;">
-        <h4 class="mb-0" style="color: #ffffff;">
-            <i class="bi bi-file-earmark-text"></i> Schéma pluriannuel pour votre site web
-        </h4>
-        <small style="color: #d1d5db; opacity: 0.9;">Document officiel prêt à publier - Conforme à l'article 47 de la loi n° 2005-102</small>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0" style="color: #ffffff;">
+                    <i class="bi bi-file-earmark-text"></i> Schéma pluriannuel pour votre site web
+                </h4>
+                <small style="color: #d1d5db; opacity: 0.9;">Document officiel prêt à publier - Conforme à l'article 47 de la loi n° 2005-102</small>
+            </div>
+            <a href="{{ path('app_action_plan_export_word', {id: action_plan.id}) }}" class="btn btn-light">
+                <i class="bi bi-file-word"></i> Exporter en Word
+            </a>
+        </div>
     </div>
     <div class="card-body">
         <div class="mb-3">
@@ -747,9 +754,6 @@
         <i class="bi bi-arrow-left"></i> Retour à la campagne
     </a>
     <div class="d-flex gap-2">
-        <a href="{{ path('app_action_plan_export_word', {id: action_plan.id}) }}" class="btn btn-success">
-            <i class="bi bi-file-word"></i> Exporter en Word
-        </a>
         <button class="btn btn-primary" onclick="window.print()">
             <i class="bi bi-printer"></i> Imprimer
         </button>
