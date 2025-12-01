@@ -383,22 +383,24 @@ class GeminiService
 
         // CRITICAL: Summary format guidelines
         $prompt .= "⚠️ RÈGLES IMPÉRATIVES pour 'summary' :\n";
-        $prompt .= "Le summary doit être un texte NARRATIF et LISIBLE (pas du JSON!), structuré ainsi :\n\n";
-        $prompt .= "🔍 Résumé de l'audit d'accessibilité\n\n";
-        $prompt .= "**Problèmes critiques détectés :**\n";
-        $prompt .= "• [Description courte du problème 1] (X occurrences)\n";
-        $prompt .= "• [Description courte du problème 2] (X occurrences)\n\n";
-        $prompt .= "**Problèmes majeurs :**\n";
-        $prompt .= "• [Description courte] (X occurrences)\n\n";
-        $prompt .= "**Problèmes mineurs :**\n";
-        $prompt .= "• [Description courte] (X occurrences)\n\n";
-        $prompt .= "**🎯 Quick Wins (effort facile + impact élevé) :**\n";
-        $prompt .= "1. [Premier quick win]\n";
-        $prompt .= "2. [Deuxième quick win]\n\n";
-        $prompt .= "**📋 Priorités d'action :**\n";
-        $prompt .= "1. Corriger en premier : [problème le plus bloquant]\n";
-        $prompt .= "2. Ensuite : [deuxième priorité]\n";
-        $prompt .= "3. Amélioration : [troisième priorité]\n\n";
+        $prompt .= "Le summary doit être un texte en MARKDOWN bien formaté et LISIBLE (pas du JSON!), structuré ainsi :\n\n";
+        $prompt .= "## Problèmes détectés\n\n";
+        $prompt .= "### 🔴 Problèmes critiques\n";
+        $prompt .= "• **[Description courte du problème 1]** (X occurrences)\n";
+        $prompt .= "• **[Description courte du problème 2]** (X occurrences)\n\n";
+        $prompt .= "### 🟠 Problèmes majeurs\n";
+        $prompt .= "• **[Description courte]** (X occurrences)\n\n";
+        $prompt .= "### 🟡 Problèmes mineurs\n";
+        $prompt .= "• **[Description courte]** (X occurrences)\n\n";
+        $prompt .= "## 🎯 Quick Wins\n\n";
+        $prompt .= "Les actions à fort impact et faciles à réaliser :\n\n";
+        $prompt .= "1. **[Premier quick win]** - [Brève explication]\n";
+        $prompt .= "2. **[Deuxième quick win]** - [Brève explication]\n\n";
+        $prompt .= "## 📋 Plan d'action recommandé\n\n";
+        $prompt .= "1. **Priorité haute :** [Problème le plus bloquant et pourquoi]\n";
+        $prompt .= "2. **Priorité moyenne :** [Deuxième priorité et pourquoi]\n";
+        $prompt .= "3. **Amélioration continue :** [Troisième priorité et pourquoi]\n\n";
+        $prompt .= "IMPORTANT : Utilise les emojis 🔴 🟠 🟡 pour les niveaux de sévérité et structure le texte avec des titres Markdown (##, ###).\n\n";
 
         $prompt .= "📤 FORMAT DE RÉPONSE FINAL :\n";
         $prompt .= "JSON avec structure : {\"results\": [...], \"summary\": \"texte markdown\"}\n";
