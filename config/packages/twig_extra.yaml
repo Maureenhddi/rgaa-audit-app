@@ -1,0 +1,23 @@
+twig:
+    extensions:
+        - Twig\Extra\Markdown\MarkdownExtension
+
+services:
+    Twig\Extra\Markdown\MarkdownExtension: ~
+    Twig\Extra\Markdown\MarkdownRuntime:
+        arguments:
+            $converter: '@Twig\Extra\Markdown\LeagueMarkdownConverter'
+
+    Twig\Extra\Markdown\LeagueMarkdownConverter:
+        class: Twig\Extra\Markdown\LeagueMarkdownConverter
+        arguments:
+            - '@League\CommonMark\MarkdownConverter'
+
+    League\CommonMark\MarkdownConverter:
+        class: League\CommonMark\MarkdownConverter
+        arguments:
+            - '@League\CommonMark\Environment\Environment'
+
+    League\CommonMark\Environment\Environment:
+        class: League\CommonMark\Environment\Environment
+        factory: ['League\CommonMark\Environment\Environment', 'createCommonMarkEnvironment']
