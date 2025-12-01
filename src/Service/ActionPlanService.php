@@ -658,6 +658,13 @@ class ActionPlanService
      */
     private function generateAnnualActionPlans(ActionPlan $ppa, array $issues, int $durationYears): void
     {
+        // Use PPA start date to determine first year instead of current year
+        $startYear = (int) $ppa->getStartDate()->format('Y');
+        $startMonth = (int) $ppa->getStartDate()->format('n');
+
+        // If starting in Q4 (Oct-Dec), consider starting from next year
+        $firstYear = ($startMonth >= 10) ? $startYear + 1 : $startYear;
+
         $currentYear = (int) date('Y');
         $currentQuarter = (int) ceil(date('n') / 3);
 
@@ -691,10 +698,10 @@ class ActionPlanService
         // Reorder: quick wins first, then regular actions
         $orderedIssues = array_merge($quickWins, $regularActions);
 
-        // Create annual plans for each year
+        // Create annual plans for each year based on PPA start date
         $annualPlansByYear = [];
         for ($i = 0; $i < $durationYears; $i++) {
-            $year = $currentYear + $i;
+            $year = $firstYear + $i;
             $annualPlan = new \App\Entity\AnnualActionPlan();
             $annualPlan->setPluriAnnualPlan($ppa);
             $annualPlan->setYear($year);
@@ -712,13 +719,16 @@ class ActionPlanService
         $itemsInCurrentQuarter = 0;
         $priorityCounter = 1;
 
+        // Start from Q1 of the first year for clean distribution
+        $startQuarter = 1;
+
         foreach ($orderedIssues as $issueData) {
             $issue = $issueData['issue'];
             $severity = $issueData['severity'];
 
-            // Calculate target quarter
-            $quarter = $currentQuarter + $quarterOffset;
-            $year = $currentYear;
+            // Calculate target quarter starting from Q1 of first year
+            $quarter = $startQuarter + $quarterOffset;
+            $year = $firstYear;
 
             // Handle year rollover
             while ($quarter > 4) {
@@ -727,7 +737,7 @@ class ActionPlanService
             }
 
             // Don't plan beyond end year
-            $endYear = $currentYear + $durationYears;
+            $endYear = $firstYear + $durationYears - 1;
             if ($year > $endYear) {
                 break;
             }
