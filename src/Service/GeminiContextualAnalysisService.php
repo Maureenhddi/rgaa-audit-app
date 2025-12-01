@@ -376,7 +376,7 @@ class GeminiContextualAnalysisService
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.1, // Réduit pour plus de cohérence entre audits
+                    'temperature' => 0.2, // Équilibre optimal : cohérent mais pas robotique
                     'topK' => 40,
                     'topP' => 0.95,
                     'maxOutputTokens' => 8192,

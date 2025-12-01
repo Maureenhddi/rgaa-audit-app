@@ -453,11 +453,11 @@ class ActionPlanService
     private function generateAcceptanceCriteria(array $issue): string
     {
         $criteria = [];
-        $criteria[] = "- Conformite RGAA {$issue['rgaaCriteria']} respectee";
-        $criteria[] = "- Correction appliquee sur " . count($issue['affectedPages']) . " page(s)";
-        $criteria[] = "- Tests automatises d'accessibilite passent";
-        $criteria[] = "- Validation manuelle avec lecteur d'ecran";
-        $criteria[] = "- Documentation technique mise a jour";
+        $criteria[] = "- Conformité RGAA {$issue['rgaaCriteria']} respectée";
+        $criteria[] = "- Correction appliquée sur " . count($issue['affectedPages']) . " page(s)";
+        $criteria[] = "- Tests automatisés d'accessibilité passent";
+        $criteria[] = "- Validation manuelle avec lecteur d'écran";
+        $criteria[] = "- Documentation technique mise à jour";
 
         if ($issue['impactUser']) {
             // Remove accents and special characters from user impact
@@ -469,11 +469,31 @@ class ActionPlanService
     }
 
     /**
-     * Remove accents and special characters from text
+     * Remove accents and special characters from text (robust UTF-8 handling)
      */
     private function removeAccents(string $text): string
     {
-        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        // First, ensure the string is valid UTF-8
+        if (!mb_check_encoding($text, 'UTF-8')) {
+            // Try to fix invalid UTF-8
+            $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+        }
+
+        // Remove any remaining invalid UTF-8 sequences
+        $text = mb_scrub($text, 'UTF-8');
+
+        // Now safely convert to ASCII
+        $text = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+
+        // Fallback if iconv fails
+        if ($text === false) {
+            // Use a simpler approach without iconv
+            $text = transliterator_transliterate(
+                'Any-Latin; Latin-ASCII; Lower()',
+                $text
+            ) ?? $text;
+        }
+
         return str_replace(['`', '´', '^', '~'], '', $text);
     }
 
@@ -686,18 +706,18 @@ class ActionPlanService
 
         // Strategic Orientations (grandes orientations)
         $ppa->setStrategicOrientations([
-            "Garantir l'egalite d'acces a nos services numeriques pour tous les utilisateurs",
-            "Integrer l'accessibilite dans le processus de conception et developpement",
-            "Former les equipes aux bonnes pratiques RGAA",
-            "Mettre en place un suivi continu de la conformite"
+            "Garantir l'égalité d'accès à nos services numériques pour tous les utilisateurs",
+            "Intégrer l'accessibilité dans le processus de conception et développement",
+            "Former les équipes aux bonnes pratiques RGAA",
+            "Mettre en place un suivi continu de la conformité"
         ]);
 
-        // Progress Axes (axes de progres)
+        // Progress Axes (axes de progrès)
         $ppa->setProgressAxes([
-            "Accessibilite des contenus" => "Amelioration des alternatives textuelles, de la structure semantique et de la navigation",
-            "Accessibilite technique" => "Conformite des composants interactifs, du clavier et des contrastes",
+            "Accessibilité des contenus" => "Amélioration des alternatives textuelles, de la structure sémantique et de la navigation",
+            "Accessibilité technique" => "Conformité des composants interactifs, du clavier et des contrastes",
             "Organisation et gouvernance" => "Processus de validation, documentation et formation continue",
-            "Suivi et amelioration continue" => "Audits reguliers et correction systematique des non-conformites"
+            "Suivi et amélioration continue" => "Audits réguliers et correction systématique des non-conformités"
         ]);
 
         // Annual Objectives (objectifs annuels SANS details techniques)
@@ -709,23 +729,23 @@ class ActionPlanService
             if ($objectiveYear === 1) {
                 $annualObjectives[$year] = [
                     "Corriger 100% des erreurs critiques bloquantes",
-                    "Traiter les quick wins a fort impact",
-                    "Former l'equipe de developpement",
-                    "Atteindre " . min(100, (int)$ppa->getCurrentConformityRate() + 30) . "% de conformite"
+                    "Traiter les quick wins à fort impact",
+                    "Former l'équipe de développement",
+                    "Atteindre " . min(100, (int)$ppa->getCurrentConformityRate() + 30) . "% de conformité"
                 ];
             } elseif ($objectiveYear === $durationYears) {
                 $annualObjectives[$year] = [
                     "Finaliser les corrections restantes",
-                    "Audit de conformite final",
-                    "Atteindre " . $ppa->getTargetConformityRate() . "% de conformite",
-                    "Mettre en place un processus de maintien de la conformite"
+                    "Audit de conformité final",
+                    "Atteindre " . $ppa->getTargetConformityRate() . "% de conformité",
+                    "Mettre en place un processus de maintien de la conformité"
                 ];
             } else {
                 $annualObjectives[$year] = [
                     "Poursuivre les corrections structurelles",
                     "Optimiser les composants et templates",
-                    "Renforcer la formation des equipes",
-                    "Atteindre " . min(100, (int)$ppa->getCurrentConformityRate() + (30 * $objectiveYear)) . "% de conformite"
+                    "Renforcer la formation des équipes",
+                    "Atteindre " . min(100, (int)$ppa->getCurrentConformityRate() + (30 * $objectiveYear)) . "% de conformité"
                 ];
             }
         }
@@ -733,20 +753,20 @@ class ActionPlanService
 
         // Resources (moyens)
         $ppa->setResources([
-            "Equipe de developpement formee aux bonnes pratiques RGAA",
-            "Outils d'audit automatise et manuel",
-            "Accompagnement par des experts en accessibilite",
-            "Integration de tests d'accessibilite dans le CI/CD",
+            "Équipe de développement formée aux bonnes pratiques RGAA",
+            "Outils d'audit automatisé et manuel",
+            "Accompagnement par des experts en accessibilité",
+            "Intégration de tests d'accessibilité dans le CI/CD",
             "Documentation et guides internes"
         ]);
 
         // Indicators (indicateurs)
         $ppa->setIndicators([
-            "Taux de conformite RGAA" => "Objectif : " . $ppa->getTargetConformityRate() . "%",
-            "Nombre d'erreurs critiques" => "Objectif : 0 en fin d'annee 1",
-            "Couverture des tests d'accessibilite" => "Objectif : 100% des composants",
-            "Taux de formation des equipes" => "Objectif : 100% de l'equipe formee",
-            "Delai moyen de correction" => "Objectif : < 1 mois pour critiques"
+            "Taux de conformité RGAA" => "Objectif : " . $ppa->getTargetConformityRate() . "%",
+            "Nombre d'erreurs critiques" => "Objectif : 0 en fin d'année 1",
+            "Couverture des tests d'accessibilité" => "Objectif : 100% des composants",
+            "Taux de formation des équipes" => "Objectif : 100% de l'équipe formée",
+            "Délai moyen de correction" => "Objectif : < 1 mois pour critiques"
         ]);
     }
 
@@ -896,55 +916,55 @@ class ActionPlanService
         $concreteExamples = $this->getConcreteExamples($issues, 5);
 
         $prompt = <<<PROMPT
-Tu es un expert en accessibilite web RGAA 4.1. IMPORTANT : Tu generes un resume STRATEGIQUE pour un Plan Pluriannuel d'Accessibilite (PPA).
+Tu es un expert en accessibilité web RGAA 4.1. IMPORTANT : Tu génères un résumé STRATÉGIQUE pour un Plan Pluriannuel d'Accessibilité (PPA).
 
-**IMPORTANT - Ce resume est pour le PPA (document strategique), PAS pour un plan d'action annuel :**
-- NE MENTIONNE PAS de criteres RGAA specifiques (ex: RGAA 1.1.1, RGAA 4.1.2)
-- NE MENTIONNE PAS d'erreurs A11yLint ou techniques detaillees
-- NE MENTIONNE PAS de composants precis ou de tickets
-- RESTE strategique : orientations, axes de progres, objectifs globaux
+**IMPORTANT - Ce résumé est pour le PPA (document stratégique), PAS pour un plan d'action annuel :**
+- NE MENTIONNE PAS de critères RGAA spécifiques (ex: RGAA 1.1.1, RGAA 4.1.2)
+- NE MENTIONNE PAS d'erreurs A11yLint ou techniques détaillées
+- NE MENTIONNE PAS de composants précis ou de tickets
+- RESTE stratégique : orientations, axes de progrès, objectifs globaux
 
 **Contexte de l'audit :**
 - Campagne : {$campaign->getName()}
-- Pages auditees : {$campaign->getTotalPages()}
-- Conformite actuelle : **{$currentRate}%**
+- Pages auditées : {$campaign->getTotalPages()}
+- Conformité actuelle : **{$currentRate}%**
 - Objectif cible : **{$targetRate}%** d'ici {$durationYears} an(s)
-- Problemes identifies : **{$totalIssues}** types d'erreurs
-  - {$criticalCount} erreurs critiques (bloquants accessibilite)
+- Problèmes identifiés : **{$totalIssues}** types d'erreurs
+  - {$criticalCount} erreurs critiques (bloquants accessibilité)
   - {$majorCount} erreurs majeures (impact significatif)
-  - {$minorCount} erreurs mineures (ameliorations recommandees)
+  - {$minorCount} erreurs mineures (améliorations recommandées)
 
-**Repartition par thematique RGAA :**
+**Répartition par thématique RGAA :**
 {$rgaaBreakdown}
 
-**Exemples concrets d'erreurs trouvees (pour contexte - ne PAS les citer dans le resume) :**
+**Exemples concrets d'erreurs trouvées (pour contexte - ne PAS les citer dans le résumé) :**
 {$concreteExamples}
 
-**Genere un resume strategique structure :**
+**Génère un résumé stratégique structuré :**
 
 ## Vision et enjeux
-(2-3 phrases sur l'importance de l'accessibilite pour l'organisation et les enjeux strategiques)
+(2-3 phrases sur l'importance de l'accessibilité pour l'organisation et les enjeux stratégiques)
 
-## Etat des lieux
-(2-3 phrases decrivant la situation globale. Mentionne les thematiques RGAA les plus impactees de maniere GENERALE, sans numero de critere)
+## État des lieux
+(2-3 phrases décrivant la situation globale. Mentionne les thématiques RGAA les plus impactées de manière GÉNÉRALE, sans numéro de critère)
 
-## Grandes orientations strategiques
-(4-5 orientations strategiques majeures sur {$durationYears} ans, en tenant compte des thematiques les plus problematiques)
+## Grandes orientations stratégiques
+(4-5 orientations stratégiques majeures sur {$durationYears} ans, en tenant compte des thématiques les plus problématiques)
 
 ## Approche pluriannuelle
-(Decrire l'approche generale en 3 phases sur {$durationYears} ans :
+(Décrire l'approche générale en 3 phases sur {$durationYears} ans :
 - Phase 1 : Corrections prioritaires et formation (focus sur les erreurs critiques)
-- Phase 2 : Ameliorations structurelles (focus sur les thematiques principales)
-- Phase 3 : Conformite complete et maintien)
+- Phase 2 : Améliorations structurelles (focus sur les thématiques principales)
+- Phase 3 : Conformité complète et maintien)
 
-## Benefices attendus
-(4-5 benefices strategiques : conformite legale, experience utilisateur, image de marque, etc.)
+## Bénéfices attendus
+(4-5 bénéfices stratégiques : conformité légale, expérience utilisateur, image de marque, etc.)
 
-**Ton :** Strategique, inspire, oriente vision et objectifs.
+**Ton :** Stratégique, inspiré, orienté vision et objectifs.
 **Format :** Markdown avec titres niveau 2 (##).
 **Longueur :** 300-350 mots maximum.
-**EVITER ABSOLUMENT :** Numeros de criteres RGAA precis (1.1.1, 4.2.3), erreurs A11yLint, code HTML, composants techniques, estimations d'heures.
-**AUTORISE :** Mentionner les THEMATIQUES RGAA (Images, Formulaires, Navigation, Couleurs, etc.) de maniere generale.
+**ÉVITER ABSOLUMENT :** Numéros de critères RGAA précis (1.1.1, 4.2.3), erreurs A11yLint, code HTML, composants techniques, estimations d'heures.
+**AUTORISÉ :** Mentionner les THÉMATIQUES RGAA (Images, Formulaires, Navigation, Couleurs, etc.) de manière générale.
 PROMPT;
 
         try {
@@ -964,7 +984,7 @@ PROMPT;
                         ]
                     ],
                     'generationConfig' => [
-                        'temperature' => 0.7,
+                        'temperature' => 0.3, // Légèrement plus créatif pour les résumés exécutifs
                         'maxOutputTokens' => 800,
                     ]
                 ],
@@ -998,37 +1018,37 @@ PROMPT;
         return <<<SUMMARY
 ## Vision et enjeux
 
-L'accessibilite numerique est un pilier fondamental de notre engagement en faveur de l'inclusion. Notre organisation s'engage a garantir un acces egal a ses services numeriques pour tous les utilisateurs, quelles que soient leurs capacites.
+L'accessibilité numérique est un pilier fondamental de notre engagement en faveur de l'inclusion. Notre organisation s'engage à garantir un accès égal à ses services numériques pour tous les utilisateurs, quelles que soient leurs capacités.
 
-## Etat des lieux
+## État des lieux
 
-L'audit de conformite RGAA revele un taux de conformite actuel de **{$currentRate}%**. Des opportunites d'amelioration ont ete identifiees dans plusieurs domaines cles de l'accessibilite.
+L'audit de conformité RGAA révèle un taux de conformité actuel de **{$currentRate}%**. Des opportunités d'amélioration ont été identifiées dans plusieurs domaines clés de l'accessibilité.
 
-## Grandes orientations strategiques
+## Grandes orientations stratégiques
 
-1. **Conformite reglementaire** : Atteindre **{$targetRate}%** de conformite RGAA d'ici {$years} an(s)
-2. **Formation et montee en competences** : Former l'ensemble des equipes aux bonnes pratiques d'accessibilite
-3. **Integration dans les processus** : Integrer l'accessibilite des la phase de conception
-4. **Amelioration continue** : Mettre en place un processus de suivi et d'amelioration continue
+1. **Conformité réglementaire** : Atteindre **{$targetRate}%** de conformité RGAA d'ici {$years} an(s)
+2. **Formation et montée en compétences** : Former l'ensemble des équipes aux bonnes pratiques d'accessibilité
+3. **Intégration dans les processus** : Intégrer l'accessibilité dès la phase de conception
+4. **Amélioration continue** : Mettre en place un processus de suivi et d'amélioration continue
 
 ## Approche pluriannuelle
 
 **Phase 1 : Corrections prioritaires et formation** (6-12 premiers mois)
-Traitement des problemes bloquants, formation des equipes, mise en place des processus.
+Traitement des problèmes bloquants, formation des équipes, mise en place des processus.
 
-**Phase 2 : Ameliorations structurelles** (12-18 mois)
-Refonte des composants, amelioration de la structure, optimisation de l'experience utilisateur.
+**Phase 2 : Améliorations structurelles** (12-18 mois)
+Refonte des composants, amélioration de la structure, optimisation de l'expérience utilisateur.
 
-**Phase 3 : Conformite complete et maintien** (derniers {$remainingMonths} mois)
-Finalisation des corrections, audit de conformite, mise en place du maintien en condition operationnelle.
+**Phase 3 : Conformité complète et maintien** (derniers {$remainingMonths} mois)
+Finalisation des corrections, audit de conformité, mise en place du maintien en condition opérationnelle.
 
-## Benefices attendus
+## Bénéfices attendus
 
-- **Conformite legale** : Respect des obligations RGAA pour les services publics
-- **Inclusion universelle** : Acces garanti pour tous les utilisateurs, y compris en situation de handicap
-- **Amelioration de l'experience** : Navigation simplifiee beneficiant a l'ensemble des utilisateurs
-- **Image de marque** : Demonstration de l'engagement societal de l'organisation
-- **Performance SEO** : Amelioration du referencement naturel grace a une meilleure structure
+- **Conformité légale** : Respect des obligations RGAA pour les services publics
+- **Inclusion universelle** : Accès garanti pour tous les utilisateurs, y compris en situation de handicap
+- **Amélioration de l'expérience** : Navigation simplifiée bénéficiant à l'ensemble des utilisateurs
+- **Image de marque** : Démonstration de l'engagement sociétal de l'organisation
+- **Performance SEO** : Amélioration du référencement naturel grâce à une meilleure structure
 SUMMARY;
     }
 
@@ -1111,7 +1131,7 @@ PROMPT;
                         ]
                     ],
                     'generationConfig' => [
-                        'temperature' => 0.7,
+                        'temperature' => 0.3, // Légèrement plus créatif pour les résumés exécutifs
                         'maxOutputTokens' => 800,
                     ]
                 ],

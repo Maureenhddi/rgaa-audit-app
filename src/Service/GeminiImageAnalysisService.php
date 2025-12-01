@@ -174,19 +174,27 @@ class GeminiImageAnalysisService
             ];
         }
 
-        // Add response format instruction
+        // Add response format instruction with strict length constraints
         $parts[] = [
             'text' => "\nRéponds avec un JSON contenant les résultats GROUPÉS PAR TYPE D'ANALYSE :\n" .
                      "{\n" .
                      "  \"" . $analysisTypes[0] . "\": [\n" .
-                     "    {\"imageIndex\": 0, \"hasIssue\": true|false, \"issue\": \"...\", \"suggestion\": \"...\", \"confidence\": 0.0-1.0},\n" .
-                     "    {\"imageIndex\": 1, ...}\n" .
+                     "    {\n" .
+                     "      \"imageIndex\": 0,\n" .
+                     "      \"hasIssue\": true|false,\n" .
+                     "      \"issue\": \"Description courte (MAX 100 caractères)\",\n" .
+                     "      \"suggestion\": \"Action concrète en 1-2 phrases MAX. Première phrase : quoi faire. Deuxième : bénéfice utilisateur.\",\n" .
+                     "      \"confidence\": 0.0-1.0 (1.0=certain, 0.8=évident, 0.6=probable, 0.4=possible, 0.2=incertain)\n" .
+                     "    }\n" .
                      "  ],\n" .
                      (count($analysisTypes) > 1 ? "  \"" . $analysisTypes[1] . "\": [...],\n" : "") .
                      "  ...\n" .
                      "}\n\n" .
-                     "IMPORTANT : Chaque type d'analyse doit contenir un résultat pour CHAQUE image.\n" .
-                     "Réponds UNIQUEMENT avec le JSON, sans texte avant ou après."
+                     "CONTRAINTES STRICTES :\n" .
+                     "- issue : MAX 100 caractères\n" .
+                     "- suggestion : MAX 2 phrases courtes\n" .
+                     "- Chaque type = un résultat par image\n" .
+                     "- JSON uniquement, AUCUN texte avant/après"
         ];
 
         // Call Gemini API
@@ -204,7 +212,7 @@ class GeminiImageAnalysisService
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.1, // Réduit pour plus de cohérence entre audits
+                    'temperature' => 0.2, // Équilibre optimal : cohérent mais pas robotique
                     'topK' => 40,
                     'topP' => 0.95,
                     'maxOutputTokens' => 8192,
@@ -313,7 +321,7 @@ class GeminiImageAnalysisService
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.1, // Réduit pour plus de cohérence entre audits
+                    'temperature' => 0.2, // Équilibre optimal : cohérent mais pas robotique
                     'topK' => 40,
                     'topP' => 0.95,
                     'maxOutputTokens' => 8192,
@@ -456,29 +464,15 @@ class GeminiImageAnalysisService
                 "- Statuts (succès/erreur) uniquement en couleur\n\n" .
                 "Indique hasIssue: true si l'information repose uniquement sur la couleur.\n\n",
 
-            ImageAnalysisType::FORM_LABELS => $basePrompt . "Analyse VISUELLE CONTEXTUELLE des formulaires (les tests techniques de base sont déjà faits).\n\n" .
-                "⚠️ NE PAS vérifier (déjà fait automatiquement) :\n" .
-                "- Label manquant (détecté par code)\n" .
-                "- Label caché (détecté par code)\n" .
-                "- Label trop éloigné (détecté par code)\n" .
-                "- Label générique simple (détecté par code)\n\n" .
-                "✅ FOCUS UNIQUEMENT sur les problèmes CONTEXTUELS (RGAA 11.1 / WCAG 1.3.1, 3.3.2) :\n\n" .
-                "1. **Ambiguïté contextuelle** :\n" .
-                "   - Plusieurs champs avec labels similaires mais fonctions différentes\n" .
-                "   - Ex: Deux \"Email\" mais l'un pour personnel, l'autre pour pro\n" .
-                "   - Ex: \"Date\" sans préciser \"Date de naissance\" ou \"Date de début\"\n\n" .
-                "2. **Clarté insuffisante dans le contexte** :\n" .
-                "   - Label incomplet par rapport aux autres champs\n" .
-                "   - Ex: \"Ville\" sans préciser \"Ville de résidence\" ou \"Ville de naissance\"\n" .
-                "   - Label qui ne correspond pas visuellement au type de champ\n\n" .
-                "3. **Disposition visuelle confuse** :\n" .
-                "   - Label qui semble appartenir à un autre champ à cause de l'alignement\n" .
-                "   - Groupes de champs mal organisés visuellement\n" .
-                "   - Ordre visuel illogique (ex: Email avant Nom)\n\n" .
-                "4. **Manque d'indication visuelle importante** :\n" .
-                "   - Champs obligatoires non distingués des optionnels\n" .
-                "   - Format attendu pas clair (ex: \"Téléphone\" sans format +33...)\n\n" .
-                "Indique hasIssue: true UNIQUEMENT si problème contextuel/visuel complexe.\n\n",
+            ImageAnalysisType::FORM_LABELS => $basePrompt . "Analyse VISUELLE des formulaires (RGAA 11.1 / WCAG 3.3.2).\n\n" .
+                "🎯 TON RÔLE : Détecter les problèmes CONTEXTUELS que les tests automatiques ne voient pas.\n\n" .
+                "Les tests auto ont déjà vérifié : labels manquants/cachés/génériques, associations techniques.\n\n" .
+                "TOI, détecte ces 4 types de problèmes :\n\n" .
+                "1️⃣ **Ambiguïté** : Plusieurs \"Email\" ou \"Date\" sans distinction (perso/pro, naissance/début)\n\n" .
+                "2️⃣ **Disposition confuse** : Label qui semble lié au mauvais champ, ordre illogique (Email avant Nom)\n\n" .
+                "3️⃣ **Manque d'indication** : Champs obligatoires (*) non marqués, format attendu absent (+33...)\n\n" .
+                "4️⃣ **Clarté insuffisante** : \"Ville\" sans préciser laquelle, label incomplet\n\n" .
+                "✅ Indique hasIssue: true UNIQUEMENT si problème visuel/contextuel réel.\n\n",
 
             default => $basePrompt . "Analyse ces images selon les critères d'accessibilité RGAA.\n\n"
         };

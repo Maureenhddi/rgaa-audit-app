@@ -269,6 +269,58 @@
         margin-top: 0.5rem;
     }
 
+    /* Conformity counts display */
+    .conformity-counts {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .count-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.15rem;
+    }
+
+    .count-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1;
+        color: white;
+    }
+
+    .count-label {
+        font-size: 0.65rem;
+        opacity: 0.85;
+        text-transform: lowercase;
+        color: white;
+    }
+
+    .count-separator {
+        font-size: 1rem;
+        opacity: 0.4;
+        color: white;
+    }
+
+    @media (max-width: 767.98px) {
+        .conformity-counts {
+            gap: 0.5rem;
+        }
+        .count-value {
+            font-size: 1.5rem;
+        }
+        .count-label {
+            font-size: 0.65rem;
+        }
+        .count-separator {
+            display: none;
+        }
+    }
+
     .issues-total-badge .issues-number {
         font-size: 3rem;
         font-weight: 700;
@@ -897,6 +949,72 @@
         border-radius: 0.25rem;
     }
 
+    /* Success explanation (conforming criteria) */
+    .success-explanation {
+        background: rgba(40, 167, 69, 0.05);
+        border: 1px solid rgba(40, 167, 69, 0.15);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .success-explanation summary {
+        cursor: pointer;
+        user-select: none;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .success-explanation summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .success-explanation summary::before {
+        content: '▶';
+        display: inline-block;
+        transition: transform 0.2s ease;
+        font-size: 0.75rem;
+        color: #28a745;
+    }
+
+    .success-explanation[open] summary::before {
+        transform: rotate(90deg);
+    }
+
+    .success-explanation summary:hover {
+        color: #28a745;
+    }
+
+    [data-theme="dark"] .success-explanation {
+        background: rgba(40, 167, 69, 0.08);
+        border-color: rgba(40, 167, 69, 0.25);
+    }
+
+    .success-content {
+        animation: slideDown 0.3s ease;
+    }
+
+    .success-item {
+        background: white;
+        border-radius: 0.375rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .success-item {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .success-item .text-dark {
+        color: #212529 !important;
+    }
+
+    [data-theme="dark"] .success-item .text-dark {
+        color: var(--text-medium) !important;
+    }
+
     /* Manual issues section */
     #manual-issues-section .card {
         transition: all 0.3s ease;
@@ -1201,30 +1319,48 @@
                     {% set rate = audit.conformityRate|number_format(1) %}
                     <div id="conformity-badge-container">
                         {% if rate >= 90 %}
-                            <div class="conformity-badge-large success text-center">
-                                <i class="bi bi-check-circle-fill conformity-icon"></i>
-                                <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
-                                <div class="conformity-label" id="conformity-label-display">CONFORME</div>
-                            </div>
+                            {% set badgeClass = 'success' %}
+                            {% set badgeIcon = 'bi-check-circle-fill' %}
+                            {% set badgeLabel = 'CONFORME' %}
                         {% elseif rate >= 70 %}
-                            <div class="conformity-badge-large text-center">
-                                <i class="bi bi-info-circle-fill conformity-icon"></i>
-                                <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
-                                <div class="conformity-label" id="conformity-label-display">PARTIELLEMENT CONFORME</div>
-                            </div>
+                            {% set badgeClass = '' %}
+                            {% set badgeIcon = 'bi-info-circle-fill' %}
+                            {% set badgeLabel = 'PARTIELLEMENT CONFORME' %}
                         {% elseif rate >= 50 %}
-                            <div class="conformity-badge-large warning text-center">
-                                <i class="bi bi-exclamation-triangle-fill conformity-icon"></i>
-                                <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
-                                <div class="conformity-label" id="conformity-label-display">À AMÉLIORER</div>
-                            </div>
+                            {% set badgeClass = 'warning' %}
+                            {% set badgeIcon = 'bi-exclamation-triangle-fill' %}
+                            {% set badgeLabel = 'À AMÉLIORER' %}
                         {% else %}
-                            <div class="conformity-badge-large danger text-center">
-                                <i class="bi bi-x-circle-fill conformity-icon"></i>
-                                <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
-                                <div class="conformity-label" id="conformity-label-display">NON CONFORME</div>
-                            </div>
+                            {% set badgeClass = 'danger' %}
+                            {% set badgeIcon = 'bi-x-circle-fill' %}
+                            {% set badgeLabel = 'NON CONFORME' %}
                         {% endif %}
+                        <div class="conformity-badge-large {{ badgeClass }} text-center">
+                            <i class="bi {{ badgeIcon }} conformity-icon"></i>
+                            <div class="conformity-percentage" id="conformity-rate-display">{{ rate }}%</div>
+                            <div class="conformity-label" id="conformity-label-display">{{ badgeLabel }}</div>
+                            <div class="conformity-counts mt-2" id="conformity-counts-display">
+                                <div class="count-item">
+                                    <span class="count-value" id="conform-count">{{ audit.conformCriteria ?? 0 }}</span>
+                                    <span class="count-label">conforme{{ (audit.conformCriteria ?? 0) > 1 ? 's' : '' }}</span>
+                                </div>
+                                <div class="count-separator">•</div>
+                                <div class="count-item">
+                                    <span class="count-value" id="non-conform-count">{{ audit.nonConformCriteria ?? 0 }}</span>
+                                    <span class="count-label">non conforme{{ (audit.nonConformCriteria ?? 0) > 1 ? 's' : '' }}</span>
+                                </div>
+                                <div class="count-separator">•</div>
+                                <div class="count-item">
+                                    <span class="count-value" id="not-applicable-count">{{ audit.notApplicableCriteria ?? 0 }}</span>
+                                    <span class="count-label">N/A</span>
+                                </div>
+                                <div class="count-separator">•</div>
+                                <div class="count-item">
+                                    <span class="count-value" id="to-verify-count">{{ audit.notTestedCriteria ?? 0 }}</span>
+                                    <span class="count-label">à vérifier</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 {% endif %}
                 <div class="issues-total-badge text-center">
@@ -1285,6 +1421,73 @@
     </div>
 </div>
 {% endif %}
+
+{# Detailed conformity calculation explanation #}
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-calculator"></i> Détails du calcul du taux de conformité
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-3">
+            <strong><i class="bi bi-info-circle"></i> Méthodologie RGAA :</strong><br>
+            Le taux de conformité est calculé selon la formule officielle RGAA 4.1 :
+            <div class="text-center my-3 p-3 bg-white rounded">
+                <code class="fs-5"><strong>Taux = Critères Conformes / (Conformes + Non-Conformes) × 100</strong></code>
+            </div>
+        </div>
+
+        <div class="row text-center mb-3">
+            <div class="col-md-3">
+                <div class="p-3 bg-light rounded">
+                    <div class="text-muted small mb-1">Total RGAA 4.1</div>
+                    <h3 class="mb-0">106</h3>
+                    <small>critères</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-primary text-white rounded">
+                    <div class="small mb-1">Testés automatiquement</div>
+                    <h3 class="mb-0">{{ audit.conformCriteria + audit.nonConformCriteria }}</h3>
+                    <small>critères</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-success text-white rounded">
+                    <div class="small mb-1">✅ Conformes</div>
+                    <h3 class="mb-0">{{ audit.conformCriteria ?? 0 }}</h3>
+                    <small>critères</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 bg-danger text-white rounded">
+                    <div class="small mb-1">❌ Non-Conformes</div>
+                    <h3 class="mb-0">{{ audit.nonConformCriteria ?? 0 }}</h3>
+                    <small>critères</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-warning mb-0">
+            <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Calcul appliqué :</h6>
+            <div class="text-center my-2 p-2 bg-white rounded">
+                <code class="fs-6">
+                    {{ audit.conformCriteria ?? 0 }} / ({{ audit.conformCriteria ?? 0 }} + {{ audit.nonConformCriteria ?? 0 }}) × 100 =
+                    <strong class="text-primary">{{ audit.conformityRate|number_format(2) }}%</strong>
+                </code>
+            </div>
+            <hr>
+            <p class="mb-2"><strong>⚠️ Important à savoir :</strong></p>
+            <ul class="mb-0">
+                <li>Seuls <strong>{{ audit.conformCriteria + audit.nonConformCriteria }} critères sur 106</strong> sont testés automatiquement par cet outil</li>
+                <li><strong>{{ audit.notApplicableCriteria ?? 0 }} critères</strong> nécessitent une vérification manuelle (onglet "Grille RGAA")</li>
+                <li>Les critères testés automatiquement représentent environ <strong>40% du RGAA 4.1</strong></li>
+                <li>Pour une conformité officielle RGAA, une <strong>vérification manuelle complète est obligatoire</strong></li>
+            </ul>
+        </div>
+    </div>
+</div>
 
 <div class="row mb-4 stats-row">
     <div class="col-md-3 mb-3 mb-md-0">
@@ -1608,6 +1811,42 @@
                                                                 {% endfor %}
                                                             {% endif %}
                                                         {% endfor %}
+                                                    </div>
+                                                </details>
+                                            </div>
+                                        {% endif %}
+
+                                        {# Display success message for conforming criteria #}
+                                        {% if criteria.autoTestable and criteria.number in criteria_status.conform %}
+                                            <div class="mt-3">
+                                                <details class="success-explanation">
+                                                    <summary class="text-success fw-bold">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                        Critère conforme
+                                                    </summary>
+                                                    <div class="mt-3 success-content">
+                                                        <div class="success-item p-3 border-start border-success border-3">
+                                                            <div class="d-flex align-items-start gap-2 mb-2">
+                                                                <span class="badge bg-success">✓ Validé automatiquement</span>
+                                                            </div>
+                                                            <div class="fw-bold text-dark mb-1">
+                                                                <i class="bi bi-shield-check"></i> Tests automatiques réussis
+                                                            </div>
+                                                            <div class="small text-muted mb-2">
+                                                                Ce critère a été testé automatiquement par les outils d'audit (Axe-core, A11yLint) et aucune erreur n'a été détectée.
+                                                            </div>
+                                                            <div class="small">
+                                                                <strong><i class="bi bi-lightbulb"></i> Pourquoi c'est conforme :</strong>
+                                                            </div>
+                                                            <ul class="small mb-0 mt-1">
+                                                                <li>Aucune violation détectée par les tests automatisés</li>
+                                                                <li>Les éléments analysés respectent les critères RGAA {{ criteria.number }}</li>
+                                                                <li>La page respecte les bonnes pratiques d'accessibilité pour ce critère</li>
+                                                            </ul>
+                                                            <div class="alert alert-info mt-3 mb-0 small">
+                                                                <i class="bi bi-info-circle"></i> <strong>Note :</strong> Vous pouvez confirmer ce résultat ou le modifier si votre vérification manuelle révèle des problèmes non détectés par les tests automatiques.
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </details>
                                             </div>
@@ -1973,40 +2212,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Force update with server values
-                if (data.conformityRate !== undefined) {
-                    const badgeContainer = document.getElementById('conformity-badge-container');
-                    const rateFormatted = parseFloat(data.conformityRate).toFixed(1);
-
-                    let badgeClass, badgeIcon, badgeLabel;
-                    const rate = parseFloat(data.conformityRate);
-
-                    if (rate >= 90) {
-                        badgeClass = 'success';
-                        badgeIcon = 'bi-check-circle-fill';
-                        badgeLabel = 'CONFORME';
-                    } else if (rate >= 70) {
-                        badgeClass = '';
-                        badgeIcon = 'bi-info-circle-fill';
-                        badgeLabel = 'PARTIELLEMENT CONFORME';
-                    } else if (rate >= 50) {
-                        badgeClass = 'warning';
-                        badgeIcon = 'bi-exclamation-triangle-fill';
-                        badgeLabel = 'À AMÉLIORER';
-                    } else {
-                        badgeClass = 'danger';
-                        badgeIcon = 'bi-x-circle-fill';
-                        badgeLabel = 'NON CONFORME';
-                    }
-
-                    if (badgeContainer) {
-                        badgeContainer.innerHTML = `
-                            <div class="conformity-badge-large ${badgeClass} text-center">
-                                <i class="bi ${badgeIcon} conformity-icon"></i>
-                                <div class="conformity-percentage" id="conformity-rate-display">${rateFormatted}%</div>
-                                <div class="conformity-label" id="conformity-label-display">${badgeLabel}</div>
-                            </div>
-                        `;
-                    }
+                if (data.conformityRate !== undefined && data.totals) {
+                    updateConformityCounts(
+                        data.totals.conform,
+                        data.totals.nonConform,
+                        data.totals.notApplicable,
+                        data.conformityRate,
+                        data.totals.notTested
+                    );
                 }
 
                 showToast('✓ Vérification sauvegardée', 'success');
@@ -2247,39 +2460,44 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Update conformity rate badge
-    function updateConformityRate(totalConform, totalNonConform, totalNotApplicable, totalNotTested) {
-        // Calculate total tested criteria (excluding not applicable and not tested)
-        const totalTested = totalConform + totalNonConform;
-
-        if (totalTested === 0) {
-            return; // No criteria tested yet
-        }
-
-        // Calculate conformity rate
-        const conformityRate = (totalConform / totalTested) * 100;
-        const rateFormatted = conformityRate.toFixed(1);
-
-        // Update the display
+    // Update conformity counts display
+    function updateConformityCounts(totalConform, totalNonConform, totalNotApplicable, conformityRate, totalNotTested) {
+        const conformCountEl = document.getElementById('conform-count');
+        const nonConformCountEl = document.getElementById('non-conform-count');
+        const notApplicableCountEl = document.getElementById('not-applicable-count');
+        const toVerifyCountEl = document.getElementById('to-verify-count');
         const rateDisplay = document.getElementById('conformity-rate-display');
         const labelDisplay = document.getElementById('conformity-label-display');
+        const countsDisplay = document.getElementById('conformity-counts-display');
         const badgeContainer = document.getElementById('conformity-badge-container');
 
-        if (rateDisplay && labelDisplay && badgeContainer) {
-            rateDisplay.textContent = rateFormatted + '%';
+        if (!badgeContainer) return;
 
-            // Determine badge type and label based on rate
+        // Use the totalNotTested value from server (represents criteria that need manual verification)
+        const toVerifyCount = totalNotTested !== undefined ? totalNotTested : 0;
+
+        // Update counts
+        if (conformCountEl) conformCountEl.textContent = totalConform;
+        if (nonConformCountEl) nonConformCountEl.textContent = totalNonConform;
+        if (notApplicableCountEl) notApplicableCountEl.textContent = totalNotApplicable;
+        if (toVerifyCountEl) toVerifyCountEl.textContent = toVerifyCount;
+
+        // Always update conformity rate and badge
+        if (conformityRate !== undefined) {
+            const rateFormatted = parseFloat(conformityRate).toFixed(1);
+            const rate = parseFloat(conformityRate);
+
             let badgeClass, badgeIcon, badgeLabel;
 
-            if (conformityRate >= 90) {
+            if (rate >= 90) {
                 badgeClass = 'success';
                 badgeIcon = 'bi-check-circle-fill';
                 badgeLabel = 'CONFORME';
-            } else if (conformityRate >= 70) {
+            } else if (rate >= 70) {
                 badgeClass = '';
                 badgeIcon = 'bi-info-circle-fill';
                 badgeLabel = 'PARTIELLEMENT CONFORME';
-            } else if (conformityRate >= 50) {
+            } else if (rate >= 50) {
                 badgeClass = 'warning';
                 badgeIcon = 'bi-exclamation-triangle-fill';
                 badgeLabel = 'À AMÉLIORER';
@@ -2289,17 +2507,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 badgeLabel = 'NON CONFORME';
             }
 
-            labelDisplay.textContent = badgeLabel;
+            // Update percentage display
+            if (rateDisplay) {
+                rateDisplay.textContent = rateFormatted + '%';
+            }
+            if (labelDisplay) {
+                labelDisplay.textContent = badgeLabel;
+            }
 
-            // Update badge container HTML
-            badgeContainer.innerHTML = `
-                <div class="conformity-badge-large ${badgeClass} text-center">
-                    <i class="bi ${badgeIcon} conformity-icon"></i>
-                    <div class="conformity-percentage" id="conformity-rate-display">${rateFormatted}%</div>
-                    <div class="conformity-label" id="conformity-label-display">${badgeLabel}</div>
-                </div>
-            `;
+            // Update badge class
+            const badgeEl = badgeContainer.querySelector('.conformity-badge-large');
+            if (badgeEl) {
+                badgeEl.className = `conformity-badge-large ${badgeClass} text-center`;
+                const iconEl = badgeEl.querySelector('.conformity-icon');
+                if (iconEl) {
+                    iconEl.className = `bi ${badgeIcon} conformity-icon`;
+                }
+            }
         }
+    }
+
+    // Legacy function for compatibility
+    function updateConformityRate(totalConform, totalNonConform, totalNotApplicable, totalNotTested) {
+        // Calculate conformity rate
+        const totalTested = totalConform + totalNonConform;
+        const conformityRate = totalTested > 0 ? (totalConform / totalTested) * 100 : 0;
+
+        // Use new function with all parameters
+        updateConformityCounts(totalConform, totalNonConform, totalNotApplicable, conformityRate, totalNotTested);
     }
 
     // Listen to radio buttons (ALL criteria, not just manual)

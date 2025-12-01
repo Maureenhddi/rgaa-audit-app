@@ -80,7 +80,7 @@ class GeminiService
                                 ]
                             ],
                             'generationConfig' => [
-                                'temperature' => 0.1, // Réduit pour plus de cohérence entre audits
+                                'temperature' => 0.2, // Équilibre optimal : cohérent mais pas robotique
                                 'topK' => 40,
                                 'topP' => 0.95,
                                 'maxOutputTokens' => 65536, // Augmenté pour Gemini 2.5 (thoughts + output)

@@ -19,6 +19,7 @@ class AuditService
         private GeminiService $geminiService,
         private GeminiImageAnalysisService $geminiImageAnalysisService,
         private GeminiContextualAnalysisService $geminiContextualAnalysisService,
+        private NonApplicableCriteriaDetector $naDetector,
         private EntityManagerInterface $entityManager,
         private LoggerInterface $logger,
         private string $projectDir
@@ -137,7 +138,7 @@ class AuditService
 
             // Step 7: Calculate conformity rate based on RGAA 4.1 official formula
             $this->logger->info('Calculating conformity rate');
-            $this->calculateConformityRate($audit);
+            $this->calculateConformityRate($audit, $playwrightResults['pageHtml'] ?? null);
 
             // Update audit status
             $audit->setStatus(AuditStatus::COMPLETED);
@@ -319,7 +320,10 @@ class AuditService
                             $storedResult->setRecommendation($recommendation);
                         }
                         if (isset($geminiResult['codeFix'])) {
-                            $storedResult->setCodeFix($geminiResult['codeFix']);
+                            $codeFixValue = is_array($geminiResult['codeFix'])
+                                ? implode("\n", $geminiResult['codeFix'])
+                                : $geminiResult['codeFix'];
+                            $storedResult->setCodeFix($codeFixValue);
                         }
                         if (isset($geminiResult['impactUser'])) {
                             $storedResult->setImpactUser($geminiResult['impactUser']);
@@ -363,7 +367,14 @@ class AuditService
                         $newResult->setSeverity($geminiResult['severity'] ?? 'major');
                         $newResult->setDescription($geminiResult['description'] ?? '');
                         $newResult->setRecommendation($geminiResult['recommendation'] ?? null);
-                        $newResult->setCodeFix($geminiResult['codeFix'] ?? null);
+
+                        $codeFixValue = isset($geminiResult['codeFix'])
+                            ? (is_array($geminiResult['codeFix'])
+                                ? implode("\n", $geminiResult['codeFix'])
+                                : $geminiResult['codeFix'])
+                            : null;
+                        $newResult->setCodeFix($codeFixValue);
+
                         $newResult->setImpactUser($geminiResult['impactUser'] ?? null);
                         $newResult->setSource('gemini-vision');
 
@@ -904,9 +915,10 @@ class AuditService
      * Manual criteria are not counted (they would need human verification).
      *
      * @param Audit $audit The audit entity
+     * @param string|null $pageHtml HTML content of the page for N/A detection
      * @return void Updates the audit's conformityRate, conformCriteria, nonConformCriteria
      */
-    private function calculateConformityRate(Audit $audit): void
+    private function calculateConformityRate(Audit $audit, ?string $pageHtml = null): void
     {
         // Load RGAA criteria configuration
         $criteriaFile = $this->projectDir . '/config/rgaa_criteria.json';
@@ -988,24 +1000,65 @@ class AuditService
 
         // Calculate conformity rate using official RGAA formula
         // Rate = Conform / (Conform + Non-Conform) × 100
+        // Note: This is calculated on TESTED criteria only (automatically testable)
+        // Manual verification may adjust this by marking criteria as "not applicable"
         if ($totalTestedCriteria > 0) {
             $conformityRate = ($conformCount / $totalTestedCriteria) * 100;
 
-            $this->logger->info('Conformity rate calculated from ACTUAL tested criteria', [
-                'total_tested_criteria' => $totalTestedCriteria,
+            // Detailed logging for transparency
+            $this->logger->info('📊 CALCUL DU TAUX DE CONFORMITÉ RGAA', [
+                '🎯 Total critères RGAA 4.1' => $totalRgaaCriteria . ' critères',
+                '🤖 Critères testés automatiquement' => $totalTestedCriteria . ' critères',
+                '✅ Critères conformes' => $conformCount,
+                '❌ Critères non-conformes' => $nonConformCount,
+                '📋 Critères non applicables (estimé)' => ($totalRgaaCriteria - $totalTestedCriteria) . ' (non testés auto)',
+                '📈 TAUX CALCUL' => $conformCount . ' / ' . $totalTestedCriteria . ' = ' . round($conformityRate, 2) . '%',
+                '⚠️  NOTE' => 'Seuls les critères automatiquement testables sont inclus. Vérification manuelle recommandée.'
+            ]);
+
+            // Store detailed calculation for UI display
+            $calculationDetails = [
+                'tested_criteria' => $totalTestedCriteria,
                 'conform_criteria' => $conformCount,
                 'non_conform_criteria' => $nonConformCount,
-                'conformity_rate' => round($conformityRate, 2) . '%',
-                'total_rgaa_criteria' => $totalRgaaCriteria
-            ]);
+                'formula' => "$conformCount / $totalTestedCriteria × 100",
+                'tested_criteria_list' => array_keys($allTestedCriteria),
+                'non_conform_criteria_list' => array_keys($nonConformCriteriaNumbers)
+            ];
 
             // Update audit entity
             $audit->setConformityRate((string) round($conformityRate, 2));
             $audit->setConformCriteria($conformCount);
             $audit->setNonConformCriteria($nonConformCount);
 
-            // Not applicable = total RGAA criteria - actually tested
-            $audit->setNotApplicableCriteria($totalRgaaCriteria - $totalTestedCriteria);
+            // Detect N/A criteria automatically using page content analysis
+            $notApplicableCriteria = [];
+            $notApplicableCount = 0;
+
+            if ($pageHtml !== null) {
+                $pageContent = $this->naDetector->analyzePage($pageHtml);
+                $notApplicableCriteria = $this->naDetector->detectNotApplicableCriteria($pageContent);
+                $notApplicableCount = \count($notApplicableCriteria);
+
+                $this->logger->info('✅ N/A criteria detected automatically', [
+                    'count' => $notApplicableCount,
+                    'criteria' => $notApplicableCriteria
+                ]);
+            } else {
+                $this->logger->warning('⚠️ Page HTML not available for N/A detection');
+            }
+
+            // Set N/A count
+            $audit->setNotApplicableCriteria($notApplicableCount);
+
+            // Not tested = total RGAA - (conformes + non conformes + N/A)
+            // These are criteria that need manual verification
+            $notTestedCount = $totalRgaaCriteria - $totalTestedCriteria - $notApplicableCount;
+            $audit->setNotTestedCriteria($notTestedCount);
+
+            // Store calculation details in summary for UI display
+            $currentSummary = $audit->getSummary() ?? '';
+            $audit->setSummary($currentSummary . "\n\n[CALCUL_DETAILS]" . json_encode($calculationDetails));
         } else {
             $this->logger->warning('No tested criteria found for conformity rate calculation');
         }

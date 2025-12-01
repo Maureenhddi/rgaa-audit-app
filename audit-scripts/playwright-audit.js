@@ -79,6 +79,9 @@ async function runPlaywrightAudit(url) {
         // Set viewport for consistent testing
         await page.setViewportSize({ width: 1280, height: 1024 });
 
+        // Capture page HTML for N/A criteria detection
+        results.pageHtml = await page.content();
+
         // Extract DOM elements for exhaustive Gemini analysis
         results.domElements = await page.evaluate(() => {
             // Extract ALL images
