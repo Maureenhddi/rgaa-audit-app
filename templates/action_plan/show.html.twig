@@ -314,7 +314,7 @@
     </div>
     <div class="card-body p-4" style="background: linear-gradient(135deg, #1e2330 0%, #252836 100%);">
         <div class="markdown-content">
-            {{ action_plan.executiveSummary|raw }}
+            {{ action_plan.executiveSummary|markdown_to_html }}
         </div>
     </div>
 </div>

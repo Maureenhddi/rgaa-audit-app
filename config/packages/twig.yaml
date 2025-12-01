@@ -4,6 +4,16 @@ twig:
     globals:
         app_name: 'RGAA Audit'
 
+when@dev:
+    twig:
+        markdown:
+            enabled: true
+
+when@prod:
+    twig:
+        markdown:
+            enabled: true
+
 when@test:
     twig:
         strict_variables: true

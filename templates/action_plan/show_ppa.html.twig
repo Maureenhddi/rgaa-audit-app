@@ -217,7 +217,7 @@
 <div class="strategic-card">
     <h3><i class="bi bi-file-text"></i> Résumé stratégique</h3>
     <div class="markdown-content">
-        {{ action_plan.executiveSummary|raw }}
+        {{ action_plan.executiveSummary|markdown_to_html }}
     </div>
 </div>
 {% endif %}
