@@ -34,6 +34,9 @@ class Audit
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $pageType = null; // homepage, form, listing, article, other
 
+    #[ORM\Column(length: 50)]
+    private ?string $auditScope = \App\Enum\AuditScope::FULL; // full, transverse, main_content
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $pageTitle = null;
 
@@ -423,6 +426,18 @@ class Audit
     public function setPageTitle(?string $pageTitle): static
     {
         $this->pageTitle = $pageTitle;
+
+        return $this;
+    }
+
+    public function getAuditScope(): ?string
+    {
+        return $this->auditScope;
+    }
+
+    public function setAuditScope(string $auditScope): static
+    {
+        $this->auditScope = $auditScope;
 
         return $this;
     }

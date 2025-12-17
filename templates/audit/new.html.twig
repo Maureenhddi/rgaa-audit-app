@@ -58,6 +58,7 @@
                 <form method="post" action="{{ path('app_audit_new', {campaign_id: campaign.id}) }}" id="duplicate-form">
                     <input type="hidden" name="url" value="{{ duplicate_url }}">
                     <input type="hidden" name="page_type" value="{{ page_type }}">
+                    <input type="hidden" name="audit_scope" value="{{ audit_scope|default('full') }}">
                     <input type="hidden" name="duplicate_action" id="duplicate_action" value="">
                     {% if image_analysis_types is defined %}
                         {% for type in image_analysis_types %}
@@ -174,6 +175,22 @@
                         </small>
                     </div>
 
+                    {# Audit Scope Selection #}
+                    <div class="mb-4">
+                        <label for="audit_scope" class="form-label">
+                            <i class="bi bi-bounding-box"></i> <strong>Périmètre de l'audit</strong>
+                        </label>
+                        <select class="form-select" id="audit_scope" name="audit_scope" required>
+                            <option value="full" selected>Page complète</option>
+                            <option value="transverse">Éléments transverses uniquement</option>
+                            <option value="main_content">Contenu principal uniquement</option>
+                        </select>
+                        <div id="scope-description" class="mt-2 p-3 bg-light rounded small">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <span id="scope-text">Audite l'intégralité de la page (header, navigation, contenu, footer)</span>
+                        </div>
+                    </div>
+
                     {# Deep Image Analysis Options #}
                     <div class="mb-4">
                         <label class="form-label">
@@ -283,6 +300,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('audit-form');
     const submitBtn = document.getElementById('submit-btn');
     const progressDiv = document.getElementById('audit-progress');
+    const auditScopeSelect = document.getElementById('audit_scope');
+    const scopeText = document.getElementById('scope-text');
+
+    // Audit scope descriptions
+    const scopeDescriptions = {
+        'full': "Audite l'intégralité de la page (header, navigation, contenu, footer)",
+        'transverse': "Audite uniquement les éléments transverses (header, footer, navigation, fil d'ariane). Idéal pour auditer une seule fois les éléments communs à toutes les pages.",
+        'main_content': "Audite uniquement le contenu principal de la page (sans les éléments transverses). Idéal pour auditer le contenu spécifique à chaque page."
+    };
+
+    // Update description when scope changes
+    auditScopeSelect.addEventListener('change', function() {
+        const selectedScope = this.value;
+        scopeText.textContent = scopeDescriptions[selectedScope] || scopeDescriptions['full'];
+    });
 
     form.addEventListener('submit', function(e) {
         // Disable button and show progress

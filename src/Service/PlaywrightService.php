@@ -17,8 +17,11 @@ class PlaywrightService
 
     /**
      * Run Playwright audit on a URL
+     *
+     * @param string $url URL to audit
+     * @param string $auditScope Scope of audit: 'full', 'transverse', or 'main_content'
      */
-    public function runAudit(string $url): array
+    public function runAudit(string $url, string $auditScope = 'full'): array
     {
         $scriptPath = $this->nodeScriptsPath . '/playwright-audit.js';
 
@@ -29,7 +32,8 @@ class PlaywrightService
         $process = new Process([
             $this->nodeExecutable,
             $scriptPath,
-            $url
+            $url,
+            $auditScope
         ]);
 
         $process->setTimeout(300); // 5 minutes timeout

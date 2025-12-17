@@ -33,22 +33,24 @@ class AuditService
      * @param User $user User running the audit
      * @param array $imageAnalysisTypes Array of ImageAnalysisType constants to perform
      * @param array $contextualAnalysisTypes Array of ContextualAnalysisType constants to perform
+     * @param string $auditScope Scope of audit: 'full', 'transverse', or 'main_content'
      */
-    public function runCompleteAudit(string $url, User $user, array $imageAnalysisTypes = [], array $contextualAnalysisTypes = []): Audit
+    public function runCompleteAudit(string $url, User $user, array $imageAnalysisTypes = [], array $contextualAnalysisTypes = [], string $auditScope = \App\Enum\AuditScope::FULL): Audit
     {
         // Create audit entity
         $audit = new Audit();
         $audit->setUrl($url);
         $audit->setUser($user);
         $audit->setStatus(AuditStatus::RUNNING);
+        $audit->setAuditScope($auditScope);
 
         $this->entityManager->persist($audit);
         $this->entityManager->flush();
 
         try {
             // Step 1: Run Playwright audit (includes Axe-core + A11yLint RGAA)
-            $this->logger->info('Starting Playwright audit with Axe-core and A11yLint RGAA', ['url' => $url]);
-            $playwrightResults = $this->playwrightService->runAudit($url);
+            $this->logger->info('Starting Playwright audit with Axe-core and A11yLint RGAA', ['url' => $url, 'scope' => $auditScope]);
+            $playwrightResults = $this->playwrightService->runAudit($url, $auditScope);
             $this->logger->info('Playwright audit completed', ['url' => $url]);
 
             // Step 2: Store all raw results

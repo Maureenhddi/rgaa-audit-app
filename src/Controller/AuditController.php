@@ -50,6 +50,7 @@ class AuditController extends AbstractController
         if ($request->isMethod('POST')) {
             $url = $request->request->get('url');
             $pageType = $request->request->get('page_type', 'other');
+            $auditScope = $request->request->get('audit_scope', \App\Enum\AuditScope::FULL);
             $action = $request->request->get('duplicate_action'); // 'replace' or 'create_new'
 
             // Get selected image analysis types (array)
@@ -83,6 +84,7 @@ class AuditController extends AbstractController
                     'existing_audit' => $existingAudit,
                     'duplicate_url' => $url,
                     'page_type' => $pageType,
+                    'audit_scope' => $auditScope,
                     'image_analysis_types' => $imageAnalysisTypes,
                 ]);
             }
@@ -94,12 +96,13 @@ class AuditController extends AbstractController
                     $entityManager->flush();
                 }
 
-                $audit = $auditService->runCompleteAudit($url, $user, $imageAnalysisTypes, $contextualAnalysisTypes);
+                $audit = $auditService->runCompleteAudit($url, $user, $imageAnalysisTypes, $contextualAnalysisTypes, $auditScope);
 
                 // Associate with campaign and project
                 $audit->setCampaign($campaign);
                 $audit->setProject($campaign->getProject());
                 $audit->setPageType($pageType);
+                $audit->setAuditScope($auditScope);
 
                 // Update campaign status to in_progress if it was draft
                 if ($campaign->getStatus() === 'draft') {

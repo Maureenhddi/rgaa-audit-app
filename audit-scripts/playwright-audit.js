@@ -9,7 +9,7 @@ const path = require('path');
  * Tests interactivity: keyboard navigation, focus management, dynamic content
  */
 
-async function runPlaywrightAudit(url) {
+async function runPlaywrightAudit(url, auditScope = 'full') {
     const browser = await chromium.launch({
         headless: true
     });
@@ -21,6 +21,7 @@ async function runPlaywrightAudit(url) {
     const page = await context.newPage();
     const results = {
         url: url,
+        auditScope: auditScope,
         timestamp: new Date().toISOString(),
         tests: [],
         summary: {
@@ -78,6 +79,63 @@ async function runPlaywrightAudit(url) {
 
         // Set viewport for consistent testing
         await page.setViewportSize({ width: 1280, height: 1024 });
+
+        // Apply audit scope filtering if needed
+        if (auditScope !== 'full') {
+            await page.evaluate((scope) => {
+                // Define selectors for transverse elements
+                const transverseSelectors = [
+                    'header',
+                    'footer',
+                    'nav',
+                    '[role="navigation"]',
+                    '[role="banner"]',
+                    '[role="contentinfo"]',
+                    '.header',
+                    '.footer',
+                    '.navbar',
+                    '.breadcrumb',
+                    '[class*="breadcrumb"]',
+                    '[id*="header"]',
+                    '[id*="footer"]',
+                    '[id*="nav"]'
+                ];
+
+                // Define selectors for main content
+                const mainContentSelectors = [
+                    'main',
+                    '[role="main"]',
+                    '#main',
+                    '#content',
+                    '.main',
+                    '.content',
+                    '.main-content',
+                    'article'
+                ];
+
+                if (scope === 'transverse') {
+                    // Hide main content, keep only transverse elements
+                    const mainElements = document.querySelectorAll(mainContentSelectors.join(','));
+                    mainElements.forEach(el => {
+                        // Check if element is not a parent of transverse elements
+                        const hasTransverseChild = transverseSelectors.some(selector =>
+                            el.querySelector(selector) !== null
+                        );
+                        if (!hasTransverseChild) {
+                            el.style.display = 'none';
+                            el.setAttribute('data-audit-hidden', 'true');
+                        }
+                    });
+                } else if (scope === 'main_content') {
+                    // Hide transverse elements, keep only main content
+                    const transverseElements = document.querySelectorAll(transverseSelectors.join(','));
+                    transverseElements.forEach(el => {
+                        el.style.display = 'none';
+                        el.setAttribute('data-audit-hidden', 'true');
+                    });
+                }
+            }, auditScope);
+        }
 
         // Capture page HTML for N/A criteria detection
         results.pageHtml = await page.content();
@@ -2086,14 +2144,22 @@ function updateSummary(summary, test) {
  */
 async function main() {
     const url = process.argv[2];
+    const auditScope = process.argv[3] || 'full'; // Default to 'full' if not provided
 
     if (!url) {
         console.error(JSON.stringify({ error: 'URL is required' }));
         process.exit(1);
     }
 
+    // Validate audit scope
+    const validScopes = ['full', 'transverse', 'main_content'];
+    if (!validScopes.includes(auditScope)) {
+        console.error(JSON.stringify({ error: `Invalid audit scope: ${auditScope}. Valid values: ${validScopes.join(', ')}` }));
+        process.exit(1);
+    }
+
     try {
-        const results = await runPlaywrightAudit(url);
+        const results = await runPlaywrightAudit(url, auditScope);
         console.log(JSON.stringify(results, null, 2));
     } catch (error) {
         console.error(JSON.stringify({ error: error.message, stack: error.stack }));
